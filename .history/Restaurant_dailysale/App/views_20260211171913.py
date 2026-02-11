@@ -1,15 +1,16 @@
 
-from .models import  User,Register,Manager
-from django.contrib.auth.hashers import make_password,check_password
-from django.shortcuts import render, redirect,get_object_or_404
-from django.contrib import messages
+# Local app imports
+from .models import User, Register, Manager
+from .forms import LoginForm, ForgotPasswordForm, ResetPasswordForm
 
+# Django imports
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.auth.hashers import make_password, check_password
 from django.views.decorators.cache import never_cache
 from django.core.mail import send_mail
 from django.conf import settings
-from .forms import LoginForm,ForgotPasswordForm,ResetPasswordForm
-from django.conf import settings
-from django.db import transaction 
+from django.db import transaction
 
 
 def dashboard(request):

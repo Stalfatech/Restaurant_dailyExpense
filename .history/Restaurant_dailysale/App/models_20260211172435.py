@@ -26,7 +26,7 @@ class User(AbstractUser):
     name = models.CharField(max_length=100, null=True, blank=True)
 
     username = None
-    email = models.EmailField(unique=True, max_length=191)
+    email = models.EmailField(unique=True, max_length=191, null=True),
 
     user_type = models.IntegerField(null=True)
 

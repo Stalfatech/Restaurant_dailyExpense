@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block 'content' %}
+
+<div class="container mt-5">
+    <div class="card shadow p-4 text-center">
+
+        <h5>Are you sure you want to delete this branch?</h5>
+        <p class="fw-bold">{{ branch.name }}</p>
+
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">
+                Yes, Delete
+            </button>
+
+            <a href="{% url 'branch_list' %}" class="btn btn-secondary">
+                Cancel
+            </a>
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}

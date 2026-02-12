@@ -563,26 +563,17 @@ def approve_expense(request, pk):
 
 # ================= SUPPLIER =================
 
-@login_required
 @admin_or_manager_required
 def add_supplier(request):
-    if request.method == 'POST':
-        form = SupplierForm(request.POST)
-        if form.is_valid():
-            supplier = form.save(commit=False)  # do not save yet
-            supplier.branch = request.user.branch  # assign branch
-            supplier.save()  # now it saves successfully
-            return redirect('supplier_list')
-        else:
-            print(form.errors)  # debug invalid form
-    else:
-        form = SupplierForm()
-    return render(request, 'expenses/supplier_form.html', {'form': form, 'edit_mode': False})
+    form = SupplierForm(request.POST or None)
+    if form.is_valid():
+        supplier = form.save(commit=False)
+        supplier.branch = request.user.branch
+        supplier.save()
+        return redirect('supplier_list')
 
 
-
-
-   
+    return render(request, 'expenses/supplier_form.html', {'form': form})
 from django.db.models import Q 
 @admin_or_manager_required
 def supplier_list(request):

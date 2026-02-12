@@ -76,14 +76,11 @@ def Logindata(request):
 
             if user is None:
                 messages.error(request, 'Invalid email')
-                messages.error(request, "Invalid email or password")
                 return redirect('login')
-               
 
             if not check_password(password, user.password):
                 messages.error(request, 'Invalid password')
                 return redirect('login')
-            login(request, user) 
 
             # ✅ Successful login
             request.session['login_id'] = user.id
@@ -165,10 +162,6 @@ def reset_password(request, user_id):
 
 @never_cache
 def add_manager(request):
-    if request.session.get('usertype') != 0:
-        return redirect('no_permission')
-
-    branches = Branch.objects.all()
     if request.method == "POST":
 
         name = request.POST.get('name')
@@ -180,15 +173,11 @@ def add_manager(request):
         email = request.POST.get('gmail')
         password = request.POST.get('password')
         photo = request.FILES.get('photo')
-        branch_id = request.POST.get('branch')
 
         # 🔍 VALIDATION
         if not email or not password:
             messages.error(request, "Email and password are required")
-        if not all([name, phone, dob, address, joining_date, email, password, branch_id]):
-            messages.error(request, "All mandatory fields are required")
             return redirect('manager_add')
-          
 
         if User.objects.filter(email=email).exists():
             messages.error(request, "Email already exists")
@@ -196,15 +185,13 @@ def add_manager(request):
 
         try:
             with transaction.atomic():
-                branch = Branch.objects.get(id=branch_id)
 
                 # ✅ 1. CREATE USER
                 user = User.objects.create_user(
                     email=email,
                     password=password,
                     name=name,
-                    user_type=1,
-                     branch=branch# MANAGER
+                    user_type=1   # MANAGER
                 )
 
                 # ✅ 2. CREATE REGISTER
@@ -232,9 +219,7 @@ def add_manager(request):
             messages.error(request, f"Error: {str(e)}")
             return redirect('manager_add')
 
-    return render(request, 'Admin/add_manager.html', {
-        'branches': branches
-    })
+    return render(request, 'Admin/add_manager.html')
 
 @never_cache
 def manager_view(request):
@@ -258,11 +243,7 @@ def manager_delete(request, id):
 
 @never_cache
 def manager_edit(request, id):
-    if request.session.get('usertype') != 0:
-        return redirect('no_permission')
-
     manager = get_object_or_404(Manager, id=id)
-    branches = Branch.objects.all()
 
     if request.method == "POST":
         try:
@@ -271,26 +252,6 @@ def manager_edit(request, id):
                 # Update User table
                 manager.user.name = request.POST.get('name')
                 manager.user.email = request.POST.get('email')
-                name = request.POST.get('name')
-                email = request.POST.get('email')
-                phone = request.POST.get('phone')
-                dob = request.POST.get('dob')
-                gender = request.POST.get('gender')
-                joining_date = request.POST.get('joining_date')
-                address = request.POST.get('address')
-                branch_id = request.POST.get('branch')
-
-                # 🔴 Validation
-                if not all([name, email, phone, branch_id]):
-                    messages.error(request, "All mandatory fields are required")
-                    return redirect('manager_edit', id=id)
-
-                branch = Branch.objects.get(id=branch_id)
-
-                # ✅ Update User
-                manager.user.name = name
-                manager.user.email = email
-                manager.user.branch = branch
                 manager.user.save()
 
                 # Update Manager table
@@ -299,12 +260,6 @@ def manager_edit(request, id):
                 manager.gender = request.POST.get('gender')
                 manager.address = request.POST.get('address')
                 manager.joining_date = request.POST.get('joining_date')
-                 # ✅ Update Manager profile
-                manager.phone = phone
-                manager.dob = dob
-                manager.gender = gender
-                manager.address = address
-                manager.joining_date = joining_date
 
                 if request.FILES.get('photo'):
                     manager.photo = request.FILES.get('photo')
@@ -319,8 +274,7 @@ def manager_edit(request, id):
             return redirect('manager_view')
 
     return render(request, 'Admin/manager_edit.html', {
-        'manager': manager,
-          'branches': branches
+        'manager': manager
     })
     
     
@@ -563,26 +517,17 @@ def approve_expense(request, pk):
 
 # ================= SUPPLIER =================
 
-@login_required
 @admin_or_manager_required
 def add_supplier(request):
-    if request.method == 'POST':
-        form = SupplierForm(request.POST)
-        if form.is_valid():
-            supplier = form.save(commit=False)  # do not save yet
-            supplier.branch = request.user.branch  # assign branch
-            supplier.save()  # now it saves successfully
-            return redirect('supplier_list')
-        else:
-            print(form.errors)  # debug invalid form
-    else:
-        form = SupplierForm()
-    return render(request, 'expenses/supplier_form.html', {'form': form, 'edit_mode': False})
+    form = SupplierForm(request.POST or None)
+    if form.is_valid():
+        supplier = form.save(commit=False)
+        supplier.branch = request.user.branch
+        supplier.save()
+        return redirect('supplier_list')
 
 
-
-
-   
+    return render(request, 'expenses/supplier_form.html', {'form': form})
 from django.db.models import Q 
 @admin_or_manager_required
 def supplier_list(request):

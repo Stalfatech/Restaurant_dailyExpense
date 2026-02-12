@@ -110,7 +110,7 @@ EXPENSE_CATEGORIES = (
 
 class Supplier(models.Model):
     name = models.CharField(max_length=150)
-    branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name='suppliers')
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE,)
     phone = models.CharField(max_length=15)
 
     def __str__(self):

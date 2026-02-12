@@ -569,9 +569,9 @@ def add_supplier(request):
     if request.method == 'POST':
         form = SupplierForm(request.POST)
         if form.is_valid():
-            supplier = form.save(commit=False)  # do not save yet
-            supplier.branch = request.user.branch  # assign branch
-            supplier.save()  # now it saves successfully
+            supplier = form.save(commit=False)  # don’t save yet
+            supplier.branch = request.user.branch  # assign branch automatically
+            supplier.save()  # now it will save correctly
             return redirect('supplier_list')
         else:
             print(form.errors)  # debug invalid form

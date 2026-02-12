@@ -47,11 +47,12 @@ from django.core.exceptions import ValidationError
 class SupplierForm(forms.ModelForm):
     class Meta:
         model = Supplier
-        fields = ['name', 'phone']
+        fields = ['name', 'phone','branch']
 
 
-   
-
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['branch'].empty_label = "Select Branch"
     def clean_phone(self):
         phone = self.cleaned_data['phone']
         if not phone.isdigit():

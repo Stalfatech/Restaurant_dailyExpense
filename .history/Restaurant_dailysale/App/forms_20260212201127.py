@@ -50,8 +50,9 @@ class SupplierForm(forms.ModelForm):
         fields = ['name', 'phone']
 
 
-   
-
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['branch'].empty_label = "Select Branch"
     def clean_phone(self):
         phone = self.cleaned_data['phone']
         if not phone.isdigit():

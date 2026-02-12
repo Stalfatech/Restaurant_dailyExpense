@@ -119,7 +119,7 @@ class Supplier(models.Model):
 
 class Product(models.Model):
     name = models.CharField(max_length=150)
-  
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
 
     def __str__(self):

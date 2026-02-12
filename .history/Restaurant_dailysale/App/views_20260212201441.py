@@ -566,11 +566,20 @@ def approve_expense(request, pk):
 @login_required
 @admin_or_manager_required
 def add_supplier(request):
-    form = SupplierForm(request.POST or None)
-    if form.is_valid():
-        form.save()
-        return redirect('supplier_list')
-    return render(request, 'expenses/supplier_form.html', {'form': form})
+    if request.method == 'POST':
+        form = SupplierForm(request.POST)
+        if form.is_valid():
+            supplier = form.save(commit=False)
+            supplier.branch = request.user.branch  # assign branch
+            supplier.save()
+            return redirect('supplier_list')
+        else:
+            print(form.errors)  # debug form issues
+    else:
+        form = SupplierForm()
+    return render(request, 'expenses/supplier_form.html', {'form': form, 'edit_mode': False})
+
+
 
 
    
@@ -632,8 +641,11 @@ def delete_supplier(request, pk):
 def add_product(request):
     form = ProductForm(request.POST or None)
     if form.is_valid():
-        form.save()
+        product = form.save(commit=False)
+        product.branch = request.user.branch
+        product.save()
         return redirect('product_list')
+
     return render(request, 'expenses/product_form.html', {'form': form})
 
 @admin_or_manager_required

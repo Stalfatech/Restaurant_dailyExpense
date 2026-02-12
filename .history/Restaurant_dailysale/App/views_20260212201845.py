@@ -569,7 +569,7 @@ def add_supplier(request):
     form = SupplierForm(request.POST or None)
     if form.is_valid():
         form.save()
-        return redirect('supplier_list')
+        return redirect('dashboard')
     return render(request, 'expenses/supplier_form.html', {'form': form})
 
 
@@ -633,7 +633,7 @@ def add_product(request):
     form = ProductForm(request.POST or None)
     if form.is_valid():
         form.save()
-        return redirect('product_list')
+        return redirect('pro')
     return render(request, 'expenses/product_form.html', {'form': form})
 
 @admin_or_manager_required

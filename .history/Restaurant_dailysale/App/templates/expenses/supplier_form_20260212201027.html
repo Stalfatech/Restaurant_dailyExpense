@@ -25,7 +25,12 @@
             {{ form.phone }}
             <div class="text-danger">{{ form.phone.errors }}</div>
         </div>
-        
+        <div class="mb-3">
+    <label>Branch <span class="text-danger">*</span></label>
+    {{ form.branch }}
+    <div class="text-danger">{{ form.branch.errors }}</div>
+</div>
+
 
         <button class="btn btn-success">
             {% if edit_mode %}Update{% else %}Save{% endif %}

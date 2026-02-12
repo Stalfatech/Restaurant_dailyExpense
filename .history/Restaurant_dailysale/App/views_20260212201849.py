@@ -569,7 +569,7 @@ def add_supplier(request):
     form = SupplierForm(request.POST or None)
     if form.is_valid():
         form.save()
-        return redirect('supplier_list')
+        return redirect('dashboard')
     return render(request, 'expenses/supplier_form.html', {'form': form})
 
 

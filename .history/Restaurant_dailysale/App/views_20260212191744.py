@@ -10,7 +10,7 @@ from django.conf import settings
 from .forms import LoginForm,ForgotPasswordForm,ResetPasswordForm
 from django.conf import settings
 from django.db import transaction 
-
+fro
 
 
 def dashboard(request):

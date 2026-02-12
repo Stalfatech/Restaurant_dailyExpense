@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block 'content %}
+
+<h3>Add Supplier</h3>
+
+<form method="POST" class="card p-4 shadow">
+    {% csrf_token %}
+
+    <div class="mb-3">
+        <label>Name <span class="text-danger">*</span></label>
+        {{ form.name }}
+        <div class="text-danger">{{ form.name.errors }}</div>
+    </div>
+
+    <div class="mb-3">
+        <label>Phone <span class="text-danger">*</span></label>
+        {{ form.phone }}
+        <div class="text-danger">{{ form.phone.errors }}</div>
+    </div>
+
+    <button class="btn btn-success">Save</button>
+
+</form>
+
+{% endblock %}

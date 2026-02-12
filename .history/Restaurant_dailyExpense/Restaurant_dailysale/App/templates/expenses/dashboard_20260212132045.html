@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block 'content' %}
+
+<h3>Daily Expense Dashboard</h3>
+
+<form method="GET" class="row g-3 mb-4">
+    <div class="col-md-4">
+        <input type="date" name="date" class="form-control" value="{{ selected_date }}">
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-primary">Filter</button>
+    </div>
+</form>
+
+<div class="card text-white bg-danger mb-4">
+    <div class="card-body">
+        <h4>Daily Expense Total: {{ daily_total }}</h4>
+    </div>
+</div>
+
+<table class="table table-bordered table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>Date</th>
+            <th>Category</th>
+            <th>Supplier</th>
+            <th>Product</th>
+            <th>Qty</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Invoice</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for e in expenses %}
+        <tr>
+            <td>{{ e.date }}</td>
+            <td>{{ e.category }}</td>
+            <td>{{ e.supplier }}</td>
+            <td>{{ e.product }}</td>
+            <td>{{ e.quantity }}</td>
+            <td>{{ e.purchase_type }}</td>
+            <td>{{ e.amount }}</td>
+            <td>
+                {% if e.invoice %}
+                    <a href="{{ e.invoice.url }}" target="_blank">View</a>
+                {% endif %}
+            </td>
+            <td>
+                <a href="{% url 'edit_expense' e.id %}" class="btn btn-sm btn-warning">Edit</a>
+                <a href="{% url 'delete_expense' e.id %}" class="btn btn-sm btn-danger">Delete</a>
+            </td>
+        </tr>
+    {% empty %}
+        <tr>
+            <td colspan="9" class="text-center">No expenses found.</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

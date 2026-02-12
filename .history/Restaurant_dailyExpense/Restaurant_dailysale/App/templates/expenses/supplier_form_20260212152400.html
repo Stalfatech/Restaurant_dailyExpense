@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container">
+
+    <h3>
+        {% if edit_mode %}
+            Edit Supplier
+        {% else %}
+            Add Supplier
+        {% endif %}
+    </h3>
+
+    <form method="POST" class="card p-4 shadow">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label>Name <span class="text-danger">*</span></label>
+            {{ form.name }}
+            <div class="text-danger">{{ form.name.errors }}</div>
+        </div>
+
+        <div class="mb-3">
+            <label>Phone <span class="text-danger">*</span></label>
+            {{ form.phone }}
+            <div class="text-danger">{{ form.phone.errors }}</div>
+        </div>
+
+        <button class="btn btn-success">
+            {% if edit_mode %}Update{% else %}Save{% endif %}
+        </button>
+
+        <a href="{% url 'supplier_list' %}" class="btn btn-secondary">
+            Cancel
+        </a>
+    </form>
+
+</div>
+
+{% endblock %}

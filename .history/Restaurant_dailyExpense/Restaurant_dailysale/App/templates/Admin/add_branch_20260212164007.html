@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load static %}
+{% block 'content' %}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>
+            {% if edit_mode %}
+                Edit Branch
+            {% else %}
+                Add Branch
+            {% endif %}
+        </h4>
+        <a href="{% url 'branch_list' %}" class="btn btn-secondary">
+            ← Back to List
+        </a>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+
+            <p class="text-muted">
+                Fields marked with <span class="text-danger">*</span> are mandatory.
+            </p>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post" id="branchForm">
+                {% csrf_token %}
+
+                <div class="row">
+
+                    <!-- Branch Name -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">
+                            Branch Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text"
+                               name="name"
+                               class="form-control"
+                               value="{{ branch.name|default:'' }}"
+                               required>
+                    </div>
+
+                    <!-- Location -->
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label">
+                            Location <span class="text-danger">*</span>
+                        </label>
+                        <textarea name="location"
+                                  class="form-control"
+                                  rows="3"
+                                  required>{{ branch.location|default:'' }}</textarea>
+                    </div>
+
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">
+                    {% if edit_mode %}
+                        Update Branch
+                    {% else %}
+                        Add Branch
+                    {% endif %}
+                </button>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block 'content' %}
+
+<h3>Expense Form</h3>
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="mb-3">
+        <label>Date *</label>
+        {{ form.date }}
+        {{ form.date.errors }}
+    </div>
+
+    <div class="mb-3">
+        <label>Category *</label>
+        {{ form.category }}
+        {{ form.category.errors }}
+    </div>
+
+    <div class="mb-3">
+        <label>Supplier *</label>
+        {{ form.supplier }}
+        {{ form.supplier.errors }}
+    </div>
+
+    <div class="mb-3">
+        <label>Product *</label>
+        {{ form.product }}
+        {{ form.product.errors }}
+    </div>
+
+    <div class="mb-3">
+        <label>Quantity *</label>
+        {{ form.quantity }}
+        {{ form.quantity.errors }}
+    </div>
+
+    <div class="mb-3">
+        <label>Purchase Type *</label>
+        {{ form.purchase_type }}
+        {{ form.purchase_type.errors }}
+    </div>
+
+    <div class="mb-3">
+        <label>Amount *</label>
+        {{ form.amount }}
+        {{ form.amount.errors }}
+    </div>
+
+    <div class="mb-3">
+        <label>Invoice (PDF/Image) *</label>
+        {{ form.invoice }}
+        {{ form.invoice.errors }}
+    </div>
+
+    <div class="mb-3">
+        <label>Description</label>
+        {{ form.description }}
+    </div>
+
+    <button class="btn btn-success">Save</button>
+
+</form>
+
+{% endblock %}

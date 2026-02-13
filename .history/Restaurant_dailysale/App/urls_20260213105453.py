@@ -6,7 +6,7 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     path('topbar', views.topbar_view, name='topbar'),
     path('login', views.Logindata, name='login'),
-    path('logouts',views.Logouts, name='logouts'),
+    path('logouts',views.Logouts,),
     path('reset_password/<int:user_id>/', views.reset_password, name='reset_password'),
     path('forgot_password/', views.forgot_password, name='forgot_password'),
     path('add_manager/', views.add_manager, name='manager_add'),

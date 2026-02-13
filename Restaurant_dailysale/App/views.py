@@ -1,9 +1,9 @@
 
-from .models import  User,Register,Manager
+from .models import  User,Register,Manager,Staff
 from django.contrib.auth.hashers import make_password,check_password
 from django.shortcuts import render, redirect,get_object_or_404
 from django.contrib import messages
-
+from datetime import date
 from django.views.decorators.cache import never_cache
 from django.core.mail import send_mail
 from django.conf import settings
@@ -272,3 +272,125 @@ def manager_edit(request, id):
     return render(request, 'Admin/manager_edit.html', {
         'manager': manager
     })
+
+def add_staff(request):
+    if request.method == "POST":
+        staff_id = request.POST.get('staff_id')
+        name = request.POST.get('name')
+        role = request.POST.get('role')
+        contact = request.POST.get('contact')
+        dob = request.POST.get('dob')
+        joining_date = request.POST.get('joining_date')
+        salary_type = request.POST.get('salary_type')
+        status = request.POST.get('status')
+
+        # 🔴 Check Duplicate Staff ID
+        if Staff.objects.filter(staff_id=staff_id).exists():
+            messages.error(request, "Staff ID already exists.")
+            return redirect('add_staff')
+
+        # 🔴 Contact Validation
+        if not contact or not contact.isdigit() or len(contact) != 10:
+            messages.error(request, "Contact number must be exactly 10 digits.")
+            return redirect('add_staff')
+
+        # 🔴 DOB Future Validation
+        if dob:
+            dob_date = date.fromisoformat(dob)
+            if dob_date > date.today():
+                messages.error(request, "Date of Birth cannot be in the future.")
+                return redirect('add_staff')
+
+        # 🟢 Save Staff
+        Staff.objects.create(
+            staff_id=staff_id,
+            name=name,
+            role=role,
+            contact=contact,
+            dob=dob if dob else None,
+            joining_date=joining_date,
+            salary_type=salary_type,
+            status=status
+        )
+
+        messages.success(request, "Staff added successfully ✅")
+        return redirect('staff_list')
+
+    return render(request, 'Manager/staff_add.html')
+
+def staff_list(request):
+    staffs = Staff.objects.all().order_by('id')
+    return render(request, 'Manager/staff_list.html', {'staffs': staffs})
+
+def staff_list(request):
+    role_filter = request.GET.get('role')
+
+    staffs = Staff.objects.all().order_by('id')   # Correct order 1 → last
+
+    if role_filter:
+        staffs = staffs.filter(role=role_filter)
+
+    # Get distinct roles for dropdown
+    roles = Staff.objects.values_list('role', flat=True).distinct()
+
+    context = {
+        'staffs': staffs,
+        'roles': roles,
+        'selected_role': role_filter
+    }
+
+    return render(request, 'Manager/staff_list.html', context)
+
+def edit_staff(request, id):
+    staff = get_object_or_404(Staff, id=id)
+
+    if request.method == "POST":
+        staff_id = request.POST.get('staff_id')
+        name = request.POST.get('name')
+        role = request.POST.get('role')
+        contact = request.POST.get('contact')
+        dob = request.POST.get('dob')
+        joining_date = request.POST.get('joining_date')
+        salary_type = request.POST.get('salary_type')
+        status = request.POST.get('status')
+
+        # Duplicate Staff ID check (except current staff)
+        if Staff.objects.filter(staff_id=staff_id).exclude(id=id).exists():
+            messages.error(request, "Staff ID already exists.")
+            return redirect('edit_staff', id=id)
+
+        # Contact Validation
+        if not contact or not contact.isdigit() or len(contact) != 10:
+            messages.error(request, "Contact number must be exactly 10 digits.")
+            return redirect('edit_staff', id=id)
+
+        # DOB Validation
+        if dob:
+            dob_date = date.fromisoformat(dob)
+            if dob_date > date.today():
+                messages.error(request, "Date of Birth cannot be in the future.")
+                return redirect('edit_staff', id=id)
+
+        # Update Staff
+        staff.staff_id = staff_id
+        staff.name = name
+        staff.role = role
+        staff.contact = contact
+        staff.dob = dob if dob else None
+        staff.joining_date = joining_date
+        staff.salary_type = salary_type
+        staff.status = status
+        staff.save()
+
+        messages.success(request, "Staff updated successfully ✅")
+        return redirect('staff_list')
+
+    return render(request, 'Manager/staff_edit.html', {'staff': staff})
+
+def delete_staff(request, id):
+    staff = get_object_or_404(Staff, id=id)
+
+    staff.delete()
+
+    messages.success(request, "Staff deleted successfully 🗑️")
+    return redirect('staff_list')

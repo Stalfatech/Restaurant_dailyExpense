@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block 'content' %}
+
+<div class="container mt-5">
+    <div class="card shadow">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Edit Staff</h5>
+        </div>
+
+        <div class="card-body">
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+                        <label>Staff ID</label>
+                        <input type="text" name="staff_id" class="form-control"
+                               value="{{ staff.staff_id }}" required>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>Name</label>
+                        <input type="text" name="name" class="form-control"
+                               value="{{ staff.name }}" required>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>Role</label>
+                        <input type="text" name="role" class="form-control"
+                               value="{{ staff.role }}" required>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>Contact</label>
+                        <input type="text" name="contact" class="form-control"
+                               value="{{ staff.contact }}" required>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>Date of Birth</label>
+                        <input type="date" name="dob" class="form-control"
+                               value="{{ staff.dob|date:'Y-m-d' }}">
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>Joining Date</label>
+                        <input type="date" name="joining_date" class="form-control"
+                               value="{{ staff.joining_date|date:'Y-m-d' }}" required>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>Salary Type</label>
+                        <select name="salary_type" class="form-select">
+                            <option {% if staff.salary_type == "Monthly" %}selected{% endif %}>Monthly</option>
+                            <option {% if staff.salary_type == "Daily" %}selected{% endif %}>Daily</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>Status</label>
+                        <select name="status" class="form-select">
+                            <option {% if staff.status == "Active" %}selected{% endif %}>Active</option>
+                            <option {% if staff.status == "Inactive" %}selected{% endif %}>Inactive</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <div class="text-end">
+                    <a href="{% url 'staff_list' %}" class="btn btn-secondary">
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        Update Staff
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

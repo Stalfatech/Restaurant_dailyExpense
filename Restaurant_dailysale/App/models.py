@@ -73,3 +73,34 @@ class Manager(models.Model):
 
     def __str__(self):
         return self.user.name
+    
+class Staff(models.Model):
+
+    ROLE_CHOICES = [
+        ('Chef', 'Chef'),
+        ('Helper', 'Helper'),
+        ('Delivery', 'Delivery'),
+        ('Manager', 'Manager'),
+    ]
+
+    SALARY_TYPE_CHOICES = [
+        ('Daily', 'Daily'),
+        ('Monthly', 'Monthly'),
+    ]
+
+    STATUS_CHOICES = [
+        ('Active', 'Active'),
+        ('Inactive', 'Inactive'),
+    ]
+
+    staff_id = models.CharField(max_length=20)
+    name = models.CharField(max_length=100)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    contact = models.CharField(max_length=10)
+    dob = models.DateField(null=True, blank=True)  # Not mandatory
+    joining_date = models.DateField()
+    salary_type = models.CharField(max_length=10, choices=SALARY_TYPE_CHOICES)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES)
+
+    def __str__(self):
+        return self.name

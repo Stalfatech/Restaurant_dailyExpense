@@ -1,0 +1,174 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-startbar="dark" data-bs-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <title>Login | Daily Sales</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="{% static 'assets/images/favicon.ico' %}">
+
+    <!-- Bootstrap CSS -->
+    <link href="{% static 'assets/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'assets/css/icons.min.css' %}" rel="stylesheet">
+    <link href="{% static 'assets/css/app.min.css' %}" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+    <style>
+        body {
+            min-height: 100vh;
+            background: url("{% static 'assets/images/login-bg.jpg' %}") no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .login-overlay {
+            min-height: 100vh;
+            background: rgba(0, 0, 0, 0.65);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-card {
+            background: rgba(20, 20, 20, 0.75);
+            backdrop-filter: blur(12px);
+            border-radius: 18px;
+            padding: 32px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #ffffff;
+        }
+
+        .form-control {
+            background: rgba(255,255,255,0.08);
+            border: none;
+            color: #ffffff;
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        .form-control::placeholder {
+            color: #cfcfcf;
+        }
+
+        .form-control,
+        .form-control:focus {
+            color: #ffffff !important;
+            caret-color: #ffffff;
+            box-shadow: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            font-weight: 600;
+        }
+      .email-input,
+.email-input:focus {
+    background: #ffffff !important;
+    color: #000000 !important;
+    caret-color: #000000;
+}
+.password-input,
+.password-input:focus {
+    background: #ffffff !important;
+    color: #000000 !important;
+    caret-color: #000000;
+}
+
+/* Autofill fix (Chrome) */
+.email-input:-webkit-autofill,
+.password-input:-webkit-autofill,
+.email-input:-webkit-autofill:hover,
+.password-input:-webkit-autofill:hover,
+.email-input:-webkit-autofill:focus,
+.password-input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #000000 !important;
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+}
+
+    </style>
+</head>
+
+<body>
+
+<div class="login-overlay">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-4 col-md-6 col-sm-10">
+
+                <div class="login-card">
+
+                    <div class="text-center mb-4">
+                        <h4>Welcome Back</h4>
+                        <p class="text-muted">Login to continue</p>
+                    </div>
+
+                    <!-- 🔴 ERROR MESSAGE -->
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-danger text-center">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- ✅ LOGIN FORM -->
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input
+    type="email"
+    name="email"
+    class="form-control email-input"
+    placeholder="example@gmail.com"
+    required
+>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input
+    type="password"
+    name="password"
+    class="form-control password-input"
+    placeholder="Enter password"
+    required
+>
+                        </div>
+                        <div class="mb-3 text-end">
+<a href="{% url 'forgot_password' %}" class="text-primary small">
+    Forgot password?
+</a>
+</div>
+
+
+                        <button type="submit" class="btn btn-primary w-100">
+                            Log In <i class="fas fa-sign-in-alt ms-1"></i>
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-4">
+                        <p class="text-muted mb-2">
+                            Don’t have an account?
+                            <a href="{% url 'register' %}" class="text-primary">Register</a>
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

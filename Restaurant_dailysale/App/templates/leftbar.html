@@ -38,10 +38,41 @@
                                 <span class="badge text-bg-info ms-auto">New</span>
                             </a>
                         </li><!--end nav-item-->
+                             <li class="nav-item">
+                    <a class="nav-link" href="{% url 'branch_list' %}">
+                   <i class="iconoir-multiple-pages menu-icon"></i>
+
+                        <span>Branches</span>
+                    </a>
+                </li>
                         <li class="nav-item">
                     <a class="nav-link" href="{% url 'manager_view' %}">
                         <i class="iconoir-group menu-icon"></i>
                         <span>Managers</span>
+                    </a>
+                </li>
+                 <li class="nav-item">
+                    <a class="nav-link" href="{% url 'supplier_list' %}">
+                    <i class="iconoir-shop menu-icon"></i>
+
+
+                        <span>Suppliers</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'product_list' %}">
+                <i class="iconoir-package menu-icon"></i>
+
+
+
+                        <span>Products</span>
+                    </a>
+                </li>
+                 <li class="nav-item">
+                    <a class="nav-link" href="{% url 'dashboard_expenses' %}">
+                      <i class="iconoir-wallet menu-icon"></i>
+
+                        <span>Expenses</span>
                     </a>
                 </li>
                         <li class="nav-item">
@@ -468,6 +499,13 @@
                                 <span class="badge text-bg-info ms-auto">New</span>
                             </a>
                         </li><!--end nav-item-->
+                                                 <li class="nav-item">
+                    <a class="nav-link" href="{% url 'dashboard_expenses' %}">
+                      <i class="iconoir-wallet menu-icon"></i>
+
+                        <span>Expenses</span>
+                    </a>
+                </li>
                         
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'staff_list' %}">

@@ -10,6 +10,9 @@ from django.conf import settings
 from .forms import LoginForm,ForgotPasswordForm,ResetPasswordForm
 from django.conf import settings
 from django.db import transaction 
+from .models import  User,Register,Manager,Branch,Expense,CashBook
+from django.contrib.auth import authenticate, login
+
 
 
 def dashboard(request):
@@ -69,14 +72,18 @@ def Logindata(request):
             password = login_submission.cleaned_data['password']
 
             user = User.objects.filter(email=email).first()
+            user = authenticate(request, email=email, password=password)
 
             if user is None:
                 messages.error(request, 'Invalid email')
+                messages.error(request, "Invalid email or password")
                 return redirect('login')
+               
 
             if not check_password(password, user.password):
                 messages.error(request, 'Invalid password')
                 return redirect('login')
+            login(request, user) 
 
             # ✅ Successful login
             request.session['login_id'] = user.id
@@ -158,6 +165,10 @@ def reset_password(request, user_id):
 
 @never_cache
 def add_manager(request):
+    if request.session.get('usertype') != 0:
+        return redirect('no_permission')
+
+    branches = Branch.objects.all()
     if request.method == "POST":
 
         name = request.POST.get('name')
@@ -169,11 +180,15 @@ def add_manager(request):
         email = request.POST.get('gmail')
         password = request.POST.get('password')
         photo = request.FILES.get('photo')
+        branch_id = request.POST.get('branch')
 
         # 🔍 VALIDATION
         if not email or not password:
             messages.error(request, "Email and password are required")
+        if not all([name, phone, dob, address, joining_date, email, password, branch_id]):
+            messages.error(request, "All mandatory fields are required")
             return redirect('manager_add')
+          
 
         if User.objects.filter(email=email).exists():
             messages.error(request, "Email already exists")
@@ -181,13 +196,15 @@ def add_manager(request):
 
         try:
             with transaction.atomic():
+                branch = Branch.objects.get(id=branch_id)
 
                 # ✅ 1. CREATE USER
                 user = User.objects.create_user(
                     email=email,
                     password=password,
                     name=name,
-                    user_type=1   # MANAGER
+                    user_type=1,
+                     branch=branch# MANAGER
                 )
 
                 # ✅ 2. CREATE REGISTER
@@ -215,7 +232,9 @@ def add_manager(request):
             messages.error(request, f"Error: {str(e)}")
             return redirect('manager_add')
 
-    return render(request, 'Admin/add_manager.html')
+    return render(request, 'Admin/add_manager.html', {
+        'branches': branches
+    })
 
 @never_cache
 def manager_view(request):
@@ -239,7 +258,11 @@ def manager_delete(request, id):
 
 @never_cache
 def manager_edit(request, id):
+    if request.session.get('usertype') != 0:
+        return redirect('no_permission')
+
     manager = get_object_or_404(Manager, id=id)
+    branches = Branch.objects.all()
 
     if request.method == "POST":
         try:
@@ -248,6 +271,26 @@ def manager_edit(request, id):
                 # Update User table
                 manager.user.name = request.POST.get('name')
                 manager.user.email = request.POST.get('email')
+                name = request.POST.get('name')
+                email = request.POST.get('email')
+                phone = request.POST.get('phone')
+                dob = request.POST.get('dob')
+                gender = request.POST.get('gender')
+                joining_date = request.POST.get('joining_date')
+                address = request.POST.get('address')
+                branch_id = request.POST.get('branch')
+
+                # 🔴 Validation
+                if not all([name, email, phone, branch_id]):
+                    messages.error(request, "All mandatory fields are required")
+                    return redirect('manager_edit', id=id)
+
+                branch = Branch.objects.get(id=branch_id)
+
+                # ✅ Update User
+                manager.user.name = name
+                manager.user.email = email
+                manager.user.branch = branch
                 manager.user.save()
 
                 # Update Manager table
@@ -256,6 +299,12 @@ def manager_edit(request, id):
                 manager.gender = request.POST.get('gender')
                 manager.address = request.POST.get('address')
                 manager.joining_date = request.POST.get('joining_date')
+                 # ✅ Update Manager profile
+                manager.phone = phone
+                manager.dob = dob
+                manager.gender = gender
+                manager.address = address
+                manager.joining_date = joining_date
 
                 if request.FILES.get('photo'):
                     manager.photo = request.FILES.get('photo')
@@ -270,7 +319,467 @@ def manager_edit(request, id):
             return redirect('manager_view')
 
     return render(request, 'Admin/manager_edit.html', {
-        'manager': manager
+        'manager': manager,
+          'branches': branches
+    })
+    
+    
+    
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.db.models import Sum
+from datetime import date
+from .models import Expense, Supplier, Product
+from .forms import ExpenseForm, SupplierForm, ProductForm
+from .decorators import admin_or_manager_required
+from django.conf import settings
+from django.db.models import Sum
+from datetime import date
+
+
+
+# ================= DASHBOARD =================
+from django.shortcuts import render
+from django.db.models import Sum
+from datetime import date
+from .models import Expense
+from .decorators import admin_or_manager_required
+# views.py
+from datetime import datetime, date
+from django.db.models import Sum
+from django.shortcuts import render
+from .models import Expense
+from .decorators import admin_or_manager_required
+
+@admin_or_manager_required
+def dashboard_expenses(request):
+    user = request.user
+
+    # Get selected date from GET params (optional)
+    selected_date_str = request.GET.get('date')
+    if selected_date_str:
+        try:
+            selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            selected_date = date.today()
+    else:
+        selected_date = None  # show all if no date selected
+
+    # Base queryset
+    if user.user_type == 0:  # Admin sees all branches
+        expenses = Expense.objects.all()
+    else:  # Manager sees only their branch
+        expenses = Expense.objects.filter(branch=user.branch)
+
+    # Filter by date if selected
+    if selected_date:
+        expenses = expenses.filter(date=selected_date)
+
+    # Calculate total
+    daily_total = expenses.aggregate(total=Sum('amount'))['total'] or 0
+
+    return render(request, 'expenses/dashboard.html', {
+        'expenses': expenses,
+        'daily_total': daily_total,
+        'selected_date': selected_date
+    })
+
+
+# ================= ADD EXPENSE =================
+# views.py
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.utils.decorators import method_decorator
+from .forms import ExpenseForm
+from .models import CashBook
+from datetime import date
+from .decorators import admin_or_manager_required
+
+# views.py
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from datetime import date
+from .forms import ExpenseForm
+from .models import Expense, CashBook
+from .decorators import admin_or_manager_required
+
+@admin_or_manager_required
+def add_expense(request):
+    user = request.user
+
+    # Check if today's CashBook is closed
+    if CashBook.objects.filter(date=date.today(), branch=getattr(user, 'branch', None), is_closed=True).exists():
+        messages.error(request, "Day is closed. No modifications allowed.")
+        return redirect('dashboard_expenses')
+
+    # Pass user to form for customizing fields (branch/status)
+    form = ExpenseForm(request.POST or None, request.FILES or None, user=user)
+
+    if form.is_valid():
+        expense = form.save(commit=False)
+
+        if user.user_type == 0:  # Admin
+            # Admin selects branch and status
+            expense.branch = form.cleaned_data.get('branch')
+            expense.status = form.cleaned_data.get('status') or 'Approved'
+        else:  # Manager
+            # Manager gets their branch automatically and status is Pending
+            if not user.branch:
+                messages.error(request, "You are not assigned to any branch.")
+                return redirect('dashboard_expenses')
+            expense.branch = user.branch
+            expense.status = 'Pending'
+
+        expense.created_by = user
+        expense.save()
+
+        messages.success(request, "Expense added successfully.")
+        return redirect('dashboard_expenses')
+
+    return render(request, 'expenses/expense_form.html', {
+        'form': form,
+        'user_type': user.user_type
+    })
+
+
+
+
+
+def close_day(request):
+    cashbook = get_object_or_404(
+    CashBook,
+    date=date.today(),
+    branch=request.user.branch
+)
+
+
+    cashbook.calculate_closing()
+    cashbook.is_closed = True
+    cashbook.save()
+
+# ================= EDIT EXPENSE =================
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from datetime import date
+from .forms import ExpenseForm
+from .models import Expense, CashBook
+from .decorators import admin_or_manager_required
+
+# views.py
+@admin_or_manager_required
+def edit_expense(request, pk):
+    user = request.user  # always logged-in
+
+    # Fetch expense based on role
+    if user.user_type == 0:  # Admin can edit any expense
+        expense = get_object_or_404(Expense, pk=pk)
+    else:  # Manager can edit only their branch
+        expense = get_object_or_404(Expense, pk=pk, branch=user.branch)
+
+    # Check if day is closed
+    if CashBook.objects.filter(date=expense.date, branch=expense.branch, is_closed=True).exists():
+        messages.error(request, "Day is closed. Cannot edit expense.")
+        return redirect('dashboard_expenses')
+
+    form = ExpenseForm(request.POST or None, request.FILES or None, instance=expense)
+
+    if form.is_valid():
+        updated_expense = form.save(commit=False)
+
+        # Branch and status logic
+        if user.user_type == 0:  # Admin
+            branch = form.cleaned_data.get('branch')
+            if not branch:
+                messages.error(request, "Please select a branch for the expense.")
+                return render(request, 'expenses/expense_form.html', {'form': form, 'user_type': user.user_type})
+            updated_expense.branch = branch
+            updated_expense.status = form.cleaned_data.get('status') or updated_expense.status
+        else:  # Manager
+            updated_expense.branch = user.branch
+            # Keep status as-is, manager cannot approve
+            updated_expense.status = expense.status
+
+        updated_expense.save()
+        messages.success(request, "Expense updated successfully.")
+        return redirect('dashboard_expenses')
+
+    return render(request, 'expenses/expense_form.html', {
+        'form': form,
+        'user_type': user.user_type
+    })
+
+
+# ================= DELETE EXPENSE =================
+
+@admin_or_manager_required
+def delete_expense(request, pk):
+    expense = get_object_or_404(Expense, pk=pk)
+
+    if request.method == "POST":
+        expense.delete()
+        return redirect('dashboard_expenses')
+
+    return render(request, 'expenses/delete_confirm.html', {'expense': expense})
+
+
+# ================= HISTORY =================
+
+@admin_or_manager_required
+def history_expenses(request):
+    start = request.GET.get('start')
+    end = request.GET.get('end')
+
+    if request.user.user_type == 0:
+        expenses = Expense.objects.all()
+    else:
+     expenses = Expense.objects.filter(
+        branch=request.user.branch
+     )
+
+
+    if start and end:
+        expenses = expenses.filter(date__range=[start, end])
+
+    total = expenses.aggregate(total=Sum('amount'))['total'] or 0
+
+    return render(request, 'expenses/history.html', {
+        'expenses': expenses,
+        'total': total
+    })
+@admin_or_manager_required
+def approve_expense(request, pk):
+
+    if request.user.user_type != 0:
+        return redirect('no_permission')
+
+    expense = get_object_or_404(Expense, pk=pk)
+    expense.status = 'Approved'
+    expense.save()
+
+    return redirect('dashboard_expenses')
+
+
+
+
+# ================= SUPPLIER =================
+
+@login_required
+@admin_or_manager_required
+def add_supplier(request):
+    form = SupplierForm(request.POST or None)
+    if form.is_valid():
+        form.save()
+        return redirect('supplier_list')
+    return render(request, 'expenses/supplier_form.html', {'form': form})
+
+
+   
+from django.db.models import Q 
+@admin_or_manager_required
+def supplier_list(request):
+    query = request.GET.get('q')
+    user_type = request.session.get('usertype')
+    if user_type == 0:
+        suppliers = Supplier.objects.all().order_by('-id')
+    else:
+     suppliers = Supplier.objects.filter(
+        branch=request.user.branch
+     ).order_by('-id')
+
+
+    if query:
+        suppliers = suppliers.filter(
+            Q(name__icontains=query)
+        )
+
+    return render(request, 'expenses/supplier_list.html', {
+        'suppliers': suppliers,
+        'query': query
+    })
+# ✅ EDIT
+@admin_or_manager_required
+def edit_supplier(request, pk):
+    supplier = get_object_or_404(Supplier, pk=pk)
+    form = SupplierForm(request.POST or None, instance=supplier)
+
+    if form.is_valid():
+        form.save()
+        return redirect('supplier_list')
+
+    return render(request, 'expenses/supplier_form.html', {
+        'form': form,
+        'edit_mode': True
+    })
+
+
+# ✅ DELETE
+@admin_or_manager_required
+def delete_supplier(request, pk):
+    supplier = get_object_or_404(Supplier, pk=pk)
+
+    if request.method == "POST":
+        supplier.delete()
+        return redirect('supplier_list')
+
+    return render(request, 'expenses/supplier_delete.html', {
+        'supplier': supplier
+    })
+
+
+# ================= PRODUCT =================
+
+@admin_or_manager_required
+def add_product(request):
+    form = ProductForm(request.POST or None)
+    if form.is_valid():
+        form.save()
+        return redirect('product_list')
+    return render(request, 'expenses/product_form.html', {'form': form})
+
+@admin_or_manager_required
+def product_list(request):
+    query = request.GET.get('q')
+
+    if request.user.user_type == 0:
+        products = Product.objects.all()
+    else:
+     products = Product.objects.filter(
+        branch=request.user.branch
+     )
+
+
+    if query:
+        products = products.filter(name__icontains=query)
+
+    return render(request, 'expenses/product_list.html', {
+        'products': products,
+        'query': query
+    })
+# ✅ EDIT
+@admin_or_manager_required
+def edit_product(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+    form = ProductForm(request.POST or None, instance=product)
+
+    if form.is_valid():
+        form.save()
+        return redirect('product_list')
+
+    return render(request, 'expenses/product_form.html', {
+        'form': form,
+        'edit_mode': True
+    })
+
+
+# ✅ DELETE
+@admin_or_manager_required
+def delete_product(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+
+    if request.method == "POST":
+        product.delete()
+        return redirect('product_list')
+
+    return render(request, 'expenses/product_delete.html', {
+        'product': product
+    })
+# ================= NO PERMISSION =================
+def no_permission(request):
+    return render(request, 'no_permission.html')
+
+
+
+from .models import Branch
+from django.contrib import messages
+from django.shortcuts import render, redirect, get_object_or_404
+from .decorators import admin_or_manager_required
+
+
+# ================= ADD BRANCH =================
+@admin_or_manager_required
+def add_branch(request):
+
+    # Only Admin can add branch
+    # if request.user.user_type != 0:
+    #     return redirect('no_permission')
+
+    if request.method == "POST":
+        name = request.POST.get('name')
+        location = request.POST.get('location')
+
+        # Validation
+        if not name or not location:
+            messages.error(request, "All fields are mandatory")
+            return redirect('branch_add')
+
+        if Branch.objects.filter(name=name).exists():
+            messages.error(request, "Branch name already exists")
+            return redirect('branch_add')
+
+        Branch.objects.create(
+            name=name,
+            location=location
+        )
+
+        messages.success(request, "Branch added successfully")
+        return redirect('branch_list')
+
+    return render(request, 'Admin/add_branch.html')
+
+
+# ================= LIST =================
+@admin_or_manager_required
+def branch_list(request):
+
+    # if request.user.user_type != 0:
+    #     return redirect('no_permission')
+
+    branches = Branch.objects.all().order_by('-id')
+
+    return render(request, 'Admin/branch_list.html', {
+        'branches': branches
+    })
+
+
+# ================= EDIT =================
+@admin_or_manager_required
+def edit_branch(request, id):
+
+    # if request.user.user_type != 0:
+    #     return redirect('no_permission')
+
+    branch = get_object_or_404(Branch, id=id)
+
+    if request.method == "POST":
+        branch.name = request.POST.get('name')
+        branch.location = request.POST.get('location')
+        branch.save()
+
+        messages.success(request, "Branch updated successfully")
+        return redirect('branch_list')
+
+    return render(request, 'Admin/add_branch.html', {
+        'branch': branch,
+        'edit_mode': True
+    })
+
+
+# ================= DELETE =================
+@admin_or_manager_required
+def delete_branch(request, id):
+
+    # if request.user.user_type != 0:
+    #     return redirect('no_permission')
+
+    branch = get_object_or_404(Branch, id=id)
+
+    if request.method == "POST":
+        branch.delete()
+        messages.success(request, "Branch deleted successfully")
+        return redirect('branch_list')
+
+    return render(request, 'Admin/branch_delete.html', {
+        'branch': branch
     })
 
 def add_staff(request):

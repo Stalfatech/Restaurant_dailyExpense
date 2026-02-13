@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block 'content' %}
+
+<h3>Expense History</h3>
+
+<!-- Back to Dashboard Button -->
+<div class="mb-3">
+    <a href="{% url 'dashboard_expenses' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+    </a>
+    <button class="btn btn-primary float-end" onclick="window.print()">
+        <i class="fas fa-print me-1"></i> Print
+    </button>
+</div>
+
+<form method="GET" class="row g-3 mb-4">
+    <div class="col-md-4">
+        <label>Start Date</label>
+        <input type="date" name="start" class="form-control" value="{{ request.GET.start }}">
+    </div>
+    <div class="col-md-4">
+        <label>End Date</label>
+        <input type="date" name="end" class="form-control" value="{{ request.GET.end }}">
+    </div>
+    <div class="col-md-4 align-self-end">
+        <button class="btn btn-primary">Filter</button>
+        <button type="button" class="btn btn-secondary" id="clearFilterBtn">Clear</button>
+    </div>
+</form>
+
+<!-- Total Card -->
+<div class="card mb-3 bg-info text-white">
+    <div class="card-body">
+        <h5>Total: {{ total }}</h5>
+    </div>
+</div>
+
+<!-- Expenses List -->
+<div class="row">
+{% for e in expenses %}
+    <div class="col-md-6 mb-3">
+        <div class="card shadow p-3">
+            <div class="mb-2 d-flex justify-content-between align-items-center">
+                <h6 class="fw-semibold">{{ e.category }} - {{ e.product }}</h6>
+                <span class="badge bg-primary">{{ e.status|default:"-" }}</span>
+            </div>
+
+            <div class="mb-1"><strong>Date:</strong> {{ e.date }}</div>
+            {% if user_type == 0 %}
+            <div class="mb-1"><strong>Branch:</strong> {{ e.branch }}</div>
+            {% endif %}
+            <div class="mb-1"><strong>Supplier:</strong> {{ e.supplier }}</div>
+            <div class="mb-1"><strong>Quantity:</strong> {{ e.quantity }}</div>
+            <div class="mb-1"><strong>Purchase Type:</strong> {{ e.purchase_type }}</div>
+            <div class="mb-1"><strong>Invoice:</strong> 
+                {% if e.invoice %}
+                    <a href="{{ e.invoice.url }}" target="_blank" class="text-decoration-underline">View</a>
+                {% else %}
+                    N/A
+                {% endif %}
+            </div>
+            <div class="mb-1"><strong>Amount:</strong> {{ e.amount }}</div>
+            <div class="mb-1"><strong>Description:</strong> {{ e.description|default:"-" }}</div>
+        </div>
+    </div>
+{% empty %}
+    <div class="col-12 text-center">
+        <div class="alert alert-warning">No records found.</div>
+    </div>
+{% endfor %}
+</div>
+
+<script>
+document.getElementById('clearFilterBtn').addEventListener('click', function() {
+    window.location.href = "{% url 'history_expenses' %}";
+});
+</script>
+
+{% endblock %}

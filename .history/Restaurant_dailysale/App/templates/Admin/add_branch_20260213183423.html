@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block 'content' %}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>
+            {% if edit_mode %}
+                Edit Branch
+            {% else %}
+                Add Branch
+            {% endif %}
+        </h4>
+        <a href="{% url 'branch_list' %}" class="btn btn-secondary">
+            ← Back to branches
+        </a>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+
+            <p class="text-muted">
+                Fields marked with <span class="text-danger">*</span> are mandatory.
+            </p>
+
+            <form method="post" class="row g-3">
+                {% csrf_token %}
+
+                <!-- Branch Name -->
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Branch Name <span class="text-danger">*</span></label>
+                    {{ form.name|add_class:"form-control" }}
+                    <div class="text-danger">{{ form.name.errors }}</div>
+                </div>
+
+                <!-- Location -->
+                <div class="col-md-12 mb-3">
+                    <label class="form-label">Location <span class="text-danger">*</span></label>
+                    {{ form.location|add_class:"form-control" }}
+                    <div class="text-danger">{{ form.location.errors }}</div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary w-100">
+                        {% if edit_mode %}
+                            Update Branch
+                        {% else %}
+                            Add Branch
+                        {% endif %}
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

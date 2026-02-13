@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block 'content' %}
+
+<div class="container-fluid">
+
+    <!-- Page Title -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold">Expense & Purchase Dashboard</h3>
+
+        <div class="d-flex gap-2">
+            {% comment %} <a href="{% url 'add_supplier' %}" class="btn btn-outline-secondary">
+                <i class="iconoir-shop menu-icon"></i> Add Supplier
+            </a>
+
+            <a href="{% url 'add_product' %}" class="btn btn-outline-info">
+                <i class="iconoir-box menu-icon"></i> Add Product
+            </a> {% endcomment %}
+
+            <a href="{% url 'add_expense' %}" class="btn btn-primary">
+                <i class="iconoir-receipt menu-icon"></i> Add Expense
+            </a>
+
+            <a href="{% url 'history_expenses' %}" class="btn btn-outline-dark">
+                <i class="iconoir-clock menu-icon"></i> Expense History
+            </a>
+        </div>
+    </div>
+
+    <!-- Date Filter -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Select Date</label>
+                    <input 
+                        type="date" 
+                        name="date" 
+                        class="form-control"
+                        value="{{ selected_date }}"
+                    >
+                </div>
+
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-dark w-100">
+                        Filter
+                    </button>
+                </div>
+                 <div class="col-md-2">
+        <button type="button" class="btn btn-secondary w-100" id="clearFilterBtn">
+            Clear
+        </button>
+    </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Daily Total Card -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card shadow border-0 bg-danger text-white">
+                <div class="card-body">
+                    <h6>Daily Expense Total</h6>
+                    <h3 class="fw-bold">{{ daily_total }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expense Table -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Date</th>
+                            <th>Branch</th>
+                            <th>Category</th>
+                            <th>Supplier</th>
+                            <th>Product</th>
+                            <th>Qty</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Invoice</th>
+                            <th>Status</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for e in expenses %}
+                        <tr>
+                            <td>{{ e.date }}</td>
+<td>{{ e.branch.name }}</td>
+                            <td>{{ e.category }}</td>
+                            <td>{{ e.supplier }}</td>
+                            <td>{{ e.product }}</td>
+                            <td>{{ e.quantity }}</td>
+
+                            <td>
+                                {% if e.purchase_type == "Cash" %}
+                                    <span class="badge bg-success">Cash</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">Credit</span>
+                                {% endif %}
+                            </td>
+
+                            <td class="fw-bold">{{ e.amount }}</td>
+
+                            <td>
+                                {% if e.invoice %}
+                                    <a href="{{ e.invoice.url }}"
+                                       target="_blank"
+                                       class="btn btn-sm btn-outline-secondary">
+                                        View
+                                    </a>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                             <td>
+            {% if e.status == "Approved" %}
+                <span class="badge bg-success">{{ e.status }}</span>
+            {% elif e.status == "Pending" %}
+                <span class="badge bg-warning text-dark">{{ e.status }}</span>
+            {% elif e.status == "Rejected" %}
+                <span class="badge bg-danger">{{ e.status }}</span>
+            {% else %}
+                {{ e.status }}
+            {% endif %}
+        </td>
+
+                            <td class="text-center">
+                                <a href="{% url 'edit_expense' e.id %}"
+                                   class="btn btn-sm btn-outline-primary">
+                                    Edit
+                                </a>
+
+                                <a href="{% url 'delete_expense' e.id %}"
+                                   class="btn btn-sm btn-outline-danger">
+                                    Delete
+                                </a>
+                            </td>
+                        </tr>
+
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted">
+                                No expenses found for selected date.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+<
+
+{% endblock %}

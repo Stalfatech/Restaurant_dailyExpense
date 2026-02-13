@@ -1,0 +1,99 @@
+{% comment %} {% extends "base.html" %}
+{% block 'content' %}
+
+<h3>Expense History</h3>
+
+<!-- Back to Dashboard Button -->
+<div class="mb-3">
+    <a href="{% url 'dashboard_expenses' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+    </a>
+    <button class="btn btn-primary float-end" onclick="window.print()">
+        <i class="fas fa-print me-1"></i> Print
+    </button>
+</div>
+
+<form method="GET" class="row g-3 mb-4">
+    <div class="col-md-4">
+        <label>Start Date</label>
+        <input type="date" name="start" class="form-control" value="{{ request.GET.start }}">
+    </div>
+    <div class="col-md-4">
+        <label>End Date</label>
+        <input type="date" name="end" class="form-control" value="{{ request.GET.end }}">
+    </div>
+    <div class="col-md-4 align-self-end">
+        <button class="btn btn-primary">Filter</button>
+        <button type="button" class="btn btn-secondary" id="clearFilterBtn">Clear</button>
+    </div>
+</form>
+
+<!-- Expenses Table -->
+<div class="table-responsive">
+    <table class="table table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>Date</th>
+                {% if user_type == 0 %}
+                <th>Branch</th>
+                <th>Status</th>
+                {% endif %}
+                <th>Category</th>
+                <th>Supplier</th>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Purchase Type</th>
+                {% comment %} <th>Invoice</th> {% endcomment %}
+                <th>Amount</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for e in expenses %}
+            <tr>
+                <td>{{ e.date }}</td>
+                {% if user_type == 0 %}
+                <td>{{ e.branch }}</td>
+                <td>{{ e.status|default:"-" }}</td>
+                {% endif %}
+                <td>{{ e.category }}</td>
+                <td>{{ e.supplier }}</td>
+                <td>{{ e.product }}</td>
+                <td>{{ e.quantity }}</td>
+                <td>{{ e.purchase_type }}</td>
+                {% comment %} <td>
+                    {% if e.invoice %}
+                        <a href="{{ e.invoice.url }}" target="_blank">View</a>
+                    {% else %}
+                        -
+                    {% endif %}
+                </td> {% endcomment %}
+                <td>{{ e.amount }}</td>
+                <td>{{ e.description|default:"-" }}</td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="12" class="text-center">No records found.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+document.getElementById('clearFilterBtn').addEventListener('click', function() {
+    window.location.href = "{% url 'history_expenses' %}";
+});
+</script>
+
+<!-- Print styling -->
+<style>
+@media print {
+    body * { visibility: hidden; }
+    .table, .table * { visibility: visible; }
+    .table { position: absolute; top: 0; left: 0; width: 100%; }
+}
+</style>
+
+{% endblock %} {% endcomment %}
+

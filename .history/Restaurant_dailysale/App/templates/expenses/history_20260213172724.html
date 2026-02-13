@@ -1,0 +1,102 @@
+
+
+{% extends "base.html" %}
+{% block 'content' %}
+
+<div class="container-fluid">
+
+    <!-- Page Heading -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">Expense History</h3>
+        <div>
+            <!-- Back Button -->
+            <a href="{% url 'dashboard_expenses' %}" class="btn btn-secondary me-2">
+                <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+            </a>
+            <!-- Print Button -->
+            <button class="btn btn-primary" onclick="window.print()">
+                <i class="fas fa-print me-1"></i> Print
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter Form -->
+    <form method="GET" class="row g-3 mb-4">
+        <div class="col-md-4">
+            <label class="form-label">Start Date</label>
+            <input type="date" name="start" class="form-control" value="{{ request.GET.start }}">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">End Date</label>
+            <input type="date" name="end" class="form-control" value="{{ request.GET.end }}">
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <button class="btn btn-primary me-2">Filter</button>
+            <button type="button" class="btn btn-secondary" id="clearFilterBtn">Clear</button>
+        </div>
+    </form>
+
+    <!-- Expenses Table -->
+    <div class="table-responsive mb-4">
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Date</th>
+                    {% if user_type == 0 %}
+                    <th>Branch</th>
+                    <th>Status</th>
+                    {% endif %}
+                    <th>Category</th>
+                    <th>Supplier</th>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Purchase Type</th>
+                    <th>Amount</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for e in expenses %}
+                <tr>
+                    <td>{{ e.date }}</td>
+                    {% if user_type == 0 %}
+                    <td>{{ e.branch }}</td>
+                    <td>{{ e.status|default:"-" }}</td>
+                    {% endif %}
+                    <td>{{ e.category }}</td>
+                    <td>{{ e.supplier }}</td>
+                    <td>{{ e.product }}</td>
+                    <td>{{ e.quantity }}</td>
+                    <td>{{ e.purchase_type }}</td>
+                    <td>{{ e.amount }}</td>
+                    <td>{{ e.description|default:"-" }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="{% if user_type == 0 %}12{% else %}9{% endif %}" class="text-center">No records found.</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<!-- Clear Filter JS -->
+<style>
+
+@media print {
+    body * { visibility: hidden; }
+    .table, .table * { visibility: visible; }
+    .table { position: absolute; top: 0; left: 0; width: 100%; }
+}
+</style>
+<script>
+    document.getElementById('clearFilterBtn').addEventListener('click', function() {
+        window.location.href = "{% url 'history_expenses' %}";
+    });
+
+<!-- Print Styling -->
+
+
+{% endblock %}

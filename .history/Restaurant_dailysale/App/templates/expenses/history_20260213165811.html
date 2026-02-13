@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block 'content' %}
+
+<h3>Expense History</h3>
+
+<form method="GET" class="row g-3 mb-4">
+    <div class="col-md-4">
+        <label>Start Date</label>
+        <input type="date" name="start" class="form-control">
+    </div>
+    <div class="col-md-4">
+        <label>End Date</label>
+        <input type="date" name="end" class="form-control">
+    </div>
+    <div class="col-md-4 align-self-end">
+        <button class="btn btn-primary">Filter</button>
+           <button type="button" class="btn btn-secondary" id="clearFilterBtn">Clear</button>
+    </div>
+</form>
+
+<div class="card mb-3 bg-info text-white">
+    <div class="card-body">
+        <h5>Total: {{ total }}</h5>
+    </div>
+</div>
+
+<table class="table table-bordered">
+    <thead class="table-dark">
+        <tr>
+            <th>Date</th>
+            <th>Category</th>
+            <th>Supplier</th>
+            <th>Amount</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for e in expenses %}
+        <tr>
+            <td>{{ e.date }}</td>
+            <td>{{ e.category }}</td>
+            <td>{{ e.supplier }}</td>
+            <td>{{ e.amount }}</td>
+        </tr>
+    {% empty %}
+        <tr>
+            <td colspan="4" class="text-center">No records found.</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<script>
+    document.getElementById('clearFilterBtn').addEventListener('click', function() {
+        window.location.href = "{% url 'history_expenses' %}";
+    });
+</script>
+
+{% endblock %}

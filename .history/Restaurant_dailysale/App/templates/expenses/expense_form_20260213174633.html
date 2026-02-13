@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{%load wig%}
+{% block 'content' %}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>Add Expense</h4>
+        <a href="{% url 'dashboard_expenses' %}" class="btn btn-secondary">
+            ← Back to Dashboard
+        </a>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+
+            <p class="text-muted">
+                Fields marked with <span class="text-danger">*</span> are mandatory.
+            </p>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST" enctype="multipart/form-data" id="expenseForm">
+                {% csrf_token %}
+                <div class="row">
+
+                    <!-- Date -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Date <span class="text-danger">*</span></label>
+                        {{ form.date|add_class:"required-field" }}
+                        <div class="text-danger"></div>
+                    </div>
+
+                    {% if user_type == 0 %}
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Branch <span class="text-danger">*</span></label>
+                        {{ form.branch|add_class:"required-field" }}
+                        <div class="text-danger"></div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Category -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Category <span class="text-danger">*</span></label>
+                        {{ form.category|add_class:"required-field" }}
+                        <div class="text-danger"></div>
+                    </div>
+
+                    <!-- Supplier -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Supplier <span class="text-danger">*</span></label>
+                        {{ form.supplier|add_class:"required-field" }}
+                        <div class="text-danger"></div>
+                    </div>
+
+                    <!-- Product -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Product <span class="text-danger">*</span></label>
+                        {{ form.product|add_class:"required-field" }}
+                        <div class="text-danger"></div>
+                    </div>
+
+                    <!-- Quantity -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Quantity <span class="text-danger">*</span></label>
+                        {{ form.quantity|add_class:"required-field" }}
+                        <div class="text-danger"></div>
+                    </div>
+
+                    <!-- Purchase Type -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Purchase Type <span class="text-danger">*</span></label>
+                        {{ form.purchase_type|add_class:"required-field" }}
+                        <div class="text-danger"></div>
+                    </div>
+
+                    <!-- Invoice -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Invoice (PDF/Image) <span class="text-danger">*</span></label>
+                        {{ form.invoice|add_class:"required-field" }}
+                        <div class="text-danger"></div>
+                    </div>
+
+                    <!-- Amount -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Amount <span class="text-danger">*</span></label>
+                        {{ form.amount|add_class:"required-field" }}
+                        <div class="text-danger"></div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label">Description</label>
+                        {{ form.description }}
+                        <div class="text-danger"></div>
+                    </div>
+
+                </div>
+
+                <button type="submit" class="btn btn-success w-100">Save Expense</button>
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+// Front-end mandatory validation
+document.getElementById("expenseForm").addEventListener("submit", function(event) {
+    let form = event.target;
+    let requiredFields = form.querySelectorAll(".required-field");
+    let valid = true;
+
+    requiredFields.forEach(function(field) {
+        let errorDiv = field.closest(".mb-3").querySelector(".text-danger");
+        if (!field.value.trim()) {
+            field.classList.add("is-invalid");
+            errorDiv.textContent = "This field is required.";
+            valid = false;
+        } else {
+            field.classList.remove("is-invalid");
+            errorDiv.textContent = "";
+        }
+    });
+
+    if (!valid) {
+        event.preventDefault();
+    }
+});
+</script>
+
+<style>
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+</style>
+
+{% endblock %}

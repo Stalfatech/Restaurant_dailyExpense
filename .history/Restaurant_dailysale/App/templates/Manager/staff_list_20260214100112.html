@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block 'content' %}
+
+<div class="container mt-5">
+
+    <!-- Page Title -->
+    <div class="mb-3">
+        <h4 class="fw-bold">STAFF LIST</h4>
+    </div>
+
+    <!-- Filter + Add Button Row -->
+    <div class="d-flex justify-content-between align-items-end mb-4">
+
+        <!-- Left Side : Filter -->
+        <div>
+            <label class="fw-semibold mb-1">Filter by Role</label>
+            <form method="GET">
+                <select name="role"
+                        class="form-select shadow-sm"
+                        style="min-width: 220px;"
+                        onchange="this.form.submit()">
+
+                    <option value="">All Roles</option>
+
+                    {% for role in roles %}
+                        <option value="{{ role }}"
+                            {% if selected_role == role %}selected{% endif %}>
+                            {{ role }}
+                        </option>
+                    {% endfor %}
+
+                </select>
+            </form>
+        </div>
+
+        <!-- Right Side : Add Staff Button -->
+        <div>
+            <a href="{% url 'add_staff' %}" class="btn btn-dark">
+                <i class="bi bi-person-plus-fill me-1"></i> Add Staff
+            </a>
+        </div>
+
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Staff Table -->
+    <div class="card shadow">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover mb-0">
+                <thead class="table-dark text-center">
+                    <tr>
+                        <th>#</th>
+                        <th>Staff ID</th>
+                        <th>Name</th>
+                        <th>Gender</th> 
+                        <th>Role</th>
+                        <th>Contact</th>
+                        <th>DOB</th>
+                        <th>Joining Date</th>
+                        <th>Salary Type</th>
+                        <th>zzzzzzz
+                        <th>Branch</th> 
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody class="text-center">
+
+                    {% for staff in staffs %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ staff.staff_id }}</td>
+                        <td>{{ staff.name }}</td>
+                        <td>{{ staff.get_gender_display }}</td>
+
+                        <td>{{ staff.role }}</td>
+                        <td>{{ staff.contact }}</td>
+                        <td>{{ staff.dob|default:"-" }}</td>
+                        <td>{{ staff.joining_date }}</td>
+                        <td>{{ staff.salary_type }}</td>
+                        <td>{{ staff.branch.name }}</td>
+
+                        <td>
+                            {% if staff.status == "Active" %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'edit_staff' staff.id %}"
+                               class="btn btn-sm btn-primary">
+                               Edit
+                            </a>
+
+                            <a href="{% url 'delete_staff' staff.id %}"
+                               class="btn btn-sm btn-danger"
+                               onclick="return confirm('Are you sure you want to delete this staff?');">
+                               Delete
+                            </a>
+                        </td>
+                    </tr>
+
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="text-center py-4">
+                            No staff records found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

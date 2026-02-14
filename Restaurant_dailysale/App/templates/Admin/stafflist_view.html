@@ -2,34 +2,22 @@
 {% block 'content' %}
 
 <div class="container mt-5">
-
     <div class="card shadow">
         
         <!-- Header -->
         <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-            
             <h5 class="mb-0">Staff List</h5>
 
-            <!-- Filter Section -->
+            <!-- Role Filter -->
             <form method="GET" class="d-flex align-items-center gap-2">
                 <label class="fw-semibold mb-0 text-white">Filter:</label>
-                <select name="role"
-                        class="form-select form-select-sm"
-                        style="width: 180px;"
-                        onchange="this.form.submit()">
-
+                <select name="role" class="form-select form-select-sm" style="width: 180px;" onchange="this.form.submit()">
                     <option value="">All Roles</option>
-
                     {% for role in roles %}
-                        <option value="{{ role }}"
-                            {% if selected_role == role %}selected{% endif %}>
-                            {{ role }}
-                        </option>
+                        <option value="{{ role }}" {% if selected_role == role %}selected{% endif %}>{{ role }}</option>
                     {% endfor %}
-
                 </select>
             </form>
-
         </div>
 
         <!-- Body -->
@@ -38,7 +26,6 @@
             {% if staffs %}
             <div class="table-responsive">
                 <table class="table table-bordered table-hover align-middle text-center">
-                    
                     <thead class="table-dark">
                         <tr>
                             <th>#</th>
@@ -52,9 +39,9 @@
                             <th>Joining Date</th>
                             <th>Status</th>
                             <th>Branch</th>
+                            <th>Added By</th>
                         </tr>
                     </thead>
-
                     <tbody>
                         {% for staff in staffs %}
                         <tr>
@@ -66,8 +53,7 @@
                             <td>{{ staff.contact }}</td>
                             <td>{{ staff.salary_type }}</td>
                             <td>{{ staff.dob|date:"d-m-Y"|default:"-" }}</td>
-                            <td>{{ staff.joining_date|date:"d-m-Y" }}</td>
-
+                            <td>{{ staff.joining_date|date:"d-m-Y"|default:"-" }}</td>
                             <td>
                                 {% if staff.status == "Active" %}
                                     <span class="badge bg-success">Active</span>
@@ -75,15 +61,13 @@
                                     <span class="badge bg-danger">Inactive</span>
                                 {% endif %}
                             </td>
-
                             <td>{{ staff.branch.name|default:"-" }}</td>
+                            <td>{{ staff.manager_name|default:"-" }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
-
                 </table>
             </div>
-
             {% else %}
                 <div class="alert alert-warning text-center">
                     No Staff Available
@@ -92,7 +76,6 @@
 
         </div>
     </div>
-
 </div>
 
 {% endblock %}

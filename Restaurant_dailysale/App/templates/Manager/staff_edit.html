@@ -135,19 +135,7 @@
                         </select>
                     </div>
 
-                    <!-- Branch -->
-                    <div class="col-md-6 mb-3">
-                        <label>Branch</label>
-                        <select name="branch" class="form-select" required>
-                            <option value="">Select Branch</option>
-                            {% for branch in branches %}
-                                <option value="{{ branch.id }}"
-                                    {% if staff.branch.id == branch.id %}selected{% endif %}>
-                                    {{ branch.name }} - {{ branch.location }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
+                   
 
                 </div> <!-- END ROW -->
 

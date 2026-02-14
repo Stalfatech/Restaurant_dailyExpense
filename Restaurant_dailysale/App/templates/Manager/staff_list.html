@@ -86,7 +86,9 @@
                         <td>{{ staff.dob|default:"-" }}</td>
                         <td>{{ staff.joining_date }}</td>
                         <td>{{ staff.salary_type }}</td>
-                        <td>{{ staff.branch.name }}</td>
+                        <td>{{ staff.branch.name|default:"-" }}</td>
+
+                        
 
                         <td>
                             {% if staff.status == "Active" %}

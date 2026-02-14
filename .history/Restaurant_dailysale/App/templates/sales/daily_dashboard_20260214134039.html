@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h3>Daily Sales Dashboard</h3>
+
+<a href="{% url 'add_daily_sale' %}" class="btn btn-primary mb-3">
+    + Add Daily Sale
+</a>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Breakfast</th>
+            <th>Lunch</th>
+            <th>Dinner</th>
+            <th>Delivery</th>
+            <th>POS</th>
+            <th>Total</th>
+            <th>Cash</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for sale in sales %}
+        <tr>
+            <td>{{ sale.breakfast }}</td>
+            <td>{{ sale.lunch }}</td>
+            <td>{{ sale.dinner }}</td>
+            <td>{{ sale.delivery }}</td>
+            <td>{{ sale.pos_amount }} ({{ sale.pos_type }})</td>
+            <td><strong>{{ sale.total_sales }}</strong></td>
+            <td><strong>{{ sale.cash_sales }}</strong></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<hr>
+
+<h5>Daily Summary</h5>
+<ul>
+    <li>Total Sales: {{ totals.total_sales|default:0 }}</li>
+    <li>Total Cash: {{ totals.total_cash|default:0 }}</li>
+</ul>
+
+{% endblock %}

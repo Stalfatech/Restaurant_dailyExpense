@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block 'content' %}
+
+<div class="container mt-4">
+
+    <h4>Sales History</h4>
+
+    <form method="GET" class="row g-3 mb-4">
+        <div class="col-md-4">
+            <label>Start Date</label>
+            <input type="date" name="start" value="{{ start }}" class="form-control">
+        </div>
+
+        <div class="col-md-4">
+            <label>End Date</label>
+            <input type="date" name="end" value="{{ end }}" class="form-control">
+        </div>
+
+        <div class="col-md-4 align-self-end">
+            <button class="btn btn-primary w-100">Filter</button>
+        </div>
+    </form>
+
+    <div class="card shadow">
+        <div class="card-body table-responsive">
+
+            <table class="table table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Date</th>
+                        <th>Branch</th>
+                        <th>Breakfast</th>
+                        <th>Lunch</th>
+                        <th>Dinner</th>
+                        <th>Delivery</th>
+                        <th>POS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in sales %}
+                    <tr>
+                        <td>{{ sale.date }}</td>
+                        <td>{{ sale.branch }}</td>
+                        <td>{{ sale.breakfast }}</td>
+                        <td>{{ sale.lunch }}</td>
+                        <td>{{ sale.dinner }}</td>
+                        <td>{{ sale.delivery }}</td>
+                        <td>{{ sale.pos_amount }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center">No records found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <h5>Summary</h5>
+        <ul>
+            <li>Breakfast Total: {{ totals.total_breakfast }}</li>
+            <li>Lunch Total: {{ totals.total_lunch }}</li>
+            <li>Dinner Total: {{ totals.total_dinner }}</li>
+            <li>Delivery Total: {{ totals.total_delivery }}</li>
+            <li>POS Total: {{ totals.total_pos }}</li>
+            <li><strong>Grand Total: {{ grand_total }}</strong></li>
+        </ul>
+    </div>
+
+</div>
+
+{% endblock %}

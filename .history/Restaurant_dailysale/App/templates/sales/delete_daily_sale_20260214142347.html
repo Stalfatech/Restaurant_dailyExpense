@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block 'content' %}
+
+<div class="container">
+
+    <div class="card shadow p-4 mt-4">
+        <h4 class="text-danger">Delete Daily Sale</h4>
+
+        <p>
+            Are you sure you want to delete the sale for 
+            <strong>{{ sale.date|date:"d-m-Y" }}</strong>
+            {% if request.user.user_type == 0 %}
+                - <strong>{{ sale.branch }}</strong>
+            {% endif %}
+            ?
+        </p>
+
+        <ul class="list-group mb-3">
+            <li class="list-group-item">
+                <strong>Total Sales:</strong> ₹ {{ sale.total_sales|default:0 }}
+            </li>
+            <li class="list-group-item">
+                <strong>Cash Sales:</strong> ₹ {{ sale.cash_sales|default:0 }}
+            </li>
+        </ul>
+
+        <form method="POST">
+            {% csrf_token %}
+            <button class="btn btn-danger">
+                Yes, Delete
+            </button>
+
+            <a href="{% url 'daily_sales_dashboard' %}" 
+               class="btn btn-secondary">
+                Cancel
+            </a>
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

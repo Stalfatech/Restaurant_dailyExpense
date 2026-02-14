@@ -1,0 +1,230 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block 'content' %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="container-fluid">
+
+    <!-- Page Title -->
+    <div class="row mb-4">
+        <div class="col-sm-12">
+            <h4 class="page-title">Dashboard</h4>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row justify-content-center mb-4">
+
+        <!-- Daily Expense Total -->
+        <div class="col-md-6 col-lg-3 mb-3">
+            <a href="{% url 'dashboard_expenses' %}" class="text-dark text-decoration-none">
+                <div class="card shadow border-0 bg-danger">
+                    <div class="card-body d-flex align-items-center justify-content-between">
+                        <div>
+                            <p class="text-uppercase mb-1 fw-semibold">Daily Expense Total</p>
+                            <h3 class="fw-bold">{{ daily_total }}</h3>
+                        </div>
+                        <div>
+                            <i class="fas fa-receipt fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Daily Sales Total -->
+        <div class="col-md-6 col-lg-3 mb-3">
+            <a href="{% url 'daily_sales_dashboard' %}" class="text-white text-decoration-none">
+                <div class="card shadow border-0 bg-success">
+                    <div class="card-body d-flex align-items-center justify-content-between">
+                        <div>
+                            <p class="text-uppercase mb-1 fw-semibold">Daily Sales Total</p>
+                            <h3 class="fw-bold">{{ daily_sales_total }}</h3>
+                        </div>
+                        <div>
+                            <i class="fas fa-cash-register fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Net Profit -->
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card shadow border-0 bg-primary text-white">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-uppercase mb-1 fw-semibold">Net Profit</p>
+                        <h3 class="fw-bold">{{ net_profit }}</h3>
+                    </div>
+                    <div>
+                        <i class="fas fa-chart-line fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Expenses & Sales Chart -->
+    <div class="row">
+
+        <!-- Today's Expenses -->
+      
+                    <!-- Monthly Sales Chart -->
+                   <!-- Monthly Sales Chart -->
+<!-- Today's Sales Card -->
+
+
+       <div class="col-md-12 col-lg-8 mb-4">
+    <div class="card shadow-sm border-0 rounded-3">
+        <!-- Card Header -->
+        <div class="card-header bg-gradient-danger text-white d-flex justify-content-between align-items-center rounded-top-3">
+            <h4 class="card-title mb-0">Today's Expenses</h4>
+        </div>
+
+        <!-- Card Body -->
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-borderless align-middle mb-0">
+                    <thead class="table-light text-uppercase small">
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Supplier</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in expenses %}
+                        <tr>
+                            <td>{{ e.date }}</td>
+                            <td>
+                                <span class="badge bg-secondary">{{ e.category }}</span>
+                            </td>
+                            <td>{{ e.supplier }}</td>
+                            <td class="text-end">{{ e.amount }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">
+                                No expenses recorded today.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+      <div class="col-md-12 col-lg-8 mb-4">
+    <div class="card shadow-sm border-0 rounded-3">
+        <!-- Card Header -->
+        <div class="card-header bg-gradient-primary text-dark d-flex justify-content-between align-items-center rounded-top-3">
+            <h4 class="card-title mb-0">Today's Sales</h4>
+        </div>
+
+        <!-- Card Body -->
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-borderless table-hover align-middle mb-0">
+                    <thead class="table-light text-uppercase small">
+                        <tr>
+                            <th>Category</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <span class="badge bg-warning text-dark">Breakfast</span>
+                            </td>
+                            <td class="text-end">{{ totals.total_breakfast }}</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="badge bg-info text-dark">Lunch</span>
+                            </td>
+                            <td class="text-end">{{ totals.total_lunch }}</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="badge bg-success text-white">Dinner</span>
+                            </td>
+                            <td class="text-end">{{ totals.total_dinner }}</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="badge bg-secondary text-white">Delivery</span>
+                            </td>
+                            <td class="text-end">{{ totals.total_delivery }}</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="badge bg-primary text-white">POS Amount</span>
+                            </td>
+                            <td class="text-end">{{ totals.total_pos }}</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="badge bg-dark text-white">Cash Sales</span>
+                            </td>
+                            <td class="text-end">{{ totals.total_cash }}</td>
+                        </tr>
+                        <tr class="fw-bold bg-light">
+                            <td>Total Sales</td>
+                            <td class="text-end">{{ totals.total_sales }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+     
+
+    </div>
+</div>
+
+<canvas id="salesChart" style="height:300px;"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const salesData = {{ monthly_sales|safe }};
+    console.log("Monthly Sales:", salesData);
+
+    if (salesData.length > 0) {
+        const labels = salesData.map(item => {
+            const date = new Date(item.month);
+            return date.toLocaleString('default', { month: 'short', year: 'numeric' });
+        });
+        const totals = salesData.map(item => item.total);
+
+        const ctx = document.getElementById('salesChart').getContext('2d');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Monthly Sales',
+                    data: totals,
+                    backgroundColor: '#198754'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } }
+            }
+        });
+    } else {
+        console.warn("No sales data to display");
+    }
+</script>
+
+{% endblock %}

@@ -1,0 +1,176 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block 'content' %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="container-fluid">
+
+    <!-- Page Title -->
+    <div class="row mb-4">
+        <div class="col-sm-12">
+            <h4 class="page-title">Dashboard</h4>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row justify-content-center mb-4">
+
+        <!-- Daily Expense Total -->
+        <div class="col-md-6 col-lg-3 mb-3">
+            <a href="{% url 'dashboard_expenses' %}" class="text-white text-decoration-none">
+                <div class="card shadow border-0 bg-danger">
+                    <div class="card-body d-flex align-items-center justify-content-between">
+                        <div>
+                            <p class="text-uppercase mb-1 fw-semibold">Daily Expense Total</p>
+                            <h3 class="fw-bold">{{ daily_total }}</h3>
+                        </div>
+                        <div>
+                            <i class="fas fa-receipt fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Daily Sales Total -->
+        <div class="col-md-6 col-lg-3 mb-3">
+            <a href="{% url 'daily_sales_dashboard' %}" class="text-white text-decoration-none">
+                <div class="card shadow border-0 bg-success">
+                    <div class="card-body d-flex align-items-center justify-content-between">
+                        <div>
+                            <p class="text-uppercase mb-1 fw-semibold">Daily Sales Total</p>
+                            <h3 class="fw-bold">{{ daily_sales_total }}</h3>
+                        </div>
+                        <div>
+                            <i class="fas fa-cash-register fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Net Profit -->
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card shadow border-0 bg-primary text-white">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-uppercase mb-1 fw-semibold">Net Profit</p>
+                        <h3 class="fw-bold">{{ net_profit }}</h3>
+                    </div>
+                    <div>
+                        <i class="fas fa-chart-line fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Expenses & Sales Chart -->
+    <div class="row">
+
+        <!-- Today's Expenses -->
+        <div class="col-md-12 col-lg-8 mb-4">
+            <div class="card shadow">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">Today's Expenses</h4>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Category</th>
+                                    <th>Supplier</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for e in expenses %}
+                                    <tr>
+                                        <td>{{ e.date }}</td>
+                                        <td>{{ e.category }}</td>
+                                        <td>{{ e.supplier }}</td>
+                                        <td>{{ e.amount }}</td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">
+                                            No expenses recorded today.
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Monthly Sales Chart -->
+                   <!-- Monthly Sales Chart -->
+<div class="card shadow mt-4">
+    <div class="card-header">
+        <h4 class="card-title mb-0">Monthly Sales Overview</h4>
+    </div>
+    <div class="card-body">
+        <canvas id="salesChart"></canvas>
+    </div>
+</div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Balance Details -->
+        <div class="col-md-12 col-lg-4 mb-4">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">Balance Details</h4>
+                </div>
+                <div class="card-body text-center">
+                    <h3 class="fw-bold">$82365.00</h3>
+                    <p class="text-muted mb-0">Available Balance</p>
+                    <hr>
+                    <p class="text-muted mb-0">From 01 Jan 2024 to 31 Dec 2024</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Chart.js Script -->
+<script>
+    // Ensure your data is properly passed from Django
+    const salesData = {{ monthly_sales|safe }};
+    console.log("Monthly Sales Data:", salesData); // Debug
+
+    const labels = salesData.map(item => {
+        const date = new Date(item.month);
+        return date.toLocaleString('default', { month: 'short', year: 'numeric' });
+    });
+
+    const totals = salesData.map(item => item.total);
+
+    const ctx = document.getElementById('salesChart').getContext('2d');
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Monthly Sales',
+                data: totals,
+                backgroundColor: '#198754'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+</script>
+{% endblock %}

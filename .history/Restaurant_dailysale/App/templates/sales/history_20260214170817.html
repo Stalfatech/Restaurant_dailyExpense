@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block 'content' %}
+
+<div class="container-fluid">
+
+    <!-- Page Heading & Actions -->
+    <div class="d-flex justify-content-between align-items-center mb-4 mt-4 flex-wrap">
+        <h3 class="fw-bold">Sales History</h3>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <!-- Back Button -->
+            <a href="{% url 'daily_sales_dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to Sales
+            </a>
+
+            <!-- Print Button -->
+            <button class="btn btn-primary" onclick="window.print()">
+                <i class="fas fa-print me-1"></i> Print
+            </button>
+        </div>
+    </div>
+
+    <!-- Total Card -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body bg-success text-white rounded-3">
+            <h5 class="mb-0">Total Sales: {{ grand_total }}</h5>
+        </div>
+    </div>
+
+    <!-- Filter Form -->
+    <form method="GET" class="row g-3 mb-4 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label">Start Date</label>
+            <input type="date" name="start" class="form-control" value="{{ request.GET.start }}">
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">End Date</label>
+            <input type="date" name="end" class="form-control" value="{{ request.GET.end }}">
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Month</label>
+            <input type="month" name="month" class="form-control" value="{{ request.GET.month }}">
+        </div>
+
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <button type="button" class="btn btn-secondary" id="clearFilterBtn">Clear</button>
+        </div>
+    </form>
+
+    <!-- Sales Table Card -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped align-middle mb-0">
+              
+
+<script>
+    // Clear filters button
+    document.getElementById('clearFilterBtn').addEventListener('click', function() {
+        window.location.href = "{% url 'history_sales' %}";
+    });
+</script>
+
+{% endblock %}
+

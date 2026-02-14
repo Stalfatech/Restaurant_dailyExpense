@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h3>Daily Sales Entry</h3>
+
+<form method="POST" class="card p-4 shadow">
+    {% csrf_token %}
+
+    <div class="mb-3">
+        <label>Date *</label>
+        {{ form.date }}
+    </div>
+
+    <h5>Dining Sales</h5>
+
+    <div class="mb-3">
+        <label>Breakfast</label>
+        {{ form.breakfast }}
+    </div>
+
+    <div class="mb-3">
+        <label>Lunch</label>
+        {{ form.lunch }}
+    </div>
+
+    <div class="mb-3">
+        <label>Dinner</label>
+        {{ form.dinner }}
+    </div>
+
+    <div class="mb-3">
+        <label>Delivery</label>
+        {{ form.delivery }}
+    </div>
+
+    <h5>POS Sale</h5>
+
+    <div class="mb-3">
+        <label>POS Amount</label>
+        {{ form.pos_amount }}
+    </div>
+
+    <div class="mb-3">
+        <label>POS Type</label>
+        {{ form.pos_type }}
+    </div>
+
+    <button type="submit" class="btn btn-success">Save</button>
+
+</form>
+
+{% endblock %}

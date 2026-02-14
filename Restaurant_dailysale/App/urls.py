@@ -36,6 +36,8 @@ path('branch/delete/<int:id>/', views.delete_branch, name='branch_delete'),
     path('staff_list/', views.staff_list, name='staff_list'),
     path('edit-staff/<int:id>/', views.edit_staff, name='edit_staff'),
     path('delete-staff/<int:id>/', views.delete_staff, name='delete_staff'),
+    path('staff/', views.adminview_staff, name='adminview_staff'),
+
     
 
 ]

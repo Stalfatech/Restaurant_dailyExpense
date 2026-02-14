@@ -62,8 +62,8 @@
                                 {% endif %}
                             </td>
                             <td>{{ staff.branch.name|default:"-" }}</td>
-                 
-                            <td>{{ staff.created_by.name|default:"-" }}</td>
+                         {{ staff.created_by.name|default:"-" }}
+
                         </tr>
                         {% endfor %}
                     </tbody>

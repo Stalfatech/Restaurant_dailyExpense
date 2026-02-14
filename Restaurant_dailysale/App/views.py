@@ -12,6 +12,8 @@ from django.conf import settings
 from django.db import transaction 
 from .models import  User,Register,Manager,Branch,Expense,CashBook
 from django.contrib.auth import authenticate, login
+from django.contrib.auth import get_user_model
+from django.db.models import OuterRef, Subquery
 
 
 
@@ -782,9 +784,8 @@ def delete_branch(request, id):
         'branch': branch
     })
 # ================= staff ================= #
-def add_staff(request):
-    branches = Branch.objects.all()
 
+def add_staff(request):
     if request.method == "POST":
         staff_id = request.POST.get('staff_id')
         name = request.POST.get('name')
@@ -795,7 +796,6 @@ def add_staff(request):
         joining_date = request.POST.get('joining_date')
         salary_type = request.POST.get('salary_type')
         status = request.POST.get('status')
-        branch_id = request.POST.get('branch')
 
         # Duplicate Staff ID
         if Staff.objects.filter(staff_id=staff_id).exists():
@@ -818,8 +818,13 @@ def add_staff(request):
                 messages.error(request, "Date of Birth cannot be in the future.")
                 return redirect('add_staff')
 
-        # Get Branch
-        branch = Branch.objects.get(id=branch_id)
+        # Get Branch object
+        manager_branch = None
+        if request.user.branch_id:  # get FK id
+            try:
+                manager_branch = Branch.objects.get(id=request.user.branch_id)
+            except Branch.DoesNotExist:
+                manager_branch = None
 
         # Save Staff
         Staff.objects.create(
@@ -832,16 +837,14 @@ def add_staff(request):
             joining_date=joining_date,
             salary_type=salary_type,
             status=status,
-            branch=branch
+            branch=manager_branch,  # properly assigned now
+            created_by=request.user
         )
 
         messages.success(request, "Staff added successfully ✅")
         return redirect('staff_list')
 
-    return render(request, 'Manager/staff_add.html', {
-        'branches': branches
-    })
-
+    return render(request, 'Manager/staff_add.html')
 
 def staff_list(request):
 
@@ -891,7 +894,6 @@ def staff_list(request):
 def edit_staff(request, id):
 
     staff = get_object_or_404(Staff, id=id)
-    branches = Branch.objects.all()
 
     if request.method == "POST":
 
@@ -904,7 +906,6 @@ def edit_staff(request, id):
         joining_date = request.POST.get('joining_date')
         salary_type = request.POST.get('salary_type')
         status = request.POST.get('status')
-        branch_id = request.POST.get('branch')
 
         # Duplicate Staff ID check
         if Staff.objects.filter(staff_id=staff_id).exclude(id=id).exists():
@@ -923,10 +924,10 @@ def edit_staff(request, id):
                 messages.error(request, "Date of Birth cannot be in the future.")
                 return redirect('edit_staff', id=id)
 
-        # Update fields
+        # Update fields (NO branch update)
         staff.staff_id = staff_id
         staff.name = name
-        staff.gender=gender
+        staff.gender = gender
         staff.role = role
         staff.contact = contact
         staff.dob = dob if dob else None
@@ -934,18 +935,13 @@ def edit_staff(request, id):
         staff.salary_type = salary_type
         staff.status = status
 
-        # ✅ Update branch properly
-        if branch_id:
-            staff.branch = get_object_or_404(Branch, id=branch_id)
-
         staff.save()
 
         messages.success(request, "Staff updated successfully ✅")
         return redirect('staff_list')
 
     return render(request, 'Manager/staff_edit.html', {
-        'staff': staff,
-        'branches': branches
+        'staff': staff
     })
 
 def delete_staff(request, id):
@@ -957,37 +953,41 @@ def delete_staff(request, id):
     return redirect('staff_list')
 
 
-def adminview_staff(request):
-    staffs = Staff.objects.all()   # get all staff
-    return render(request, 'Admin/stafflist_view.html', {'staffs': staffs})
+User = get_user_model()
 
 def adminview_staff(request):
-
     user = request.user
     selected_role = request.GET.get('role')
 
-    # 🔹 Base queryset (NO order_by here yet)
-    if user.user_type == 0:   # Admin
-        base_queryset = Staff.objects.all()
-    else:   # Manager
-        base_queryset = Staff.objects.filter(branch=user.branch)
+    # Base queryset
+    if user.user_type == 0:  # Admin
+        staffs = Staff.objects.all()
+    else:  # Manager
+        staffs = Staff.objects.filter(branch=user.branch)
 
-    # 🔹 Get distinct roles properly
-    roles = base_queryset.values_list('role', flat=True).distinct()
-
-    # 🔹 Apply filtering
-    staffs = base_queryset
+    # Role filter
     if selected_role:
         staffs = staffs.filter(role=selected_role)
 
-    # 🔹 Order at the end
     staffs = staffs.order_by('id')
+
+    # Subquery to get manager / added by
+    manager_subquery = User.objects.filter(
+        user_type=1,
+        branch=OuterRef('branch_id')
+    ).values('name')[:1]
+
+    # Annotate each staff with manager_name
+    staffs = staffs.annotate(manager_name=Subquery(manager_subquery))
+
+    # Prepare unique roles for filter dropdown
+    if user.user_type == 0:  # Admin
+        roles = Staff.objects.values_list('role', flat=True).distinct()
+    else:  # Manager
+        roles = Staff.objects.filter(branch=user.branch).values_list('role', flat=True).distinct()
 
     return render(request, 'Admin/stafflist_view.html', {
         'staffs': staffs,
         'roles': roles,
         'selected_role': selected_role
     })
-
-
-

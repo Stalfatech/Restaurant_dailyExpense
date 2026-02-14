@@ -31,9 +31,9 @@
             <div>
              <p class="text-uppercase mb-1 fw-semibold">
     {% if request.session.usertype == 0 %}
-        Daily Expense Total 
+        Daily Expense Total (All)
     {% else %}
-        Daily Expense Total
+        Daily Expense Total 
     {% endif %}
 </p>
 <h3 class="fw-bold">{{ daily_total }}</h3>

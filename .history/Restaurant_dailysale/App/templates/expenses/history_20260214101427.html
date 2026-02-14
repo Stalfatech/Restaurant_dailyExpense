@@ -23,11 +23,7 @@
         </button>
     </div>
 </div>
-<div class="card mb-3 bg-info text-white">
-    <div class="card-body">
-        <h5>Total Expense: {{ total }}</h5>
-    </div>
-</div>
+
 
     <!-- Filter Form -->
     <form method="GET" class="row g-3 mb-4">
@@ -51,10 +47,10 @@
             <thead class="table-dark">
                 <tr>
                     <th>Date</th>
-               
+                    {% if user_type == 0 %}
                     <th>Branch</th>
                     <th>Status</th>
-              
+                    {% endif %}
                     <th>Category</th>
                     <th>Supplier</th>
                     <th>Product</th>
@@ -68,10 +64,10 @@
             {% for e in expenses %}
                 <tr>
                     <td>{{ e.date }}</td>
-                 
+                    {% if user_type == 0 %}
                     <td>{{ e.branch }}</td>
                     <td>{{ e.status|default:"-" }}</td>
-             
+                    {% endif %}
                     <td>{{ e.category }}</td>
                     <td>{{ e.supplier }}</td>
                     <td>{{ e.product }}</td>
@@ -86,18 +82,6 @@
                 </tr>
             {% endfor %}
             </tbody>
-          <tfoot>
-    <tr class="table-secondary fw-bold">
-     
-      
-        <td colspan="9" class="text-end">Total Expense:</td>
-        <td>{{ total }}</td>
-   
-      
-    </tr>
-</tfoot>
-
-        </tfoot>
         </table>
     </div>
 

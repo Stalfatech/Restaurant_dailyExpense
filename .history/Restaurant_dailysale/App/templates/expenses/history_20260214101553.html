@@ -51,10 +51,10 @@
             <thead class="table-dark">
                 <tr>
                     <th>Date</th>
-               
+                    {% if user_type == 0 %}
                     <th>Branch</th>
                     <th>Status</th>
-              
+                    {% endif %}
                     <th>Category</th>
                     <th>Supplier</th>
                     <th>Product</th>
@@ -68,10 +68,10 @@
             {% for e in expenses %}
                 <tr>
                     <td>{{ e.date }}</td>
-                 
+                    {% if user_type == 0 %}
                     <td>{{ e.branch }}</td>
                     <td>{{ e.status|default:"-" }}</td>
-             
+                    {% endif %}
                     <td>{{ e.category }}</td>
                     <td>{{ e.supplier }}</td>
                     <td>{{ e.product }}</td>
@@ -86,17 +86,12 @@
                 </tr>
             {% endfor %}
             </tbody>
-          <tfoot>
-    <tr class="table-secondary fw-bold">
-     
-      
-        <td colspan="9" class="text-end">Total Expense:</td>
-        <td>{{ total }}</td>
-   
-      
-    </tr>
-</tfoot>
-
+             <tfoot>
+            <tr class="table-secondary fw-bold">
+                <td colspan="{% if user_type == 0 %}8{% else %}7{% endif %}" class="text-end">Total:</td>
+                <td>{{ total }}</td>
+                <td></td>
+            </tr>
         </tfoot>
         </table>
     </div>

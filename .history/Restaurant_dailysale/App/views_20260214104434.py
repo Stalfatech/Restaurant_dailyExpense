@@ -22,8 +22,8 @@ def dashboard(request):
     if user.user_type == 0:
         expenses = Expense.objects.filter(date=today)
 
-    elif user.user_type == 1:
-        expenses = Expense.objects.filter(
+elif user.user_type == 1:
+    expenses = Expense.objects.filter(
         date=today,
         branch=user.branch
     )
@@ -261,19 +261,12 @@ def add_manager(request):
 
 @never_cache
 def manager_view(request):
-    search_query = request.GET.get('search', '')
-
-    managers = Manager.objects.select_related('user', 'user__branch').all().order_by('-id')
-
-    if search_query:
-        managers = managers.filter(
-            Q(user__name__icontains=search_query)
-        )
+    managers = Manager.objects.select_related('user').all().order_by('-id')
 
     return render(request, 'Admin/manager_list.html', {
-        'managers': managers,
-        'search_query': search_query
+        'managers': managers
     })
+
 @never_cache
 def manager_delete(request, id):
     manager = get_object_or_404(Manager, id=id)

@@ -242,7 +242,7 @@ class Staff(models.Model):
         ('Chef', 'Chef'),
         ('Helper', 'Helper'),
         ('Delivery', 'Delivery'),
-        ('Manager', 'Manager'),
+        
     ]
 
     SALARY_TYPE_CHOICES = [
@@ -254,15 +254,22 @@ class Staff(models.Model):
         ('Active', 'Active'),
         ('Inactive', 'Inactive'),
     ]
+    GENDER_CHOICES = [
+    ('Male', 'Male'),
+    ('Female', 'Female'),
+    ('Other', 'Other'),
+]
 
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,blank=True,related_name='added_staff')
     staff_id = models.CharField(max_length=20)
     name = models.CharField(max_length=100)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
     contact = models.CharField(max_length=10)
     dob = models.DateField(null=True, blank=True)  # Not mandatory
     joining_date = models.DateField()
+    gender = models.CharField(max_length=10,choices=GENDER_CHOICES,default='Male')   # ✅ Add default
     salary_type = models.CharField(max_length=10, choices=SALARY_TYPE_CHOICES)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES)
-
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE,null=True,blank=True)
     def __str__(self):
         return self.name

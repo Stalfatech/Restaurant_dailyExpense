@@ -801,120 +801,172 @@ def delete_branch(request, id):
     return render(request, 'Admin/branch_delete.html', {
         'branch': branch
     })
-
+# ================= staff ================= #
 def add_staff(request):
+    branches = Branch.objects.all()
+
     if request.method == "POST":
         staff_id = request.POST.get('staff_id')
         name = request.POST.get('name')
+        gender = request.POST.get('gender')  
         role = request.POST.get('role')
         contact = request.POST.get('contact')
         dob = request.POST.get('dob')
         joining_date = request.POST.get('joining_date')
         salary_type = request.POST.get('salary_type')
         status = request.POST.get('status')
+        branch_id = request.POST.get('branch')
 
-        # 🔴 Check Duplicate Staff ID
+        # Duplicate Staff ID
         if Staff.objects.filter(staff_id=staff_id).exists():
             messages.error(request, "Staff ID already exists.")
             return redirect('add_staff')
 
-        # 🔴 Contact Validation
-        if not contact or not contact.isdigit() or len(contact) != 10:
-            messages.error(request, "Contact number must be exactly 10 digits.")
-            return redirect('add_staff')
-
-        # 🔴 DOB Future Validation
-        if dob:
-            dob_date = date.fromisoformat(dob)
-            if dob_date > date.today():
-                messages.error(request, "Date of Birth cannot be in the future.")
-                return redirect('add_staff')
-
-        # 🟢 Save Staff
-        Staff.objects.create(
-            staff_id=staff_id,
-            name=name,
-            role=role,
-            contact=contact,
-            dob=dob if dob else None,
-            joining_date=joining_date,
-            salary_type=salary_type,
-            status=status
-        )
-
-        messages.success(request, "Staff added successfully ✅")
-        return redirect('staff_list')
-
-    return render(request, 'Manager/staff_add.html')
-
-def staff_list(request):
-    staffs = Staff.objects.all().order_by('id')
-    return render(request, 'Manager/staff_list.html', {'staffs': staffs})
-
-def staff_list(request):
-    role_filter = request.GET.get('role')
-
-    staffs = Staff.objects.all().order_by('id')   # Correct order 1 → last
-
-    if role_filter:
-        staffs = staffs.filter(role=role_filter)
-
-    # Get distinct roles for dropdown
-    roles = Staff.objects.values_list('role', flat=True).distinct()
-
-    context = {
-        'staffs': staffs,
-        'roles': roles,
-        'selected_role': role_filter
-    }
-
-    return render(request, 'Manager/staff_list.html', context)
-
-def edit_staff(request, id):
-    staff = get_object_or_404(Staff, id=id)
-
-    if request.method == "POST":
-        staff_id = request.POST.get('staff_id')
-        name = request.POST.get('name')
-        role = request.POST.get('role')
-        contact = request.POST.get('contact')
-        dob = request.POST.get('dob')
-        joining_date = request.POST.get('joining_date')
-        salary_type = request.POST.get('salary_type')
-        status = request.POST.get('status')
-
-        # Duplicate Staff ID check (except current staff)
-        if Staff.objects.filter(staff_id=staff_id).exclude(id=id).exists():
-            messages.error(request, "Staff ID already exists.")
-            return redirect('edit_staff', id=id)
-
         # Contact Validation
         if not contact or not contact.isdigit() or len(contact) != 10:
             messages.error(request, "Contact number must be exactly 10 digits.")
-            return redirect('edit_staff', id=id)
+            return redirect('add_staff')
+        
+        if not gender:
+            messages.error(request, "Please select a gender.")
+            return redirect('add_staff')
 
         # DOB Validation
         if dob:
             dob_date = date.fromisoformat(dob)
             if dob_date > date.today():
                 messages.error(request, "Date of Birth cannot be in the future.")
+                return redirect('add_staff')
+
+        # Get Branch
+        branch = Branch.objects.get(id=branch_id)
+
+        # Save Staff
+        Staff.objects.create(
+            staff_id=staff_id,
+            name=name,
+            gender=gender,
+            role=role,
+            contact=contact,
+            dob=dob if dob else None,
+            joining_date=joining_date,
+            salary_type=salary_type,
+            status=status,
+            branch=branch
+        )
+
+        messages.success(request, "Staff added successfully ✅")
+        return redirect('staff_list')
+
+    return render(request, 'Manager/staff_add.html', {
+        'branches': branches
+    })
+
+
+def staff_list(request):
+
+    user = request.user
+
+    # If Admin → show all staff
+    if user.user_type == 0:
+        staffs = Staff.objects.all().order_by('id')
+
+    # If Manager → show only their branch staff
+    else:
+        staffs = Staff.objects.filter(branch=user.branch).order_by('id')
+
+    return render(request, 'Manager/staff_list.html', {
+        'staffs': staffs
+    })
+
+def staff_list(request):
+
+    user = request.user
+    selected_role = request.GET.get('role')
+
+    # 🔹 Base queryset (NO order_by here yet)
+    if user.user_type == 0:   # Admin
+        base_queryset = Staff.objects.all()
+    else:   # Manager
+        base_queryset = Staff.objects.filter(branch=user.branch)
+
+    # 🔹 Get distinct roles properly
+    roles = base_queryset.values_list('role', flat=True).distinct()
+
+    # 🔹 Apply filtering
+    staffs = base_queryset
+    if selected_role:
+        staffs = staffs.filter(role=selected_role)
+
+    # 🔹 Order at the end
+    staffs = staffs.order_by('id')
+
+    return render(request, 'Manager/staff_list.html', {
+        'staffs': staffs,
+        'roles': roles,
+        'selected_role': selected_role
+    })
+
+
+def edit_staff(request, id):
+
+    staff = get_object_or_404(Staff, id=id)
+    branches = Branch.objects.all()
+
+    if request.method == "POST":
+
+        staff_id = request.POST.get('staff_id')
+        name = request.POST.get('name')
+        gender = request.POST.get('gender')   
+        role = request.POST.get('role')
+        contact = request.POST.get('contact')
+        dob = request.POST.get('dob')
+        joining_date = request.POST.get('joining_date')
+        salary_type = request.POST.get('salary_type')
+        status = request.POST.get('status')
+        branch_id = request.POST.get('branch')
+
+        # Duplicate Staff ID check
+        if Staff.objects.filter(staff_id=staff_id).exclude(id=id).exists():
+            messages.error(request, "Staff ID already exists.")
+            return redirect('edit_staff', id=id)
+
+        # Contact validation
+        if not contact or not contact.isdigit() or len(contact) != 10:
+            messages.error(request, "Contact number must be exactly 10 digits.")
+            return redirect('edit_staff', id=id)
+
+        # DOB validation
+        if dob:
+            dob_date = date.fromisoformat(dob)
+            if dob_date > date.today():
+                messages.error(request, "Date of Birth cannot be in the future.")
                 return redirect('edit_staff', id=id)
 
-        # Update Staff
+        # Update fields
         staff.staff_id = staff_id
         staff.name = name
+        staff.gender=gender
         staff.role = role
         staff.contact = contact
         staff.dob = dob if dob else None
         staff.joining_date = joining_date
         staff.salary_type = salary_type
         staff.status = status
+
+        # ✅ Update branch properly
+        if branch_id:
+            staff.branch = get_object_or_404(Branch, id=branch_id)
+
         staff.save()
 
         messages.success(request, "Staff updated successfully ✅")
         return redirect('staff_list')
 
-    return render(request, 'Manager/staff_edit.html', {'staff': staff})
+    return render(request, 'Manager/staff_edit.html', {
+        'staff': staff,
+        'branches': branches
+    })
 
 def delete_staff(request, id):
     staff = get_object_or_404(Staff, id=id)
@@ -923,3 +975,39 @@ def delete_staff(request, id):
 
     messages.success(request, "Staff deleted successfully 🗑️")
     return redirect('staff_list')
+
+
+def adminview_staff(request):
+    staffs = Staff.objects.all()   # get all staff
+    return render(request, 'Admin/stafflist_view.html', {'staffs': staffs})
+
+def adminview_staff(request):
+
+    user = request.user
+    selected_role = request.GET.get('role')
+
+    # 🔹 Base queryset (NO order_by here yet)
+    if user.user_type == 0:   # Admin
+        base_queryset = Staff.objects.all()
+    else:   # Manager
+        base_queryset = Staff.objects.filter(branch=user.branch)
+
+    # 🔹 Get distinct roles properly
+    roles = base_queryset.values_list('role', flat=True).distinct()
+
+    # 🔹 Apply filtering
+    staffs = base_queryset
+    if selected_role:
+        staffs = staffs.filter(role=selected_role)
+
+    # 🔹 Order at the end
+    staffs = staffs.order_by('id')
+
+    return render(request, 'Admin/stafflist_view.html', {
+        'staffs': staffs,
+        'roles': roles,
+        'selected_role': selected_role
+    })
+
+
+

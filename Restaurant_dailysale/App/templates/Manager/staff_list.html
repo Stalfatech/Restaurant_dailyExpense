@@ -5,7 +5,7 @@
 
     <!-- Page Title -->
     <div class="mb-3">
-        <h4 class="fw-bold">Staff list view</h4>
+        <h4 class="fw-bold">STAFF LIST</h4>
     </div>
 
     <!-- Filter + Add Button Row -->
@@ -61,11 +61,13 @@
                         <th>#</th>
                         <th>Staff ID</th>
                         <th>Name</th>
+                        <th>Gender</th> 
                         <th>Role</th>
                         <th>Contact</th>
                         <th>DOB</th>
                         <th>Joining Date</th>
                         <th>Salary Type</th>
+                        <th>Branch</th> 
                         <th>Status</th>
                         <th>Action</th>
                     </tr>
@@ -77,11 +79,15 @@
                         <td>{{ forloop.counter }}</td>
                         <td>{{ staff.staff_id }}</td>
                         <td>{{ staff.name }}</td>
+                        <td>{{ staff.get_gender_display }}</td>
+
                         <td>{{ staff.role }}</td>
                         <td>{{ staff.contact }}</td>
                         <td>{{ staff.dob|default:"-" }}</td>
                         <td>{{ staff.joining_date }}</td>
                         <td>{{ staff.salary_type }}</td>
+                        <td>{{ staff.branch.name }}</td>
+
                         <td>
                             {% if staff.status == "Active" %}
                                 <span class="badge bg-success">Active</span>

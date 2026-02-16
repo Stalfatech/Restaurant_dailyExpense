@@ -79,14 +79,14 @@ class ProductForm(forms.ModelForm):
             self.fields['branch'].empty_label = "Select Branch"
             self.fields['supplier'].empty_label = "Select Supplier"
 
+
 class ExpenseForm(forms.ModelForm):
-    
+
     class Meta:
         model = Expense
         fields = [
             'date', 'category', 'supplier', 'product',
-            'quantity', 'purchase_type', 'amount',
-            'invoice', 'description', 'branch', 'status'
+            'quantity', 'purchase_type', 'amount', 'invoice', 'description', 'branch','status'
         ]
 
         widgets = {
@@ -99,54 +99,19 @@ class ExpenseForm(forms.ModelForm):
             'branch': forms.Select(attrs={'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control'}),
-           'invoice': forms.FileInput(attrs={
-    'id': 'invoiceInput',
-    'class': 'form-control'
-}),
+'invoice': forms.ClearableFileInput(attrs={'id': 'invoiceInput', 'class': 'form-control'}),
 
-            'amount': forms.NumberInput(attrs={
-                'id': 'amountField',
-                'class': 'form-control'
-            }),
+'amount': forms.NumberInput(attrs={'id': 'amountField', 'class': 'form-control'}),
+
+
         }
 
-    def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
-        super().__init__(*args, **kwargs)
-
-        self.fields['amount'].required = False
-
-        # Mandatory fields except invoice
-        mandatory_fields = ['date', 'category', 'supplier', 'product', 'purchase_type']
-
-        for field_name in mandatory_fields:
-            self.fields[field_name].widget.attrs['required'] = 'true'
-
-        # 🔥 Invoice required only when creating
-        if not self.instance.pk:
-            self.fields['invoice'].required = True
-            self.fields['invoice'].widget.attrs['required'] = 'true'
-        else:
-            self.fields['invoice'].required = False
-
-        # Manager restrictions
-        if user and user.user_type != 0:
-            self.fields['branch'].required = False
-            self.fields['status'].required = False
-            self.fields['branch'].widget = forms.HiddenInput()
-            self.fields['status'].widget = forms.HiddenInput()
 
     def clean_invoice(self):
         invoice = self.cleaned_data.get('invoice')
-
-        # If editing and no new file uploaded → keep old file
-        if not invoice and self.instance.pk:
-            return self.instance.invoice
-
         if invoice:
-            if not invoice.name.lower().endswith(('.pdf', '.jpg', '.jpeg', '.png')):
+            if not invoice.name.endswith(('.pdf', '.jpg', '.jpeg', '.png')):
                 raise ValidationError("Invoice must be PDF or Image file.")
-
         return invoice
 
     def clean(self):
@@ -154,14 +119,30 @@ class ExpenseForm(forms.ModelForm):
         quantity = cleaned_data.get('quantity')
         amount = cleaned_data.get('amount')
 
-        if quantity and quantity <= 0:
-            raise ValidationError("Quantity must be greater than zero.")
-
-        if amount and amount <= 0:
-            raise ValidationError("Amount must be greater than zero.")
+        if quantity and amount:
+            if quantity <= 0:
+                raise ValidationError("Quantity must be greater than zero.")
+            if amount <= 0:
+                raise ValidationError("Amount must be greater than zero.")
 
         return cleaned_data
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        self.fields['amount'].required = False
+        mandatory_fields = ['date', 'category', 'supplier', 'product', 'purchase_type', 'invoice']
+        for field_name in mandatory_fields:
+            
 
+            self.fields[field_name].widget.attrs['required'] = 'true'
+
+        if user and user.user_type != 0:
+            # Manager: hide branch and status fields
+            self.fields['branch'].required = False
+            self.fields['status'].required = False
+            self.fields['branch'].widget = forms.HiddenInput()
+            self.fields['status'].widget = forms.HiddenInput()
+            
             
 from .models import DailySale
 

@@ -99,11 +99,10 @@ class ExpenseForm(forms.ModelForm):
             'branch': forms.Select(attrs={'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control'}),
-           'invoice': forms.FileInput(attrs={
-    'id': 'invoiceInput',
-    'class': 'form-control'
-}),
-
+            'invoice': forms.ClearableFileInput(attrs={
+                'id': 'invoiceInput',
+                'class': 'form-control'
+            }),
             'amount': forms.NumberInput(attrs={
                 'id': 'amountField',
                 'class': 'form-control'

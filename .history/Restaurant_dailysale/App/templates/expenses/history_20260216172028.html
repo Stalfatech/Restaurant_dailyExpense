@@ -71,7 +71,6 @@
                     <th>Purchase Type</th>
                     <th>Amount</th>
                     <th>Invoice</th>
-                    <th>Status</th>
                     
                     <th>Description</th>
                 </tr>
@@ -88,16 +87,6 @@
                     <td>{{ e.quantity }}</td>
                     <td>{{ e.purchase_type }}</td>
                     <td>{{ e.amount }}</td>
-                    <td>
-                        {% if e.invoice %}
-                            <a href="{{ e.invoice.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                View Invoice
-                            </a>
-                        {% else %}
-                            No Invoice
-                        {% endif %}
-                    </td>
-                    <td>{{ e.status }}</td>
                     <td>{{ e.description|default:"-" }}</td>
                 </tr>
                 {% empty %}
@@ -107,8 +96,8 @@
                 {% endfor %}
             </tbody>
             <tfoot>
-                <tr class="table fw-bold">
-                    <td colspan="8" class="text-end">Total Expense:</td>
+                <tr class="table-secondary fw-bold">
+                    <td colspan="9" class="text-end">Total Expense:</td>
                     <td>{{ total }}</td>
                 </tr>
             </tfoot>
@@ -154,7 +143,6 @@
     @page { margin: 5mm; }
 }
 </style>
-<script> document.getElementById('clearFilterBtn').addEventListener('click', function() { window.location.href = "{% url 'history_expenses' %}"; }); </script>
 
 
 {% endblock %}

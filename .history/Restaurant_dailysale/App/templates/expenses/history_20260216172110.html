@@ -107,8 +107,8 @@
                 {% endfor %}
             </tbody>
             <tfoot>
-                <tr class="table fw-bold">
-                    <td colspan="8" class="text-end">Total Expense:</td>
+                <tr class="table-secondary fw-bold">
+                    <td colspan="9" class="text-end">Total Expense:</td>
                     <td>{{ total }}</td>
                 </tr>
             </tfoot>
@@ -154,7 +154,6 @@
     @page { margin: 5mm; }
 }
 </style>
-<script> document.getElementById('clearFilterBtn').addEventListener('click', function() { window.location.href = "{% url 'history_expenses' %}"; }); </script>
 
 
 {% endblock %}

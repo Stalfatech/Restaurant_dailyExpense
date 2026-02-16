@@ -37,13 +37,7 @@
             <input type="date" name="end" class="form-control" value="{{ request.GET.end }}">
         </div>
 
-        {% if request.user.user_type == 0 %}
-        <div class="col-md-2">
-            <label class="form-label">Branch</label>
-            <input type="text" name="branch" class="form-control" placeholder="Search Branch"
-                   value="{{ request.GET.branch|default:'' }}">
-        </div>
-        {% endif %}
+       {% if request.user.user_type == 0 %} <div class="col-md-2"> <label class="form-label">Branch</label> <input type="text" name="branch" class="form-control" placeholder="Search Branch" value="{{ request.GET.branch|default:'' }}"> </div> {% endif %}
 
         <div class="col-md-2">
             <label class="form-label">Month</label>
@@ -72,7 +66,6 @@
                     <th>Amount</th>
                     <th>Invoice</th>
                     <th>Status</th>
-                    
                     <th>Description</th>
                 </tr>
             </thead>
@@ -88,16 +81,17 @@
                     <td>{{ e.quantity }}</td>
                     <td>{{ e.purchase_type }}</td>
                     <td>{{ e.amount }}</td>
-                    <td>
-                        {% if e.invoice %}
-                            <a href="{{ e.invoice.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                View Invoice
-                            </a>
-                        {% else %}
-                            No Invoice
-                        {% endif %}
-                    </td>
-                    <td>{{ e.status }}</td>
+                 <td>
+                                {% if e.invoice %}
+                                    <a href="{{ e.invoice.url }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                        View
+                                    </a>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+
+                    <td>{{ e.status|default:"-" }}</td>
                     <td>{{ e.description|default:"-" }}</td>
                 </tr>
                 {% empty %}
@@ -117,7 +111,6 @@
 
 </div>
 
-<!-- Print Styling -->
 <style>
 @media print {
     body * { visibility: hidden; margin: 0; padding: 0; }
@@ -154,7 +147,13 @@
     @page { margin: 5mm; }
 }
 </style>
-<script> document.getElementById('clearFilterBtn').addEventListener('click', function() { window.location.href = "{% url 'history_expenses' %}"; }); </script>
 
+
+<!-- Clear Filter JS -->
+<script>
+document.getElementById('clearFilterBtn').addEventListener('click', function() {
+    window.location.href = "{% url 'history_expenses' %}";
+});
+</script>
 
 {% endblock %}

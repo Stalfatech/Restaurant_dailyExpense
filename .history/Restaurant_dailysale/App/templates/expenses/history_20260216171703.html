@@ -72,7 +72,6 @@
                     <th>Amount</th>
                     <th>Invoice</th>
                     <th>Status</th>
-                    
                     <th>Description</th>
                 </tr>
             </thead>
@@ -88,16 +87,8 @@
                     <td>{{ e.quantity }}</td>
                     <td>{{ e.purchase_type }}</td>
                     <td>{{ e.amount }}</td>
-                    <td>
-                        {% if e.invoice %}
-                            <a href="{{ e.invoice.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                View Invoice
-                            </a>
-                        {% else %}
-                            No Invoice
-                        {% endif %}
-                    </td>
-                    <td>{{ e.status }}</td>
+               
+                    <td>{{ e.status|default:"-" }}</td>
                     <td>{{ e.description|default:"-" }}</td>
                 </tr>
                 {% empty %}
@@ -107,8 +98,8 @@
                 {% endfor %}
             </tbody>
             <tfoot>
-                <tr class="table fw-bold">
-                    <td colspan="8" class="text-end">Total Expense:</td>
+                <tr class="table-secondary fw-bold">
+                    <td colspan="9" class="text-end">Total Expense:</td>
                     <td>{{ total }}</td>
                 </tr>
             </tfoot>
@@ -121,40 +112,23 @@
 <style>
 @media print {
     body * { visibility: hidden; margin: 0; padding: 0; }
-
-    /* Show only the print area and heading */
     .print-area, .print-area * { visibility: visible; }
     .print-heading, .print-heading * { visibility: visible; }
-
-    /* Position print area */
-    .print-area {
-        position: absolute;
-        top: 80px; /* spacing for heading */
-        left: 0;
-        width: 100%;
+    .print-area { 
+        position: absolute; 
+        top: 80px; /* spacing so heading is visible */
+        left: 0; 
+        width: 100%; 
     }
-
-    /* Table adjustments */
-    table {
-        width: 100% !important;
-        table-layout: fixed !important; /* make all columns fit the page */
-        font-size: 10px; /* smaller font for many columns */
-        border-collapse: collapse;
-    }
-    th, td {
-        padding: 4px !important; /* tighter padding */
-        word-wrap: break-word;
-        white-space: normal !important;
-        overflow-wrap: break-word;
-    }
-
-    /* Optional: rotate very wide tables (if needed) */
-    /* body { transform: rotate(-90deg); transform-origin: top left; } */
-
-    @page { margin: 5mm; }
+    @page { margin: 0; }
 }
 </style>
-<script> document.getElementById('clearFilterBtn').addEventListener('click', function() { window.location.href = "{% url 'history_expenses' %}"; }); </script>
 
+<!-- Clear Filter JS -->
+<script>
+document.getElementById('clearFilterBtn').addEventListener('click', function() {
+    window.location.href = "{% url 'history_expenses' %}";
+});
+</script>
 
 {% endblock %}

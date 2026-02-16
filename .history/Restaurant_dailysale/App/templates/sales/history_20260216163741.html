@@ -5,9 +5,7 @@
 
     <!-- Page Heading & Actions -->
     <div class="d-flex justify-content-between align-items-center mb-4 mt-4 flex-wrap">
-        
-        <h3 class="fw-bold print-heading">Sales History</h3>
-
+        <h3 class="fw-bold">Sales History</h3>
 
         <div class="d-flex gap-2 flex-wrap">
             <!-- Back Button -->
@@ -22,50 +20,53 @@
         </div>
     </div>
 
-    <!-- Total Card -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-body bg-success text-white rounded-3">
-            <h5 class="mb-0">Total Sales: {{ grand_total }}</h5>
-        </div>
-    </div>
-
-    <!-- Filter Form -->
+    <!-- Month Filter at Top -->
     <form method="GET" class="row g-3 mb-4 align-items-end">
-        <div class="col-md-2">
+        <div class="col-md-3">
+            <label class="form-label">Month</label>
+            <input type="month" name="month" class="form-control" value="{{ request.GET.month }}">
+        </div>
+    </form>
+
+    <!-- Start, End, Branch Filters + Buttons -->
+    <form method="GET" class="row g-3 mb-4 align-items-end">
+        <div class="col-md-3">
             <label class="form-label">Start Date</label>
             <input type="date" name="start" class="form-control" value="{{ request.GET.start }}">
         </div>
 
-        <div class="col-md-2">
+        <div class="col-md-3">
             <label class="form-label">End Date</label>
             <input type="date" name="end" class="form-control" value="{{ request.GET.end }}">
         </div>
 
-       
-         <!-- Branch Search for Admin Only -->
+        <!-- Branch input only for Admin -->
         {% if request.user.user_type == 0 %}
-        <div class="col-md-2">
+        <div class="col-md-3">
             <label class="form-label">Branch</label>
-            <div class="d-flex gap-2">
-                <input type="text" name="branch" placeholder="Search Branch" 
-                       value="{{ request.GET.branch|default:'' }}" class="form-control">
-             
-            </div>
+            <input type="text" name="branch" placeholder="Search Branch" 
+                   value="{{ request.GET.branch|default:'' }}" class="form-control">
         </div>
         {% endif %}
-         <div class="col-md-2">
-            <label class="form-label">Month</label>
-            <input type="month" name="month" class="form-control" value="{{ request.GET.month }}">
-        </div>
 
-        <div class="col-md-3 d-flex gap-2">
+        <div class="col-md-3 d-flex gap-2 mt-2">
             <button type="submit" class="btn btn-primary">Filter</button>
-            <button type="button" class="btn btn-secondary" id="clearFilterBtn">Clear</button>
+            <button type="button" class="btn btn-outline-danger" id="clearFilterBtn">Clear</button>
         </div>
     </form>
 
     <!-- Printable Table Area -->
     <div class="print-area">
+
+        <!-- Print Header -->
+        <div class="mb-3 d-none d-print-block text-center">
+            <h2>Sales History</h2>
+            {% if request.GET.start and request.GET.end %}
+            <p>{{ request.GET.start }} to {{ request.GET.end }}</p>
+            {% elif request.GET.month %}
+            <p>{{ request.GET.month }}</p>
+            {% endif %}
+        </div>
 
         <!-- Sales Table Card -->
         <div class="card shadow-sm mb-4">
@@ -136,25 +137,17 @@
 <style>
 @media print {
     body * { visibility: hidden; margin: 0; padding: 0; }
-    
-    /* Make heading and print area visible */
-    .print-heading,
-    .print-heading *,
-    .print-area,
-    .print-area * { visibility: visible; }
-
+    .print-area, .print-area * { visibility: visible; }
     .print-area { 
         position: absolute; 
-        top: 80px; /* adjust spacing so heading doesn't overlap table */
+        top: 0; 
         left: 0; 
         width: 100%; 
         padding: 0;
         margin: 0;
     }
-
     @page { margin: 0; }
 }
-
 </style>
 
 <script>
@@ -165,4 +158,3 @@
 </script>
 
 {% endblock %}
-

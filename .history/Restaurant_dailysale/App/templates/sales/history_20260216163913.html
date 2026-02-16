@@ -5,9 +5,7 @@
 
     <!-- Page Heading & Actions -->
     <div class="d-flex justify-content-between align-items-center mb-4 mt-4 flex-wrap">
-        
-        <h3 class="fw-bold print-heading">Sales History</h3>
-
+        <h3 class="fw-bold">Sales History</h3>
 
         <div class="d-flex gap-2 flex-wrap">
             <!-- Back Button -->
@@ -31,20 +29,23 @@
 
     <!-- Filter Form -->
     <form method="GET" class="row g-3 mb-4 align-items-end">
-        <div class="col-md-2">
+        <div class="col-md-3">
             <label class="form-label">Start Date</label>
             <input type="date" name="start" class="form-control" value="{{ request.GET.start }}">
         </div>
 
-        <div class="col-md-2">
+        <div class="col-md-3">
             <label class="form-label">End Date</label>
             <input type="date" name="end" class="form-control" value="{{ request.GET.end }}">
         </div>
 
-       
+        <div class="col-md-3">
+            <label class="form-label">Month</label>
+            <input type="month" name="month" class="form-control" value="{{ request.GET.month }}">
+        </div>
          <!-- Branch Search for Admin Only -->
         {% if request.user.user_type == 0 %}
-        <div class="col-md-2">
+        <div class="col-md-3">
             <label class="form-label">Branch</label>
             <div class="d-flex gap-2">
                 <input type="text" name="branch" placeholder="Search Branch" 
@@ -53,10 +54,6 @@
             </div>
         </div>
         {% endif %}
-         <div class="col-md-2">
-            <label class="form-label">Month</label>
-            <input type="month" name="month" class="form-control" value="{{ request.GET.month }}">
-        </div>
 
         <div class="col-md-3 d-flex gap-2">
             <button type="submit" class="btn btn-primary">Filter</button>
@@ -136,33 +133,24 @@
 <style>
 @media print {
     body * { visibility: hidden; margin: 0; padding: 0; }
-    
-    /* Make heading and print area visible */
-    .print-heading,
-    .print-heading *,
-    .print-area,
-    .print-area * { visibility: visible; }
-
+    .print-area, .print-area * { visibility: visible; }
     .print-area { 
         position: absolute; 
-        top: 80px; /* adjust spacing so heading doesn't overlap table */
+        top: 0; 
         left: 0; 
         width: 100%; 
         padding: 0;
         margin: 0;
     }
-
     @page { margin: 0; }
 }
-
 </style>
 
 <script>
-    // Clear all filters
+    // Clear filters button
     document.getElementById('clearFilterBtn').addEventListener('click', function() {
         window.location.href = "{% url 'history_sales' %}";
     });
 </script>
 
 {% endblock %}
-

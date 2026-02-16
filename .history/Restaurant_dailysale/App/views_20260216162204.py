@@ -466,29 +466,28 @@ from .decorators import admin_or_manager_required
 @admin_or_manager_required
 def dashboard_expenses(request):
     user = request.user
-    selected_date_str = request.GET.get('date')
-    branch_name = request.GET.get('branch', '').strip()
 
+    # Get selected date from GET params (optional)
+    selected_date_str = request.GET.get('date')
     if selected_date_str:
         try:
             selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
         except ValueError:
-            selected_date = None
+            selected_date = date.today()
     else:
-        selected_date = None
+        selected_date = None  # show all if no date selected
 
     # Base queryset
-    if user.user_type == 0:  # Admin
+    if user.user_type == 0:  # Admin sees all branches
         expenses = Expense.objects.all()
-        if branch_name:
-            expenses = expenses.filter(branch__name__icontains=branch_name)
-    else:  # Manager
+    else:  # Manager sees only their branch
         expenses = Expense.objects.filter(branch=user.branch)
 
+    # Filter by date if selected
     if selected_date:
         expenses = expenses.filter(date=selected_date)
 
-    # Daily total
+    # Calculate total
     daily_total = expenses.aggregate(total=Sum('amount'))['total'] or 0
 
     return render(request, 'expenses/dashboard.html', {
@@ -1350,17 +1349,20 @@ def daily_sales_dashboard(request):
         selected_date = date.today()
 
     user = request.user
-    branch_name = request.GET.get('branch')  # Admin-only search
+    branch_name = request.GET.get('branch')  # new
 
     if user.user_type == 0:  # Admin
         sales = DailySale.objects.filter(date=selected_date)
         if branch_name:
             sales = sales.filter(branch__name__icontains=branch_name)
-    else:  # Manager sees only their branch
+    else:  # Manager
         if not user.branch:
             sales = DailySale.objects.none()
         else:
-            sales = DailySale.objects.filter(date=selected_date, branch=user.branch)
+            sales = DailySale.objects.filter(
+                date=selected_date,
+                branch=user.branch
+            )
 
     totals = sales.aggregate(
         total_breakfast=Sum('breakfast'),
@@ -1485,16 +1487,13 @@ from datetime import datetime
 def history_sales(request):
     start = request.GET.get('start')
     end = request.GET.get('end')
-    month = request.GET.get('month')
-    branch_name = request.GET.get('branch')  # Admin-only
+    month = request.GET.get('month')  # NEW
 
     user = request.user
 
     # Admin → all branches
     if user.user_type == 0:
         sales = DailySale.objects.all()
-        if branch_name:
-            sales = sales.filter(branch__name__icontains=branch_name)
     else:
         if not user.branch:
             sales = DailySale.objects.none()
@@ -1508,6 +1507,7 @@ def history_sales(request):
             sales = sales.filter(date__year=year, date__month=month_num)
         except ValueError:
             pass
+    # Date range filter (only if month not set)
     elif start and end:
         try:
             start_date = datetime.strptime(start, "%Y-%m-%d").date()
@@ -1516,6 +1516,7 @@ def history_sales(request):
         except ValueError:
             pass
 
+    # Aggregate totals
     totals = sales.aggregate(
         total_breakfast=Sum('breakfast'),
         total_lunch=Sum('lunch'),

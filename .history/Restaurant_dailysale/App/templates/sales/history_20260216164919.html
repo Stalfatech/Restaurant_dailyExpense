@@ -136,25 +136,17 @@
 <style>
 @media print {
     body * { visibility: hidden; margin: 0; padding: 0; }
-    
-    /* Make heading and print area visible */
-    .print-heading,
-    .print-heading *,
-    .print-area,
-    .print-area * { visibility: visible; }
-
+    .print-area, .print-area * { visibility: visible; }
     .print-area { 
         position: absolute; 
-        top: 80px; /* adjust spacing so heading doesn't overlap table */
+        top: 0; 
         left: 0; 
         width: 100%; 
         padding: 0;
         margin: 0;
     }
-
     @page { margin: 0; }
 }
-
 </style>
 
 <script>

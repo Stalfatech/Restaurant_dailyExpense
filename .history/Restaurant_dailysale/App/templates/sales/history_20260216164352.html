@@ -5,9 +5,7 @@
 
     <!-- Page Heading & Actions -->
     <div class="d-flex justify-content-between align-items-center mb-4 mt-4 flex-wrap">
-        
-        <h3 class="fw-bold print-heading">Sales History</h3>
-
+        <h3 class="fw-bold">Sales History</h3>
 
         <div class="d-flex gap-2 flex-wrap">
             <!-- Back Button -->
@@ -136,25 +134,17 @@
 <style>
 @media print {
     body * { visibility: hidden; margin: 0; padding: 0; }
-    
-    /* Make heading and print area visible */
-    .print-heading,
-    .print-heading *,
-    .print-area,
-    .print-area * { visibility: visible; }
-
+    .print-area, .print-area * { visibility: visible; }
     .print-area { 
         position: absolute; 
-        top: 80px; /* adjust spacing so heading doesn't overlap table */
+        top: 0; 
         left: 0; 
         width: 100%; 
         padding: 0;
         margin: 0;
     }
-
     @page { margin: 0; }
 }
-
 </style>
 
 <script>
@@ -165,4 +155,126 @@
 </script>
 
 {% endblock %}
+✅ Backend Adjustments (Admin Only Branch Filter)
+@admin_or_manager_required
+def history_sales(request):
+    start = request.GET.get('start')
+    end = request.GET.get('end')
+    month = request.GET.get('month')
+    branch_name = request.GET.get('branch')  # Admin-only
 
+    user = request.user
+
+    # Admin → all branches
+    if user.user_type == 0:
+        sales = DailySale.objects.all()
+        if branch_name:
+            sales = sales.filter(branch__name__icontains=branch_name)
+    else:
+        if not user.branch:
+            sales = DailySale.objects.none()
+        else:
+            sales = DailySale.objects.filter(branch=user.branch)
+
+    # Month filter overrides start/end
+    if month:
+        try:
+            year, month_num = map(int, month.split('-'))
+            sales = sales.filter(date__year=year, date__month=month_num)
+        except ValueError:
+            pass
+    elif start and end:
+        try:
+            start_date = datetime.strptime(start, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end, "%Y-%m-%d").date()
+            sales = sales.filter(date__range=[start_date, end_date])
+        except ValueError:
+            pass
+
+    totals = sales.aggregate(
+        total_breakfast=Sum('breakfast'),
+        total_lunch=Sum('lunch'),
+        total_dinner=Sum('dinner'),
+        total_delivery=Sum('delivery'),
+        total_pos=Sum('pos_amount'),
+        total_sales=Sum('total_sales'),
+    )
+
+    for key in totals:
+        totals[key] = totals[key] or 0
+
+    grand_total = totals['total_sales']
+
+    return render(request, 'sales/history.html', {
+        'sales': sales.order_by('-date'),
+        'totals': totals,
+        'grand_total': grand_total,
+    })
+✅ Now it works like this:
+
+Month filter at top.
+
+Start Date, End Date, Branch (admin-only), Filter & Clear all in one row.
+
+Print shows “Sales History” at top.
+
+Branch search only visible to admins.
+
+Clear button resets all filters.
+
+If you want, I can also make the branch filter auto-submit when typed, so admins don’t have to click “Filter” manually.
+
+Do you want me to add that?
+
+
+You said:
+whwre is my total sales under the monthy filter
+
+ChatGPT said:
+Ah! I see the issue — currently the “Total Sales” card isn’t updating or visible under the Monthly filter. Right now, your template only shows the table; the totals aren’t displayed in a card above the table.
+
+We can fix this by adding a summary card right under the Month filter row that dynamically shows the grand_total for the currently filtered data (whether by month, start/end date, or branch).
+
+Here’s the updated snippet to place after the Month filter form:
+
+<!-- Total Sales Card -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card shadow-sm text-white bg-success text-center">
+            <div class="card-body">
+                <p class="mb-1 fw-semibold">Total Sales</p>
+                <h3 class="fw-bold">₹ {{ grand_total }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+Full Integration:
+<!-- Month Filter at Top -->
+<form method="GET" class="row g-3 mb-4 align-items-end">
+    <div class="col-md-3">
+        <label class="form-label">Month</label>
+        <input type="month" name="month" class="form-control" value="{{ request.GET.month }}">
+    </div>
+</form>
+
+<!-- TOTAL SALES CARD -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card shadow-sm text-white bg-success text-center">
+            <div class="card-body">
+                <p class="mb-1 fw-semibold">Total Sales</p>
+                <h3 class="fw-bold">₹ {{ grand_total }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+✅ Now it will always show total sales for the current filter (month/start-end/branch).
+
+If you want, I can also add separate totals for Breakfast, Lunch, Dinner, Delivery, POS above the table, just like your table footer, so you can see all sub-totals at a glance.
+
+Do you want me to do that?
+
+
+
+
+{% endblock %}

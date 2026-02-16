@@ -466,29 +466,28 @@ from .decorators import admin_or_manager_required
 @admin_or_manager_required
 def dashboard_expenses(request):
     user = request.user
-    selected_date_str = request.GET.get('date')
-    branch_name = request.GET.get('branch', '').strip()
 
+    # Get selected date from GET params (optional)
+    selected_date_str = request.GET.get('date')
     if selected_date_str:
         try:
             selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
         except ValueError:
-            selected_date = None
+            selected_date = date.today()
     else:
-        selected_date = None
+        selected_date = None  # show all if no date selected
 
     # Base queryset
-    if user.user_type == 0:  # Admin
+    if user.user_type == 0:  # Admin sees all branches
         expenses = Expense.objects.all()
-        if branch_name:
-            expenses = expenses.filter(branch__name__icontains=branch_name)
-    else:  # Manager
+    else:  # Manager sees only their branch
         expenses = Expense.objects.filter(branch=user.branch)
 
+    # Filter by date if selected
     if selected_date:
         expenses = expenses.filter(date=selected_date)
 
-    # Daily total
+    # Calculate total
     daily_total = expenses.aggregate(total=Sum('amount'))['total'] or 0
 
     return render(request, 'expenses/dashboard.html', {

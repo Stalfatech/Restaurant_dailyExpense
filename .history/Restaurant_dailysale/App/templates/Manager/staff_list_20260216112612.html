@@ -9,30 +9,38 @@
     </div>
 
     <!-- Filter + Add Button Row -->
-    <div class="d-flex justify-content-between align-items-end mb-4">
+   <!-- Left Side : Filter -->
+<div>
+    <label class="fw-semibold mb-1">Filter by Role</label>
 
-        <!-- Left Side : Filter -->
-        <div>
-            <label class="fw-semibold mb-1">Filter by Role</label>
-            <form method="GET">
-                <select name="role"
-                        class="form-select shadow-sm"
-                        style="min-width: 220px;"
-                        onchange="this.form.submit()">
+    <form method="GET" class="d-flex gap-2 align-items-end">
 
-                    <option value="">All Roles</option>
+        <select name="role"
+                class="form-select shadow-sm"
+                style="min-width: 220px;"
+                onchange="this.form.submit()">
 
-                    {% for role in roles %}
-                        <option value="{{ role }}"
-                            {% if selected_role == role %}selected{% endif %}>
-                            {{ role }}
-                        </option>
-                    {% endfor %}
+            <option value="">All Roles</option>
 
-                </select>
-                
-            </form>
-        </div>
+            {% for role in roles %}
+                <option value="{{ role }}"
+                    {% if selected_role == role %}selected{% endif %}>
+                    {{ role }}
+                </option>
+            {% endfor %}
+
+        </select>
+
+        <!-- Clear Button -->
+        {% if selected_role %}
+        <a href="{% url 'staff_list' %}" class="btn btn-outline-secondary">
+            Clear
+        </a>
+        {% endif %}
+
+    </form>
+</div>
+
 
         <!-- Right Side : Add Staff Button -->
         <div>

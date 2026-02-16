@@ -30,7 +30,11 @@
                     {% endfor %}
 
                 </select>
-                
+                  {% if selected_role %}
+        <a href="{% url 'staff_list' %}" class="btn btn-outline-secondary">
+            Clear
+        </a>
+        {% endif %}
             </form>
         </div>
 

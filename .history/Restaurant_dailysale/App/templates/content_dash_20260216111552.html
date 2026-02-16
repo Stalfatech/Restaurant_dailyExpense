@@ -7,8 +7,8 @@
 <style>
 
 /* ================= Layout ================= */
-.dashboard-wrapper {
-    padding: 30px 35px 50px 35px; /* top | right | bottom | left */
+.container-fluid {
+    padding: 25px 35px;
 }
 
 /* ================= Summary Cards ================= */
@@ -109,20 +109,28 @@
     color: white;
     font-weight: bold;
 }
+.page-content {
+    padding: 20px 30px;
+}
+
+.container-fluid {
+    max-width: 100%;
+}
+
 
 </style>
 
+<div class="container-fluid px-4">
 
-<div class="container-fluid dashboard-wrapper">
 
     <!-- Page Title -->
-    <div class="row mb-4 mt-3">
+    <div class="row mb-4">
         <div class="col-12">
             <h3 class="fw-bold">Dashboard Overview</h3>
         </div>
     </div>
 
-    <!-- ================= FIRST ROW ================= -->
+    <!-- ================= FIRST ROW FULL WIDTH ================= -->
     <div class="row g-4 mb-4">
 
         <div class="col-lg-4">
@@ -167,8 +175,8 @@
 
     </div>
 
-    <!-- ================= SECOND ROW ================= -->
-    <div class="row g-4 mb-5">
+    <!-- ================= SECOND ROW FULL WIDTH ================= -->
+    <div class="row g-4">
 
         <!-- Expenses -->
         <div class="col-lg-4">

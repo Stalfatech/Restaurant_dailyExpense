@@ -21,7 +21,9 @@
 
             <ul class="navbar-nav mb-auto w-100">
 
-               
+                <li class="menu-label mt-2">
+                
+                </li>
 
                 {% if request.session.usertype == 0 %}
 
@@ -33,7 +35,7 @@
                             <a class="nav-link" href="{% url 'dashboard' %}">
                                 <i class="iconoir-report-columns menu-icon"></i>
                                 <span>Dashboard</span>
-                          
+                            
                             </a>
                         </li><!--end nav-item-->
                              <li class="nav-item">
@@ -501,7 +503,7 @@
                             <a class="nav-link" href="{% url 'dashboard' %}">
                                 <i class="iconoir-report-columns menu-icon"></i>
                                 <span>Dashboard</span>
-                           
+                                <span class="badge text-bg-info ms-auto">New</span>
                             </a>
                         </li><!--end nav-item-->
                                                  <li class="nav-item">

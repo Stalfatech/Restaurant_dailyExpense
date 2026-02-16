@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block 'content %}
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+    body {
+        background: #f4f6fb;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .dashboard-title {
+        font-weight: 700;
+        color: #2b2e4a;
+    }
+
+    /* KPI Cards */
+    .kpi-card {
+        border: none;
+        border-radius: 18px;
+        padding: 20px;
+        background: linear-gradient(135deg, #ffffff, #f1f3f9);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+    }
+
+    .kpi-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+    }
+
+    .kpi-title {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #6c757d;
+        margin-bottom: 8px;
+    }
+
+    .kpi-amount {
+        font-size: 26px;
+        font-weight: 700;
+        color: #2b2e4a;
+    }
+
+    .kpi-icon {
+        font-size: 26px;
+        opacity: 0.7;
+    }
+
+    /* Chart & Calendar Cards */
+    .card-modern {
+        border: none;
+        border-radius: 18px;
+        background: #ffffff;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        padding: 20px;
+    }
+
+    /* Tables */
+    .table-card {
+        border: none;
+        border-radius: 18px;
+        background: #ffffff;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    }
+
+    .table-card .card-header {
+        background: transparent;
+        border-bottom: 1px solid #eee;
+        font-weight: 600;
+        padding: 18px;
+    }
+
+    .table thead {
+        background: #f8f9fa;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f1f4ff;
+    }
+
+    /* Calendar */
+    #calendar {
+        text-align: center;
+    }
+
+    .calendar-header {
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 6px;
+        font-size: 13px;
+    }
+
+    .calendar-day {
+        padding: 8px;
+        border-radius: 8px;
+        background: #f4f6fb;
+    }
+
+    .calendar-day.today {
+        background: #4e73df;
+        color: #fff;
+        font-weight: bold;
+    }
+
+    .calendar-weekday {
+        font-weight: 600;
+        font-size: 12px;
+        color: #6c757d;
+    }
+
+</style>
+
+<div class="container-fluid py-4">
+
+    <!-- Title -->
+    <div class="row mb-4">
+        <div class="col">
+            <h3 class="dashboard-title">Dashboard Overview</h3>
+        </div>
+    </div>
+
+    <!-- KPI ROW -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-md-6 col-xl-3">
+            <a href="{% url 'dashboard_expenses' %}" class="text-decoration-none">
+                <div class="kpi-card d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="kpi-title">Daily Expense</div>
+                        <div class="kpi-amount">{{ daily_total }}</div>
+                    </div>
+                    <i class="fas fa-receipt text-danger kpi-icon"></i>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <a href="{% url 'daily_sales_dashboard' %}" class="text-decoration-none">
+                <div class="kpi-card d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="kpi-title">Daily Sales</div>
+                        <div class="kpi-amount">{{ daily_sales_total }}</div>
+                    </div>
+                    <i class="fas fa-cash-register text-success kpi-icon"></i>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="kpi-card d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="kpi-title">Net Profit</div>
+                    <div class="kpi-amount">{{ net_profit }}</div>
+                </div>
+                <i class="fas fa-chart-line text-primary kpi-icon"></i>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="kpi-card d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="kpi-title">Total Sales Today</div>
+                    <div class="kpi-amount">{{ totals.total_sales }}</div>
+                </div>
+                <i class="fas fa-wallet text-warning kpi-icon"></i>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- CHART + CALENDAR ROW -->
+    <div class="row g-4 mb-4">
+
+        <!-- Chart -->
+        <div class="col-lg-8">
+            <div class="card-modern">
+                <h6 class="fw-bold mb-3">Monthly Sales Overview</h6>
+                <canvas id="salesChart" height="120"></canvas>
+            </div>
+        </div>
+
+        <!-- Calendar -->
+        <div class="col-lg-4">
+            <div class="card-modern">
+                <h6 class="fw-bold mb-3">Calendar</h6>
+                <div id="calendar"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- TABLES ROW -->
+    <div class="row g-4">
+
+        <div class="col-lg-6">
+            <div class="card table-card">
+                <div class="card-header">Today's Expenses</div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Supplier</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for e in expenses %}
+                            <tr>
+                                <td>{{ e.date }}</td>
+                                <td>{{ e.category }}</td>
+                                <td>{{ e.supplier }}</td>
+                                <td class="text-end">{{ e.amount }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    No expenses recorded today.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card table-card">
+                <div class="card-header">Today's Sales Breakdown</div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <tbody>
+                            <tr><td>Breakfast</td><td class="text-end">{{ totals.total_breakfast }}</td></tr>
+                            <tr><td>Lunch</td><td class="text-end">{{ totals.total_lunch }}</td></tr>
+                            <tr><td>Dinner</td><td class="text-end">{{ totals.total_dinner }}</td></tr>
+                            <tr><td>Delivery</td><td class="text-end">{{ totals.total_delivery }}</td></tr>
+                            <tr><td>POS</td><td class="text-end">{{ totals.total_pos }}</td></tr>
+                            <tr><td>Cash</td><td class="text-end">{{ totals.total_cash }}</td></tr>
+                            <tr class="fw-bold bg-light">
+                                <td>Total Sales</td>
+                                <td class="text-end">{{ totals.total_sales }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+/* Chart */
+const salesData = {{ monthly_sales|safe }};
+if (salesData.length > 0) {
+    const labels = salesData.map(item =>
+        new Date(item.month).toLocaleString('default', { month: 'short' })
+    );
+    const totals = salesData.map(item => item.total);
+
+    new Chart(document.getElementById('salesChart'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Monthly Sales',
+                data: totals,
+                borderColor: '#4e73df',
+                backgroundColor: 'rgba(78,115,223,0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+
+/* Calendar */
+function generateCalendar() {
+    const calendar = document.getElementById("calendar");
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const monthNames = ["January","February","March","April","May","June",
+                        "July","August","September","October","November","December"];
+
+    let html = `<div class="calendar-header">${monthNames[month]} ${year}</div>
+                <div class="calendar-grid">`;
+
+    const weekdays = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    weekdays.forEach(day => {
+        html += `<div class="calendar-weekday">${day}</div>`;
+    });
+
+    for (let i = 0; i < firstDay; i++) html += `<div></div>`;
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const isToday = day === today.getDate();
+        html += `<div class="calendar-day ${isToday ? "today" : ""}">${day}</div>`;
+    }
+
+    html += `</div>`;
+    calendar.innerHTML = html;
+}
+
+generateCalendar();
+</script>
+
+{% endblock %}

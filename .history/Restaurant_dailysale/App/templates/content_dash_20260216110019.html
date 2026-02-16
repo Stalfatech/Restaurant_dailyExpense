@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block 'content' %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="container-fluid">
+
+    <!-- Page Title -->
+    <div class="row mb-3">
+        <div class="col-sm-12">
+            <h4 class="page-title fw-bold">Dashboard</h4>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+
+        <!-- Daily Expense -->
+        <div class="col-md-6 col-lg-3">
+            <a href="{% url 'dashboard_expenses' %}" class="text-decoration-none">
+                <div class="card shadow-sm border-0 rounded-3 bg-danger text-white hover-shadow">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-uppercase mb-1 small fw-semibold">Daily Expense</p>
+                            <h3 class="fw-bold">{{ daily_total }}</h3>
+                        </div>
+                        <i class="fas fa-receipt fa-2x"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Daily Sales -->
+        <div class="col-md-6 col-lg-3">
+            <a href="{% url 'daily_sales_dashboard' %}" class="text-decoration-none">
+                <div class="card shadow-sm border-0 rounded-3 bg-success text-white hover-shadow">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-uppercase mb-1 small fw-semibold">Daily Sales</p>
+                            <h3 class="fw-bold">{{ daily_sales_total }}</h3>
+                        </div>
+                        <i class="fas fa-cash-register fa-2x"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Net Profit -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card shadow-sm border-0 rounded-3 bg-primary text-white hover-shadow">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-uppercase mb-1 small fw-semibold">Net Profit</p>
+                        <h3 class="fw-bold">{{ net_profit }}</h3>
+                    </div>
+                    <i class="fas fa-chart-line fa-2x"></i>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Tables + Calendar Row -->
+ <!-- Tables Row -->
+<div class="row g-4 mt-2">
+
+    <!-- Today's Expenses -->
+    <div class="col-lg-6">
+        <div class="card modern-table-card expense-card">
+            <div class="card-header">
+                <h5 class="mb-0">Today's Expenses</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table modern-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Supplier</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for e in expenses %}
+                            <tr>
+                                <td>{{ e.date }}</td>
+                                <td>
+                                    <span class="badge category-badge">
+                                        {{ e.category }}
+                                    </span>
+                                </td>
+                                <td>{{ e.supplier }}</td>
+                                <td class="text-end fw-semibold text-danger">
+                                    {{ e.amount }}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    No expenses recorded today.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's Sales -->
+    <div class="col-lg-6">
+        <div class="card modern-table-card sales-card">
+            <div class="card-header">
+                <h5 class="mb-0">Today's Sales</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table modern-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Breakfast</td><td class="text-end text-success fw-semibold">{{ totals.total_breakfast }}</td></tr>
+                            <tr><td>Lunch</td><td class="text-end text-success fw-semibold">{{ totals.total_lunch }}</td></tr>
+                            <tr><td>Dinner</td><td class="text-end text-success fw-semibold">{{ totals.total_dinner }}</td></tr>
+                            <tr><td>Delivery</td><td class="text-end text-success fw-semibold">{{ totals.total_delivery }}</td></tr>
+                            <tr><td>POS</td><td class="text-end text-success fw-semibold">{{ totals.total_pos }}</td></tr>
+                            <tr><td>Cash</td><td class="text-end text-success fw-semibold">{{ totals.total_cash }}</td></tr>
+                            <tr class="total-row">
+                                <td>Total Sales</td>
+                                <td class="text-end">{{ totals.total_sales }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+        <!-- Calendar -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-header bg-light fw-bold">
+                    Calendar
+                </div>
+                <div class="card-body">
+                    <div id="calendar"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Calendar Script -->
+<script>
+function generateCalendar() {
+    const calendar = document.getElementById("calendar");
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const monthNames = ["January","February","March","April","May","June",
+                        "July","August","September","October","November","December"];
+
+    let html = `<h6 class="text-center fw-bold mb-3">${monthNames[month]} ${year}</h6>`;
+    html += `<div class="calendar-grid">`;
+
+    const weekdays = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    weekdays.forEach(day => {
+        html += `<div class="calendar-weekday">${day}</div>`;
+    });
+
+    for (let i = 0; i < firstDay; i++) {
+        html += `<div></div>`;
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const isToday = day === today.getDate();
+        html += `<div class="calendar-day ${isToday ? 'today' : ''}">${day}</div>`;
+    }
+
+    html += `</div>`;
+    calendar.innerHTML = html;
+}
+
+generateCalendar();
+</script>
+
+<style>
+.hover-shadow:hover {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15) !important;
+    transition: 0.3s;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    text-align: center;
+}
+
+.calendar-weekday {
+    font-weight: 600;
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.calendar-day {
+    padding: 8px;
+    border-radius: 6px;
+    background: #f8f9fa;
+}
+
+.calendar-day.today {
+    background: #0d6efd;
+    color: white;
+    font-weight: bold;
+}
+</style>
+
+{% endblock %}

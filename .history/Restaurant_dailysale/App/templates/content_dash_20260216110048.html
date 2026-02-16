@@ -3,38 +3,20 @@
 
 {% block 'content' %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <style>
 
-/* ================= Layout ================= */
-.container-fluid {
-    padding: 25px 35px;
-}
-
-/* ================= Summary Cards ================= */
-.summary-card {
-    border: none;
-    border-radius: 18px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-    transition: 0.3s ease;
-}
-
-.summary-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 15px 40px rgba(0,0,0,0.12);
-}
-
-/* ================= Modern Table Cards ================= */
+/* Modern Table Card */
 .modern-table-card {
     border: none;
-    border-radius: 18px;
+    border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 8px 25px rgba(0,0,0,0.05);
-    transition: 0.3s ease;
+    transition: 0.3s;
 }
 
 .modern-table-card:hover {
     transform: translateY(-4px);
+    box-shadow: 0 12px 35px rgba(0,0,0,0.08);
 }
 
 /* Gradient Headers */
@@ -42,14 +24,14 @@
     background: linear-gradient(135deg, #ff6b6b, #ff8787);
     color: white;
     font-weight: 600;
-    padding: 16px 20px;
+    padding: 15px 20px;
 }
 
 .sales-card .card-header {
     background: linear-gradient(135deg, #20c997, #38d9a9);
     color: white;
     font-weight: 600;
-    padding: 16px 20px;
+    padding: 15px 20px;
 }
 
 /* Modern Table */
@@ -58,6 +40,10 @@
     font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 1px;
+}
+
+.modern-table tbody tr {
+    transition: 0.2s;
 }
 
 .modern-table tbody tr:hover {
@@ -84,54 +70,29 @@
     color: #198754;
 }
 
-/* Calendar */
-.calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 6px;
-    text-align: center;
-}
-
-.calendar-weekday {
-    font-weight: 600;
-    font-size: 12px;
-    color: #6c757d;
-}
-
-.calendar-day {
-    padding: 10px;
-    border-radius: 6px;
-    background: #f8f9fa;
-}
-
-.calendar-day.today {
-    background: #0d6efd;
-    color: white;
-    font-weight: bold;
-}
-
 </style>
 
 
 <div class="container-fluid">
 
     <!-- Page Title -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <h3 class="fw-bold">Dashboard Overview</h3>
+    <div class="row mb-3">
+        <div class="col-sm-12">
+            <h4 class="page-title fw-bold">Dashboard</h4>
         </div>
     </div>
 
-    <!-- ================= FIRST ROW FULL WIDTH ================= -->
-    <div class="row g-4 mb-4">
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
 
-        <div class="col-lg-4">
+        <!-- Daily Expense -->
+        <div class="col-md-6 col-lg-3">
             <a href="{% url 'dashboard_expenses' %}" class="text-decoration-none">
-                <div class="card summary-card bg-danger text-white h-100">
+                <div class="card shadow-sm border-0 rounded-3 bg-danger text-white hover-shadow">
                     <div class="card-body d-flex justify-content-between align-items-center">
                         <div>
                             <p class="text-uppercase mb-1 small fw-semibold">Daily Expense</p>
-                            <h2 class="fw-bold">{{ daily_total }}</h2>
+                            <h3 class="fw-bold">{{ daily_total }}</h3>
                         </div>
                         <i class="fas fa-receipt fa-2x"></i>
                     </div>
@@ -139,13 +100,14 @@
             </a>
         </div>
 
-        <div class="col-lg-4">
+        <!-- Daily Sales -->
+        <div class="col-md-6 col-lg-3">
             <a href="{% url 'daily_sales_dashboard' %}" class="text-decoration-none">
-                <div class="card summary-card bg-success text-white h-100">
+                <div class="card shadow-sm border-0 rounded-3 bg-success text-white hover-shadow">
                     <div class="card-body d-flex justify-content-between align-items-center">
                         <div>
                             <p class="text-uppercase mb-1 small fw-semibold">Daily Sales</p>
-                            <h2 class="fw-bold">{{ daily_sales_total }}</h2>
+                            <h3 class="fw-bold">{{ daily_sales_total }}</h3>
                         </div>
                         <i class="fas fa-cash-register fa-2x"></i>
                     </div>
@@ -153,12 +115,13 @@
             </a>
         </div>
 
-        <div class="col-lg-4">
-            <div class="card summary-card bg-primary text-white h-100">
+        <!-- Net Profit -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card shadow-sm border-0 rounded-3 bg-primary text-white hover-shadow">
                 <div class="card-body d-flex justify-content-between align-items-center">
                     <div>
                         <p class="text-uppercase mb-1 small fw-semibold">Net Profit</p>
-                        <h2 class="fw-bold">{{ net_profit }}</h2>
+                        <h3 class="fw-bold">{{ net_profit }}</h3>
                     </div>
                     <i class="fas fa-chart-line fa-2x"></i>
                 </div>
@@ -167,52 +130,70 @@
 
     </div>
 
-    <!-- ================= SECOND ROW FULL WIDTH ================= -->
-    <div class="row g-4">
+    <!-- Tables + Calendar Row -->
+ <!-- Tables Row -->
+<div class="row g-4 mt-2">
 
-        <!-- Expenses -->
-        <div class="col-lg-4">
-            <div class="card modern-table-card expense-card h-100">
-                <div class="card-header">Today's Expenses</div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table modern-table mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Category</th>
-                                    <th>Supplier</th>
-                                    <th class="text-end">Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for e in expenses %}
-                                <tr>
-                                    <td>{{ e.date }}</td>
-                                    <td><span class="badge category-badge">{{ e.category }}</span></td>
-                                    <td>{{ e.supplier }}</td>
-                                    <td class="text-end fw-semibold text-danger">{{ e.amount }}</td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="4" class="text-center text-muted py-4">
-                                        No expenses recorded today.
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+    <!-- Today's Expenses -->
+    <div class="col-lg-6">
+        <div class="card modern-table-card expense-card">
+            <div class="card-header">
+                <h5 class="mb-0">Today's Expenses</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table modern-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Supplier</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for e in expenses %}
+                            <tr>
+                                <td>{{ e.date }}</td>
+                                <td>
+                                    <span class="badge category-badge">
+                                        {{ e.category }}
+                                    </span>
+                                </td>
+                                <td>{{ e.supplier }}</td>
+                                <td class="text-end fw-semibold text-danger">
+                                    {{ e.amount }}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    No expenses recorded today.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Sales -->
-        <div class="col-lg-4">
-            <div class="card modern-table-card sales-card h-100">
-                <div class="card-header">Today's Sales</div>
-                <div class="card-body p-0">
+    <!-- Today's Sales -->
+    <div class="col-lg-6">
+        <div class="card modern-table-card sales-card">
+            <div class="card-header">
+                <h5 class="mb-0">Today's Sales</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
                     <table class="table modern-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             <tr><td>Breakfast</td><td class="text-end text-success fw-semibold">{{ totals.total_breakfast }}</td></tr>
                             <tr><td>Lunch</td><td class="text-end text-success fw-semibold">{{ totals.total_lunch }}</td></tr>
@@ -229,10 +210,14 @@
                 </div>
             </div>
         </div>
+    </div>
+
+</div>
+
 
         <!-- Calendar -->
         <div class="col-lg-4">
-            <div class="card shadow-sm border-0 rounded-3 h-100">
+            <div class="card shadow-sm border-0 rounded-3">
                 <div class="card-header bg-light fw-bold">
                     Calendar
                 </div>
@@ -246,7 +231,7 @@
 
 </div>
 
-
+<!-- Calendar Script -->
 <script>
 function generateCalendar() {
     const calendar = document.getElementById("calendar");
@@ -268,7 +253,9 @@ function generateCalendar() {
         html += `<div class="calendar-weekday">${day}</div>`;
     });
 
-    for (let i = 0; i < firstDay; i++) html += `<div></div>`;
+    for (let i = 0; i < firstDay; i++) {
+        html += `<div></div>`;
+    }
 
     for (let day = 1; day <= daysInMonth; day++) {
         const isToday = day === today.getDate();
@@ -281,5 +268,37 @@ function generateCalendar() {
 
 generateCalendar();
 </script>
+
+<style>
+.hover-shadow:hover {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15) !important;
+    transition: 0.3s;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    text-align: center;
+}
+
+.calendar-weekday {
+    font-weight: 600;
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.calendar-day {
+    padding: 8px;
+    border-radius: 6px;
+    background: #f8f9fa;
+}
+
+.calendar-day.today {
+    background: #0d6efd;
+    color: white;
+    font-weight: bold;
+}
+</style>
 
 {% endblock %}

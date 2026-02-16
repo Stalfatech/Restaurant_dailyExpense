@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block 'content' %}
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+    body {
+        background-color: #f5f7fb;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .page-title {
+        font-weight: 700;
+        color: #2c3e50;
+    }
+
+    /* Modern Cards */
+    .modern-card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+
+    .modern-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 35px rgba(0,0,0,0.12);
+    }
+
+    .kpi-label {
+        font-size: 13px;
+        text-transform: uppercase;
+        opacity: 0.85;
+        letter-spacing: 1px;
+        margin-bottom: 6px;
+    }
+
+    .kpi-value {
+        font-weight: 700;
+        font-size: 28px;
+    }
+
+    .icon-circle {
+        width: 55px;
+        height: 55px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        background: rgba(255,255,255,0.2);
+    }
+
+    /* Table Cards */
+    .modern-table-card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+    }
+
+    .modern-header {
+        background: #ffffff;
+        border-bottom: 1px solid #eee;
+        font-weight: 600;
+        padding: 15px 20px;
+    }
+
+    .table thead {
+        background-color: #f8f9fa;
+        font-size: 12px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f2f6ff;
+        transition: 0.2s;
+    }
+
+    .badge {
+        padding: 6px 10px;
+        font-size: 12px;
+        border-radius: 6px;
+    }
+
+</style>
+
+<div class="container-fluid py-4">
+
+    <!-- Page Title -->
+    <div class="row mb-4">
+        <div class="col">
+            <h3 class="page-title">Dashboard Overview</h3>
+        </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="row g-4 mb-4">
+
+        <!-- Daily Expense -->
+        <div class="col-md-6 col-xl-4">
+            <a href="{% url 'dashboard_expenses' %}" class="text-decoration-none">
+                <div class="card modern-card bg-danger text-white">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="kpi-label">Daily Expense</p>
+                            <h2 class="kpi-value">{{ daily_total }}</h2>
+                        </div>
+                        <div class="icon-circle">
+                            <i class="fas fa-receipt"></i>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Daily Sales -->
+        <div class="col-md-6 col-xl-4">
+            <a href="{% url 'daily_sales_dashboard' %}" class="text-decoration-none">
+                <div class="card modern-card bg-success text-white">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="kpi-label">Daily Sales</p>
+                            <h2 class="kpi-value">{{ daily_sales_total }}</h2>
+                        </div>
+                        <div class="icon-circle">
+                            <i class="fas fa-cash-register"></i>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Net Profit -->
+        <div class="col-md-6 col-xl-4">
+            <div class="card modern-card bg-primary text-white">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="kpi-label">Net Profit</p>
+                        <h2 class="kpi-value">{{ net_profit }}</h2>
+                    </div>
+                    <div class="icon-circle">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Tables Section -->
+    <div class="row g-4">
+
+        <!-- Today's Expenses -->
+        <div class="col-lg-6">
+            <div class="card modern-table-card">
+                <div class="modern-header">
+                    Today's Expenses
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Supplier</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for e in expenses %}
+                            <tr>
+                                <td>{{ e.date }}</td>
+                                <td><span class="badge bg-secondary">{{ e.category }}</span></td>
+                                <td>{{ e.supplier }}</td>
+                                <td class="text-end">{{ e.amount }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    No expenses recorded today.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Today's Sales -->
+        <div class="col-lg-6">
+            <div class="card modern-table-card">
+                <div class="modern-header">
+                    Today's Sales
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><span class="badge bg-warning text-dark">Breakfast</span></td><td class="text-end">{{ totals.total_breakfast }}</td></tr>
+                            <tr><td><span class="badge bg-info text-dark">Lunch</span></td><td class="text-end">{{ totals.total_lunch }}</td></tr>
+                            <tr><td><span class="badge bg-success">Dinner</span></td><td class="text-end">{{ totals.total_dinner }}</td></tr>
+                            <tr><td><span class="badge bg-secondary">Delivery</span></td><td class="text-end">{{ totals.total_delivery }}</td></tr>
+                            <tr><td><span class="badge bg-primary">POS Amount</span></td><td class="text-end">{{ totals.total_pos }}</td></tr>
+                            <tr><td><span class="badge bg-dark">Cash Sales</span></td><td class="text-end">{{ totals.total_cash }}</td></tr>
+                            <tr class="fw-bold bg-light"><td>Total Sales</td><td class="text-end">{{ totals.total_sales }}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

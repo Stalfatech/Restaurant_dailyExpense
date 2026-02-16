@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block 'content' %}
+
+<div class="container mt-4">
+
+    <h3>CashBook Dashboard</h3>
+
+  <form method="GET" class="mb-3 d-flex gap-2">
+    <input type="date" name="date" value="{{ selected_date|default:'' }}" class="form-control" style="max-width:200px;">
+    <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+    <a href="{% url 'cashbook_dashboard' %}" class="btn btn-secondary btn-sm">Reset</a>
+</form>
+
+
+    <div class="card shadow">
+        <div class="card-body">
+
+            <table class="table table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>
+                        <th>Branch</th>
+                        <th>Opening</th>
+                        <th>Cash Sales</th>
+                        <th>Expenses</th>
+                        <th>Closing</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cash in cashbooks %}
+                    <tr>
+                        <td>{{ cash.branch.name }}</td>
+                        <td>{{ cash.opening_balance }}</td>
+                        <td>{{ cash.cash_sales }}</td>
+                        <td>{{ cash.expenses }}</td>
+                        <td><strong>{{ cash.closing_balance }}</strong></td>
+                        <td>
+                            {% if cash.is_closed %}
+                                <span class="badge bg-danger">Closed</span>
+                            {% else %}
+                                <span class="badge bg-success">Open</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No Data Found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

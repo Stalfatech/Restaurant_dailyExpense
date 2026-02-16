@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% load static %}
+{% block 'content' %}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>{{ page_title }}</h4>
+
+        <a href="{% url 'daily_sales_dashboard' %}" class="btn btn-secondary">
+            ← Back to Sales
+        </a>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+
+            <p class="text-muted">
+                Fields marked with <span class="text-danger">*</span> are mandatory.
+            </p>
+<div class="alert alert-light-blue">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            <
+
+            <form method="POST" id="salesForm">
+                {% csrf_token %}
+
+                <div class="row">
+
+                    <!-- Date -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Date <span class="text-danger">*</span></label>
+                        {{ form.date }}
+                        <div class="text-danger">{{ form.date.errors }}</div>
+                    </div>
+
+                    <!-- Branch (Admin Only) -->
+                    {% if user_type == 0 %}
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Branch <span class="text-danger">*</span></label>
+                        {{ form.branch }}
+                        <div class="text-danger">{{ form.branch.errors }}</div>
+                    </div>
+                    {% endif %}
+
+                </div>
+
+                <hr>
+                <h5 class="mb-3">Dining Sales</h5>
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Breakfast</label>
+                        {{ form.breakfast }}
+                        <div class="text-danger">{{ form.breakfast.errors }}</div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Lunch</label>
+                        {{ form.lunch }}
+                        <div class="text-danger">{{ form.lunch.errors }}</div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Dinner</label>
+                        {{ form.dinner }}
+                        <div class="text-danger">{{ form.dinner.errors }}</div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Delivery</label>
+                        {{ form.delivery }}
+                        <div class="text-danger">{{ form.delivery.errors }}</div>
+                    </div>
+
+                </div>
+
+                <hr>
+                <h5 class="mb-3">POS Sale</h5>
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">POS Amount</label>
+                        {{ form.pos_amount }}
+                        <div class="text-danger">{{ form.pos_amount.errors }}</div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">POS Type</label>
+                        {{ form.pos_type }}
+                        <div class="text-danger">{{ form.pos_type.errors }}</div>
+                    </div>
+
+                </div>
+
+                <button type="submit" class="btn btn-success w-100 mt-3">
+                    Save Daily Sale
+                </button>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- Optional Frontend Validation -->
+<script>
+document.getElementById("salesForm").addEventListener("submit", function(event) {
+    let requiredFields = event.target.querySelectorAll("input[required], select[required]");
+    let valid = true;
+
+    requiredFields.forEach(function(field) {
+        if (field.offsetParent === null) return;
+        let errorDiv = field.closest(".mb-3").querySelector(".text-danger");
+        if (!field.value.trim()) {
+            field.classList.add("is-invalid");
+            errorDiv.textContent = "This field is required.";
+            valid = false;
+        } else {
+            field.classList.remove("is-invalid");
+            errorDiv.textContent = "";
+        }
+    });
+
+    if (!valid) event.preventDefault();
+});
+</script>
+
+<style>
+.is-invalid { border-color: #dc3545 !important; }
+</style>
+
+{% endblock %}

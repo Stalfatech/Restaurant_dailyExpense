@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block 'content' %}
+
+<div class="container mt-4">
+
+      <h3 class="fw-bold">CashBook Dashboard</h3>
+        {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+  <form method="GET" class="mb-3 d-flex gap-2">
+    <input type="date" name="date" value="{{ selected_date|default:'' }}" class="form-control" style="max-width:200px;">
+    <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+    <a href="{% url 'cashbook_dashboard' %}" class="btn btn-secondary btn-sm">Reset</a>
+</form>
+
+
+    <div class="card shadow">
+        <div class="card-body">
+
+            <table class="table table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Date</th>
+                        <th>Branch</th>
+                        <th>Opening</th>
+                        <th>Cash Sales</th>
+                        <th>Expenses</th>
+                        <th>Closing</th>
+                        <th>Status</th>
+                        
+                        {% if request.user.user_type == 0 %}
+                <th>Action</th>  <!-- Only admins see this -->
+            {% endif %}
+
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cash in cashbooks %}
+                    <tr>
+                        <td>{{ cash.date|date:"d-m-Y" }}</td>
+                        <td>{{ cash.branch.name }}</td>
+                        <td>{{ cash.opening_balance }}</td>
+                        <td>{{ cash.cash_sales }}</td>
+                        <td>{{ cash.expenses }}</td>
+                        <td><strong>{{ cash.closing_balance }}</strong></td>
+                        <td>
+                            {% if cash.is_closed %}
+                                <span class="badge bg-danger">Closed</span>
+                            {% else %}
+                                <span class="badge bg-success">Open</span>
+                            {% endif %}
+                        </td>
+                        
+                        {% if request.user.user_type == 0 %}
+   <td>
+    {% if not cash.is_closed %}
+        <a href="{% url 'toggle_day' cash.branch.id cash.date %}"
+           class="btn btn-sm btn-danger">
+           Close Day
+        </a>
+    {% else %}
+        <a href="{% url 'toggle_day' cash.branch.id cash.date %}"
+           class="btn btn-sm btn-success">
+           Reopen Day
+        </a>
+    {% endif %}
+</td>
+{% endif %}
+
+
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No Data Found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

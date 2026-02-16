@@ -6,33 +6,42 @@
 
 <style>
 
-/* ================= PREMIUM DARK BACKGROUND ================= */
-body {
- 
-
-    font-family: 'Inter', sans-serif;
-}
-
-/* ================= Layout ================= */
+/* ================= DASHBOARD WRAPPER ================= */
 .dashboard-wrapper {
-    padding: 40px 40px 60px 40px;
+    padding: 40px;
+    background: #f4f6f9;
+    border-radius: 20px;
 }
 
-/* ================= GLASS CARD BASE ================= */
+/* ================= AUTO DARK MODE SUPPORT ================= */
+@media (prefers-color-scheme: dark) {
+    .dashboard-wrapper {
+        background: transparent;
+    }
+}
+
+/* ================= GLASS CARD ================= */
 .glass-card {
- 
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    border-radius: 22px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-    transition: 0.35s ease;
-    color: #1e3144;
+    background: #ffffff;
+    border-radius: 20px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.05);
+    transition: 0.3s ease;
 }
 
 .glass-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+}
+
+/* Dark Mode Card */
+@media (prefers-color-scheme: dark) {
+    .glass-card {
+        background: rgba(255,255,255,0.05);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    }
 }
 
 /* ================= SUMMARY CARDS ================= */
@@ -45,58 +54,62 @@ body {
     font-weight: 700;
 }
 
-.summary-card i {
-    opacity: 0.8;
-}
-
 /* Accent Borders */
-.border-danger-glow {
-    border-left: 4px solid #ef4444;
-}
-.border-success-glow {
-    border-left: 4px solid #22c55e;
-}
-.border-primary-glow {
-    border-left: 4px solid #3b82f6;
-}
+.border-danger-glow { border-left: 5px solid #ef4444; }
+.border-success-glow { border-left: 5px solid #22c55e; }
+.border-primary-glow { border-left: 5px solid #3b82f6; }
 
-/* ================= TABLES ================= */
+/* ================= TABLE ================= */
 .table {
- 
-    color: #e2e8f0;
+    background: transparent !important;
 }
 
 .table th {
     font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 1px;
-    color: #1f3c66;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    color: #64748b;
+    border-bottom: 1px solid #e5e7eb;
 }
 
 .table td {
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid #f1f5f9;
 }
 
 .table tbody tr:hover {
-    background: rgba(255,255,255,0.08);
+    background: #f8fafc;
 }
 
+/* Dark Table */
+@media (prefers-color-scheme: dark) {
+    .table th {
+        color: #94a3b8;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .table td {
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .table tbody tr:hover {
+        background: rgba(255,255,255,0.08);
+    }
+}
+
+/* ================= BADGE ================= */
 .category-badge {
-    background: rgba(38, 41, 226, 0.25);
-    color: #0e0f13;
+    background: #eef2ff;
+    color: #4f46e5;
     padding: 6px 12px;
     border-radius: 30px;
     font-size: 12px;
 }
 
-.total-row {
-    background: rgba(255,255,255,0.06);
-    font-weight: 700;
-}
-
-.total-row td:last-child {
-    color: #4ade80;
+@media (prefers-color-scheme: dark) {
+    .category-badge {
+        background: rgba(99,102,241,0.2);
+        color: #a5b4fc;
+    }
 }
 
 /* ================= CALENDAR ================= */
@@ -109,20 +122,19 @@ body {
 
 .calendar-weekday {
     font-size: 12px;
-    color: #94a3b8;
+    color: #64748b;
     font-weight: 600;
 }
 
 .calendar-day {
     padding: 12px;
-    border-radius: 10px;
-    background: rgba(255,255,255,0.06);
+    border-radius: 12px;
+    background: #f1f5f9;
     transition: 0.2s ease;
 }
 
 .calendar-day:hover {
-    background: rgba(255,255,255,0.12);
-    transform: scale(1.05);
+    background: #e2e8f0;
 }
 
 .calendar-day.today {
@@ -131,15 +143,18 @@ body {
     font-weight: bold;
 }
 
-/* ================= Fade Animation ================= */
-.fade-in {
-    animation: fadeIn 0.7s ease forwards;
-    opacity: 0;
-}
+/* Dark Calendar */
+@media (prefers-color-scheme: dark) {
+    .calendar-weekday {
+        color: #94a3b8;
+    }
 
-@keyframes fadeIn {
-    to {
-        opacity: 1;
+    .calendar-day {
+        background: rgba(255,255,255,0.06);
+    }
+
+    .calendar-day:hover {
+        background: rgba(255,255,255,0.12);
     }
 }
 
@@ -159,7 +174,6 @@ body {
     <div class="row g-4 mb-4 fade-in">
 
         <div class="col-lg-4">
-             <a href="{% url 'dashboard_expenses' %}" class="text-decoration-none">
             <div class="glass-card summary-card border-danger-glow">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -169,11 +183,9 @@ body {
                     <i class="fas fa-receipt fa-2x"></i>
                 </div>
             </div>
-            </a>
         </div>
 
         <div class="col-lg-4">
-                <a href="{% url 'daily_sales_dashboard' %}" class="text-decoration-none">
             <div class="glass-card summary-card border-success-glow">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -183,7 +195,6 @@ body {
                     <i class="fas fa-cash-register fa-2x"></i>
                 </div>
             </div>
-            </a>
         </div>
 
         <div class="col-lg-4">

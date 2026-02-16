@@ -6,10 +6,10 @@
 
 <style>
 
-/* ================= PREMIUM DARK BACKGROUND ================= */
+/* ================= WHITE BACKGROUND ================= */
 body {
- 
-
+    background: #f4f6f9;
+    color: #1e293b;
     font-family: 'Inter', sans-serif;
 }
 
@@ -18,21 +18,18 @@ body {
     padding: 40px 40px 60px 40px;
 }
 
-/* ================= GLASS CARD BASE ================= */
+/* ================= GLASS LIGHT CARD ================= */
 .glass-card {
- 
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+    background: rgba(255, 255, 255, 0.9);
     border-radius: 22px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
     transition: 0.35s ease;
-    color: #1e3144;
 }
 
 .glass-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+    transform: translateY(-6px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.1);
 }
 
 /* ================= SUMMARY CARDS ================= */
@@ -45,58 +42,55 @@ body {
     font-weight: 700;
 }
 
-.summary-card i {
-    opacity: 0.8;
-}
-
 /* Accent Borders */
 .border-danger-glow {
-    border-left: 4px solid #ef4444;
+    border-left: 5px solid #ef4444;
 }
 .border-success-glow {
-    border-left: 4px solid #22c55e;
+    border-left: 5px solid #22c55e;
 }
 .border-primary-glow {
-    border-left: 4px solid #3b82f6;
+    border-left: 5px solid #3b82f6;
 }
 
 /* ================= TABLES ================= */
 .table {
- 
-    color: #e2e8f0;
+    background: transparent !important;
+    color: #1e293b;
 }
 
 .table th {
     font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 1px;
-    color: #1f3c66;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    color: #64748b;
+    border-bottom: 1px solid #e5e7eb;
 }
 
 .table td {
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid #f1f5f9;
 }
 
 .table tbody tr:hover {
-    background: rgba(255,255,255,0.08);
+    background: #f8fafc;
 }
 
 .category-badge {
-    background: rgba(38, 41, 226, 0.25);
-    color: #0e0f13;
+    background: #eef2ff;
+    color: #4f46e5;
     padding: 6px 12px;
     border-radius: 30px;
     font-size: 12px;
 }
 
+/* ================= TOTAL ROW ================= */
 .total-row {
-    background: rgba(255,255,255,0.06);
+    background: #f8fafc;
     font-weight: 700;
 }
 
 .total-row td:last-child {
-    color: #4ade80;
+    color: #16a34a;
 }
 
 /* ================= CALENDAR ================= */
@@ -109,20 +103,19 @@ body {
 
 .calendar-weekday {
     font-size: 12px;
-    color: #94a3b8;
+    color: #64748b;
     font-weight: 600;
 }
 
 .calendar-day {
     padding: 12px;
-    border-radius: 10px;
-    background: rgba(255,255,255,0.06);
+    border-radius: 12px;
+    background: #f1f5f9;
     transition: 0.2s ease;
 }
 
 .calendar-day:hover {
-    background: rgba(255,255,255,0.12);
-    transform: scale(1.05);
+    background: #e2e8f0;
 }
 
 .calendar-day.today {
@@ -131,7 +124,7 @@ body {
     font-weight: bold;
 }
 
-/* ================= Fade Animation ================= */
+/* ================= SMOOTH FADE ================= */
 .fade-in {
     animation: fadeIn 0.7s ease forwards;
     opacity: 0;
@@ -159,7 +152,6 @@ body {
     <div class="row g-4 mb-4 fade-in">
 
         <div class="col-lg-4">
-             <a href="{% url 'dashboard_expenses' %}" class="text-decoration-none">
             <div class="glass-card summary-card border-danger-glow">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -169,11 +161,9 @@ body {
                     <i class="fas fa-receipt fa-2x"></i>
                 </div>
             </div>
-            </a>
         </div>
 
         <div class="col-lg-4">
-                <a href="{% url 'daily_sales_dashboard' %}" class="text-decoration-none">
             <div class="glass-card summary-card border-success-glow">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -183,7 +173,6 @@ body {
                     <i class="fas fa-cash-register fa-2x"></i>
                 </div>
             </div>
-            </a>
         </div>
 
         <div class="col-lg-4">

@@ -1,0 +1,368 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block 'content' %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+
+/* ================= MAIN WRAPPER ================= */
+.dashboard-wrapper {
+    padding: 50px 50px 70px 50px;
+    background: linear-gradient(135deg, #eef2ff, #f8fafc);
+    min-height: 100vh;
+}
+
+/* Auto dark background */
+@media (prefers-color-scheme: dark) {
+    .dashboard-wrapper {
+        background: linear-gradient(135deg, #0f172a, #111827);
+    }
+}
+
+/* ================= PREMIUM DARK CARDS ================= */
+.summary-card,
+.modern-table-card {
+    border: none;
+    border-radius: 22px;
+    background: #111827;
+    color: #f8fafc;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.35);
+    transition: all 0.35s ease;
+    backdrop-filter: blur(14px);
+}
+
+/* Light mode card override */
+@media (prefers-color-scheme: light) {
+    .summary-card,
+    .modern-table-card {
+        background: #ffffff;
+        color: #1e293b;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.06);
+    }
+}
+
+.summary-card:hover,
+.modern-table-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 25px 60px rgba(0,0,0,0.45);
+}
+
+/* ================= SUMMARY CARD BODY ================= */
+.summary-card .card-body {
+    padding: 30px;
+}
+
+.summary-card h2 {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+/* Gradient Accent Strip */
+.summary-card::before {
+    content: "";
+    position: absolute;
+    height: 6px;
+    width: 100%;
+    top: 0;
+    left: 0;
+    border-top-left-radius: 22px;
+    border-top-right-radius: 22px;
+}
+
+.bg-danger::before {
+    background: linear-gradient(90deg, #ff4d4d, #ff8787);
+}
+
+.bg-success::before {
+    background: linear-gradient(90deg, #20c997, #38d9a9);
+}
+
+.bg-primary::before {
+    background: linear-gradient(90deg, #4c6ef5, #748ffc);
+}
+
+/* Remove solid bootstrap backgrounds */
+.bg-danger,
+.bg-success,
+.bg-primary {
+    background: transparent !important;
+}
+
+/* ================= PREMIUM TABLE ================= */
+.modern-table {
+    margin: 0;
+    font-size: 14px;
+}
+
+.modern-table thead {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.modern-table td,
+.modern-table th {
+    padding: 16px 20px;
+    border: none;
+}
+
+/* Row Hover */
+.modern-table tbody tr {
+    transition: 0.25s ease;
+}
+
+.modern-table tbody tr:hover {
+    background: rgba(255,255,255,0.06);
+}
+
+/* Light mode hover */
+@media (prefers-color-scheme: light) {
+    .modern-table tbody tr:hover {
+        background: #f1f5ff;
+    }
+}
+
+/* ================= BADGES ================= */
+.category-badge {
+    background: rgba(99,102,241,0.15);
+    color: #818cf8;
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* ================= TOTAL ROW ================= */
+.total-row {
+    font-weight: 700;
+    font-size: 15px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+/* ================= CALENDAR CARD ================= */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    text-align: center;
+}
+
+.calendar-weekday {
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0.6;
+}
+
+.calendar-day {
+    padding: 14px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.05);
+    transition: 0.2s ease;
+}
+
+.calendar-day:hover {
+    background: rgba(255,255,255,0.12);
+    transform: scale(1.05);
+}
+
+.calendar-day.today {
+    background: linear-gradient(135deg, #4c6ef5, #3b5bdb);
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 6px 20px rgba(76,110,245,0.5);
+}
+
+/* ================= HEADER STYLE ================= */
+.card-header {
+    font-weight: 600;
+    padding: 20px 25px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    background: transparent !important;
+}
+
+/* ================= SMOOTH ANIMATION ================= */
+.dashboard-wrapper {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+</style>
+
+
+
+<div class="container-fluid dashboard-wrapper">
+
+    <!-- Page Title -->
+    <div class="row mb-4 mt-3">
+        <div class="col-12">
+            <h3 class="fw-bold">Dashboard Overview</h3>
+        </div>
+    </div>
+
+    <!-- ================= FIRST ROW ================= -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-lg-4">
+            <a href="{% url 'dashboard_expenses' %}" class="text-decoration-none">
+                <div class="card summary-card bg-danger text-white h-100">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-uppercase mb-1 small fw-semibold">Daily Expense</p>
+                            <h2 class="fw-bold">{{ daily_total }}</h2>
+                        </div>
+                        <i class="fas fa-receipt fa-2x"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-lg-4">
+            <a href="{% url 'daily_sales_dashboard' %}" class="text-decoration-none">
+                <div class="card summary-card bg-success text-white h-100">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-uppercase mb-1 small fw-semibold">Daily Sales</p>
+                            <h2 class="fw-bold">{{ daily_sales_total }}</h2>
+                        </div>
+                        <i class="fas fa-cash-register fa-2x"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card summary-card bg-primary text-white h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-uppercase mb-1 small fw-semibold">Net Profit</p>
+                        <h2 class="fw-bold">{{ net_profit }}</h2>
+                    </div>
+                    <i class="fas fa-chart-line fa-2x"></i>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ================= SECOND ROW ================= -->
+    <div class="row g-4 mb-5">
+
+        <!-- Expenses -->
+        <div class="col-lg-4">
+            <div class="card modern-table-card expense-card h-100">
+                <div class="card-header">Today's Expenses</div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table modern-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Category</th>
+                                    <th>Supplier</th>
+                                    <th class="text-end">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for e in expenses %}
+                                <tr>
+                                    <td>{{ e.date }}</td>
+                                    <td><span class="badge category-badge">{{ e.category }}</span></td>
+                                    <td>{{ e.supplier }}</td>
+                                    <td class="text-end fw-semibold text-danger">{{ e.amount }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-4">
+                                        No expenses recorded today.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sales -->
+        <div class="col-lg-4">
+            <div class="card modern-table-card sales-card h-100">
+                <div class="card-header">Today's Sales</div>
+                <div class="card-body p-0">
+                    <table class="table modern-table mb-0">
+                        <tbody>
+                            <tr><td>Breakfast</td><td class="text-end text-success fw-semibold">{{ totals.total_breakfast }}</td></tr>
+                            <tr><td>Lunch</td><td class="text-end text-success fw-semibold">{{ totals.total_lunch }}</td></tr>
+                            <tr><td>Dinner</td><td class="text-end text-success fw-semibold">{{ totals.total_dinner }}</td></tr>
+                            <tr><td>Delivery</td><td class="text-end text-success fw-semibold">{{ totals.total_delivery }}</td></tr>
+                            <tr><td>POS</td><td class="text-end text-success fw-semibold">{{ totals.total_pos }}</td></tr>
+                            <tr><td>Cash</td><td class="text-end text-success fw-semibold">{{ totals.total_cash }}</td></tr>
+                            <tr class="total-row">
+                                <td>Total Sales</td>
+                                <td class="text-end">{{ totals.total_sales }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 rounded-3 h-100">
+                <div class="card-header bg-light fw-bold">
+                    Calendar
+                </div>
+                <div class="card-body">
+                    <div id="calendar"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+function generateCalendar() {
+    const calendar = document.getElementById("calendar");
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const monthNames = ["January","February","March","April","May","June",
+                        "July","August","September","October","November","December"];
+
+    let html = `<h6 class="text-center fw-bold mb-3">${monthNames[month]} ${year}</h6>`;
+    html += `<div class="calendar-grid">`;
+
+    const weekdays = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    weekdays.forEach(day => {
+        html += `<div class="calendar-weekday">${day}</div>`;
+    });
+
+    for (let i = 0; i < firstDay; i++) html += `<div></div>`;
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const isToday = day === today.getDate();
+        html += `<div class="calendar-day ${isToday ? 'today' : ''}">${day}</div>`;
+    }
+
+    html += `</div>`;
+    calendar.innerHTML = html;
+}
+
+generateCalendar();
+</script>
+
+{% endblock %}

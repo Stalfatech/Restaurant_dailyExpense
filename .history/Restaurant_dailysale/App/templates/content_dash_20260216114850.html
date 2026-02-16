@@ -9,7 +9,7 @@
 /* ================= PREMIUM DARK BACKGROUND ================= */
 body {
  
-
+    color: #18365e;
     font-family: 'Inter', sans-serif;
 }
 
@@ -20,14 +20,14 @@ body {
 
 /* ================= GLASS CARD BASE ================= */
 .glass-card {
- 
+    background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
     border-radius: 22px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 10px 40px rgba(0,0,0,0.6);
     transition: 0.35s ease;
-    color: #1e3144;
+    color: #f1f5f9;
 }
 
 .glass-card:hover {
@@ -62,7 +62,7 @@ body {
 
 /* ================= TABLES ================= */
 .table {
- 
+    background: transparent !important;
     color: #e2e8f0;
 }
 
@@ -70,7 +70,7 @@ body {
     font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 1px;
-    color: #1f3c66;
+    color: #94a3b8;
     border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
@@ -83,8 +83,8 @@ body {
 }
 
 .category-badge {
-    background: rgba(38, 41, 226, 0.25);
-    color: #0e0f13;
+    background: rgba(99,102,241,0.25);
+    color: #a5b4fc;
     padding: 6px 12px;
     border-radius: 30px;
     font-size: 12px;
@@ -159,7 +159,6 @@ body {
     <div class="row g-4 mb-4 fade-in">
 
         <div class="col-lg-4">
-             <a href="{% url 'dashboard_expenses' %}" class="text-decoration-none">
             <div class="glass-card summary-card border-danger-glow">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -169,11 +168,9 @@ body {
                     <i class="fas fa-receipt fa-2x"></i>
                 </div>
             </div>
-            </a>
         </div>
 
         <div class="col-lg-4">
-                <a href="{% url 'daily_sales_dashboard' %}" class="text-decoration-none">
             <div class="glass-card summary-card border-success-glow">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -183,7 +180,6 @@ body {
                     <i class="fas fa-cash-register fa-2x"></i>
                 </div>
             </div>
-            </a>
         </div>
 
         <div class="col-lg-4">

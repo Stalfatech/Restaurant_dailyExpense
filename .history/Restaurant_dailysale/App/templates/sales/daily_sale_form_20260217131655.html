@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+{% load static %}
+{% block 'content' %}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>{{ page_title }}</h4>
+        <a href="{% url 'daily_sales_dashboard' %}" class="btn btn-secondary">
+            ← Back to Sales
+        </a>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST" id="salesForm">
+                {% csrf_token %}
+
+                <!-- ================= BASIC DETAILS ================= -->
+                <div class="row">
+
+                    <!-- Date -->
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Date *</label>
+                        {{ form.date }}
+                        <div class="text-danger">{{ form.date.errors }}</div>
+                    </div>
+
+                    <!-- Branch (Admin only) -->
+                    {% if user_type == 0 %}
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Branch *</label>
+                        {{ form.branch }}
+                        <div class="text-danger">{{ form.branch.errors }}</div>
+                    </div>
+                    {% endif %}
+
+                    <!-- POS Type -->
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">POS Type</label>
+                        {{ form.pos_type }}
+                        <div class="text-danger">{{ form.pos_type.errors }}</div>
+                    </div>
+
+                    <!-- POS Amount -->
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">POS Amount</label>
+                        {{ form.pos_amount }}
+                        <div class="text-danger">{{ form.pos_amount.errors }}</div>
+                    </div>
+
+                </div>
+
+                <hr>
+
+                <!-- ================= MEAL ITEMS ================= -->
+                <h5>Meal Items</h5>
+                {{ item_formset.management_form }}
+
+                <table class="table" id="mealTable">
+                    <thead>
+                        <tr>
+                           <th>Meal <span class="text-danger mandatory-star">*</span></th>
+<th>Item <span class="text-danger mandatory-star">*</span></th>
+<th>Amount <span class="text-danger mandatory-star">*</span></th>
+
+                            <th width="80">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                       {% for form in item_formset %}
+<tr class="meal-form">
+    {{ form.id }}   <!-- 🔥 ADD THIS LINE -->
+
+                        <td>
+        {{ form.meal_type }}
+        {% if form.meal_type.errors %}
+        <div class="text-danger small">
+            {{ form.meal_type.errors|join:", " }}
+        </div>
+        {% endif %}
+    </td>
+
+    <td>
+        {{ form.item_name }}
+      
+    </td>
+
+    <td>
+        {{ form.amount }}
+   
+        <div class="text-danger small">
+            {{ form.amount.errors|join:", " }}
+    
+            
+                            <td>
+                                {{ form.DELETE }}
+                                <button type="button" class="btn btn-sm btn-danger remove-row">❌</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <button type="button" class="btn btn-sm btn-primary" id="addMeal">
+                    + Add Meal
+                </button>
+
+                <hr>
+
+                <!-- ================= DELIVERY ================= -->
+                <h5>Delivery Platforms</h5>
+                {{ delivery_formset.management_form }}
+
+                <table class="table" id="deliveryTable">
+                    <thead>
+                        <tr>
+                            <th>Platform <span class="text-danger">*</span></th>
+        <th>Amount <span class="text-danger">*</span></th>
+                            <th width="80">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for form in delivery_formset %}
+<tr class="delivery-form">
+    {{ form.id }}
+
+    <td>
+        {{ form.platform }}
+        <div class="text-danger small">
+            {{ form.platform.errors }}
+        </div>
+    </td>
+
+    <td>
+        {{ form.amount }}
+        <div class="text-danger small">
+            {{ form.amount.errors }}
+        </div>
+    </td>
+
+    <td>
+        {{ form.DELETE }}
+        <button type="button" class="btn btn-sm btn-danger remove-row">❌</button>
+    </td>
+</tr>
+{% endfor %}
+
+                    </tbody>
+                </table>
+
+                <button type="button" class="btn btn-sm btn-primary" id="addDelivery">
+                    + Add Delivery
+                </button>
+
+                <hr>
+
+                <button type="submit" class="btn btn-success w-100">
+                    Save Daily Sale
+                </button>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ================= JAVASCRIPT ================= -->
+<script>
+
+// Remove Row
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('remove-row')) {
+        let row = e.target.closest('tr');
+        let deleteCheckbox = row.querySelector("input[type='checkbox']");
+
+        if (deleteCheckbox) {
+            deleteCheckbox.checked = true;
+            row.style.display = "none";
+        } else {
+            row.remove();
+        }
+    }
+});
+
+// Add Meal Row
+document.getElementById('addMeal').addEventListener('click', function() {
+    let tableBody = document.querySelector('#mealTable tbody');
+    let totalForms = document.querySelector('#id_items-TOTAL_FORMS');
+    let formCount = parseInt(totalForms.value);
+
+    let newRow = document.querySelector('.meal-form').cloneNode(true);
+    newRow.innerHTML = newRow.innerHTML.replace(/items-\d+/g, 'items-' + formCount);
+
+    newRow.querySelectorAll('input, select').forEach(function(input) {
+        if (input.type !== "hidden" && input.type !== "checkbox") {
+            input.value = '';
+        }
+        if (input.type === "checkbox") {
+            input.checked = false;
+        }
+    });
+
+    tableBody.appendChild(newRow);
+    totalForms.value = formCount + 1;
+});
+
+// Add Delivery Row
+document.getElementById('addDelivery').addEventListener('click', function() {
+    let tableBody = document.querySelector('#deliveryTable tbody');
+    let totalForms = document.querySelector('#id_deliveries-TOTAL_FORMS');
+    let formCount = parseInt(totalForms.value);
+
+    let newRow = document.querySelector('.delivery-form').cloneNode(true);
+    newRow.innerHTML = newRow.innerHTML.replace(/deliveries-\d+/g, 'deliveries-' + formCount);
+
+    newRow.querySelectorAll('input, select').forEach(function(input) {
+        if (input.type !== "hidden" && input.type !== "checkbox") {
+            input.value = '';
+        }
+        if (input.type === "checkbox") {
+            input.checked = false;
+        }
+    });
+
+    tableBody.appendChild(newRow);
+    totalForms.value = formCount + 1;
+});
+
+// Disable empty rows before submit
+document.getElementById("salesForm").addEventListener("submit", function() {
+
+    function cleanEmptyRows(tableSelector) {
+        let rows = document.querySelectorAll(tableSelector + " tbody tr");
+
+        rows.forEach(function(row) {
+            let inputs = row.querySelectorAll("input[type='text'], input[type='number'], select");
+            let isEmpty = true;
+
+            inputs.forEach(function(input) {
+                if (input.value && input.value.trim() !== "") {
+                    isEmpty = false;
+                }
+            });
+
+            if (isEmpty) {
+                let deleteCheckbox = row.querySelector("input[type='checkbox']");
+                if (deleteCheckbox) {
+                    deleteCheckbox.checked = true;
+                }
+            }
+        });
+    }
+
+    cleanEmptyRows("#mealTable");
+    cleanEmptyRows("#deliveryTable");
+});
+function updateMandatoryStars(tableSelector) {
+    let rows = document.querySelectorAll(tableSelector + " tbody tr");
+    rows.forEach(function(row) {
+        let inputs = row.querySelectorAll("input, select");
+        let anyFilled = Array.from(inputs).some(input => input.value && input.value.trim() !== "");
+
+        let stars = row.querySelectorAll(".mandatory-star");
+        stars.forEach(star => {
+            star.style.visibility = anyFilled ? "visible" : "hidden";
+        });
+    });
+}
+
+// Run on input
+document.addEventListener('input', function(e) {
+    if (e.target.closest('#mealTable')) updateMandatoryStars('#mealTable');
+    if (e.target.closest('#deliveryTable')) updateMandatoryStars('#deliveryTable');
+});
+
+// Initial run to hide stars
+updateMandatoryStars('#mealTable');
+updateMandatoryStars('#deliveryTable');
+
+</script>
+
+<style>
+input[type="checkbox"][name$="DELETE"] {
+    display: none;
+}
+</style>
+
+{% endblock %}

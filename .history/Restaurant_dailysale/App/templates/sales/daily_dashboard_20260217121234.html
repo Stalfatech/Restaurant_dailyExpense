@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block 'content' %}
+
+<div class="d-flex justify-content-between align-items-center mb-4 mt-4">
+    <h3 class="fw-bold">Daily Sales Dashboard</h3>
+    <div class="d-flex gap-2">
+        <a href="{% url 'add_daily_sale' %}" class="btn btn-primary">
+            + Add Daily Sale
+        </a>
+        <a href="{% url 'history_sales' %}" class="btn btn-outline-dark">
+            <i class="iconoir-clock menu-icon"></i> Sales History
+        </a>
+    </div>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<!-- Daily Total Card -->
+<div class="row mb-4 justify-content-center">
+    <div class="col-md-4">
+        <div class="card shadow border-0 bg-success text-white text-center">
+            <div class="card-body">
+                <p class="text-uppercase mb-1 fw-semibold">Daily Total Sales</p>
+                <h3 class="fw-bold">{{ totals.total_sales }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<form method="GET" class="row mb-3 align-items-end">
+    <div class="col-md-3">
+        <label>Select Date</label>
+        <input type="date" name="date" value="{{ selected_date|date:'Y-m-d' }}" class="form-control">
+    </div>
+
+    {% if request.user.user_type == 0 %}
+    <div class="col-md-3">
+        <label>Branch Name</label>
+        <input type="text" name="branch" value="{{ request.GET.branch|default:'' }}" placeholder="Search Branch" class="form-control">
+    </div>
+    {% endif %}
+
+    <div class="col-md-2 mt-2">
+        <button type="submit" class="btn btn-secondary w-100">
+            Search
+        </button>
+    </div>
+
+    <div class="col-md-2 mt-2">
+        <a href="{% url 'daily_sales_dashboard' %}" class="btn btn-outline-danger w-100">
+            Clear
+        </a>
+    </div>
+</form>
+<div class="row mb-4">
+
+    <div class="col-md-2">
+        <div class="card shadow text-center">
+            <div class="card-body">
+                <h6>Breakfast</h6>
+                <strong>{{ totals.total_breakfast }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-2">
+        <div class="card shadow text-center">
+            <div class="card-body">
+                <h6>Lunch</h6>
+                <strong> {{ totals.total_lunch }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-2">
+        <div class="card shadow text-center">
+            <div class="card-body">
+                <h6>Dinner</h6>
+                <strong> {{ totals.total_dinner }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-2">
+        <div class="card shadow text-center">
+            <div class="card-body">
+                <h6>Delivery</h6>
+                <strong> {{ totals.total_delivery }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-2">
+        <div class="card shadow text-center">
+            <div class="card-body">
+                <h6>POS</h6>
+                <strong>{{ totals.total_pos }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-2">
+        <div class="card shadow bg-success text-white text-center">
+            <div class="card-body">
+                <h6>Total</h6>
+                <strong>{{ totals.total_sales }}</strong>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<table class="table table-bordered table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>Date</th>
+            <th>Branch</th>
+            <th>Breakfast</th>
+            <th>Lunch</th>
+            <th>Dinner</th>
+            <th>Delivery</th>
+            <th>POS</th>
+            <th>Total</th>
+            <th>Cash</th>
+            <th>Action</th> 
+        </tr>
+    </thead>
+    <tbody>
+        {% for sale in sales %}
+        <tr>
+            <td>{{ sale.date|date:"d-m-Y" }}</td>
+            <td>{{ sale.branch }}</td>
+          <td>
+    {{ sale.breakfast_total|default:0 }}
+    {% if sale.breakfast_items %}
+        ({{ sale.breakfast_items }})
+    {% endif %}
+</td>
+<td>
+    {{ sale.lunch_total|default:0 }}
+    {% if sale.lunch_items %}
+        ({{ sale.lunch_items }})
+    {% endif %}
+</td>
+
+   <td>
+    {{ sale.dinner_total|default:0 }}
+    {% if sale.dinner_items %}
+        ({{ sale.dinner_items }})
+    {% endif %}
+</td>
+
+            <td>{{ sale.delivery_total|default:0 }}</td>
+            <td>{{ sale.pos_amount|default:0 }} ({{ sale.pos_type }})</td>
+            <td><strong>{{ sale.total_sales|default:0 }}</strong></td>
+            <td><strong>{{ sale.cash_sales|default:0 }}</strong></td>
+            <td>
+                <a href="{% url 'edit_daily_sale' sale.id %}" class="btn btn-sm btn-warning">Edit</a>
+                <a href="{% url 'delete_daily_sale' sale.id %}" class="btn btn-sm btn-danger">Delete</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="10" class="text-center text-muted">
+                No sales found for selected filters.
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+<hr>
+
+<div class="card p-3 shadow-sm">
+    <h5>Daily Summary</h5>
+    <div class="row">
+        <div class="col-md-4">
+            <strong>Total Sales:</strong> ₹ {{ totals.total_sales|default:0 }}
+        </div>
+        <div class="col-md-4">
+            <strong>Total Cash:</strong> ₹ {{ totals.total_cash|default:0 }}
+        </div>
+        <div class="col-md-4">
+            <strong>Date:</strong> {{ selected_date }}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block 'content %}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>{{ page_title }}</h4>
+
+        <a href="{% url 'add_delivery_platform' %}" class="btn btn-success">
+            + Add Platform
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow">
+        <div class="card-body">
+
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th width="50">#</th>
+                        <th>Name</th>
+                        <th width="180">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for platform in platforms %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ platform.name }}</td>
+                        <td>
+                            <a href="{% url 'edit_delivery_platform' platform.id %}"
+                               class="btn btn-sm btn-primary">
+                                Edit
+                            </a>
+
+                            <a href="{% url 'delete_delivery_platform' platform.id %}"
+                               class="btn btn-sm btn-danger">
+                                Delete
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center">
+                            No Platforms Added
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

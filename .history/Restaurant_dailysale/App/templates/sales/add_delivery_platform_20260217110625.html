@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>{{ page_title }}</h4>
+
+        <a href="{% url 'daily_sales_dashboard' %}" class="btn btn-secondary">
+            ← Back to Sales
+        </a>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-body">
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-8">
+                        {{ form.name }}
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-success w-100">
+                            Add Platform
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+            <h5>Existing Platforms</h5>
+            <table class="table table-bordered">
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                </tr>
+                {% for platform in platforms %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ platform.name }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2">No Platforms Added</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

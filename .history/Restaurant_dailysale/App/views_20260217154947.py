@@ -1283,22 +1283,28 @@ from django.db.models import Sum
 
 
 from django.db.models import Sum
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from .forms import DailySaleForm, DailySaleItemFormSet, DeliveryFormSet
-from .models import DailySale
 @admin_or_manager_required
 def add_daily_sale(request):
     user = request.user
-    sale = DailySale()  # empty instance
 
-    form = DailySaleForm(request.POST or None, user=user, instance=sale)
-    item_formset = DailySaleItemFormSet(request.POST or None, prefix='items', instance=sale)
-    delivery_formset = DeliveryFormSet(request.POST or None, prefix='deliveries', instance=sale)
+    # Pass user into form for branch logic
+    form = DailySaleForm(request.POST or None, user=user)
+
+    # Formsets with prefixes
+    item_formset = DailySaleItemFormSet(request.POST or None, prefix='items')
+    delivery_formset = DeliveryFormSet(request.POST or None, prefix='deliveries')
 
     if request.method == "POST":
-        if form.is_valid() and item_formset.is_valid() and delivery_formset.is_valid():
-            # Save main sale
+        # ✅ Ignore completely empty rows before validation
+        def ignore_empty_rows(formset):
+            for form in formset:
+                if not any(form.cleaned_data.get(f) for f in form.fields if f != 'DELETE'):
+                    if 'DELETE' in form.cleaned_data:
+                        form.cleaned_data['DELETE'] = True
+
+        # First validate the main form
+        if form.is_valid():
+            # Bind instance to formsets
             sale = form.save(commit=False)
             if user.user_type == 0:
                 sale.branch = form.cleaned_data.get('branch')
@@ -1307,29 +1313,32 @@ def add_daily_sale(request):
             sale.created_by = user
             sale.save()
 
-            # 🔑 Assign saved instance to formsets
+            # Bind formsets to saved sale
             item_formset.instance = sale
             delivery_formset.instance = sale
 
-            # Save inline formsets
-            item_formset.save()
-            delivery_formset.save()
+            # Validate formsets
+            if item_formset.is_valid() and delivery_formset.is_valid():
+                ignore_empty_rows(item_formset)
+                ignore_empty_rows(delivery_formset)
 
-            # Recalculate totals
-            sale.calculate_totals()
-            sale.save(update_fields=[
-                'breakfast_total', 'lunch_total', 'dinner_total',
-                'delivery_total', 'cash_sales', 'total_sales'
-            ])
+                item_formset.save()
+                delivery_formset.save()
 
-            update_cashbook(sale.branch, sale.date)
-            messages.success(request, "Daily Sale Added Successfully ✅")
-            return redirect('daily_sales_dashboard')
+                # Recalculate totals
+                sale.calculate_totals()
+                sale.save(update_fields=[
+                    'breakfast_total', 'lunch_total', 'dinner_total',
+                    'delivery_total', 'cash_sales', 'total_sales'
+                ])
+
+                update_cashbook(sale.branch, sale.date)
+                messages.success(request, "Daily Sale Added Successfully ✅")
+                return redirect('daily_sales_dashboard')
         else:
-            # Debug: print errors to console
-            print("Form errors:", form.errors)
-            print("Item formset errors:", item_formset.errors)
-            print("Delivery formset errors:", delivery_formset.errors)
+            print("FORM ERRORS:", form.errors)
+            print("ITEM ERRORS:", item_formset.errors)
+            print("DELIVERY ERRORS:", delivery_formset.errors)
 
     return render(request, 'sales/daily_sale_form.html', {
         'form': form,

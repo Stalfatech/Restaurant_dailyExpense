@@ -162,7 +162,7 @@ class ExpenseForm(forms.ModelForm):
             raise ValidationError("Amount must be greater than zero.")
 
         return cleaned_data
-from .models import DailySale, DailySaleItem, DeliverySale, DeliveryPlatform
+fr
 class DailySaleForm(forms.ModelForm):
     class Meta:
         model = DailySale
@@ -257,7 +257,8 @@ class DeliverySaleForm(forms.ModelForm):
         if not platform and (amount is None or amount == ''):
             return cleaned_data  # empty row, formset will ignore
 
-        
+        if not platform:
+            self.add_error('platform', 'This field is required.')
         if amount is None:
             self.add_error('amount', 'This field is required.')
         elif amount <= 0:

@@ -1283,14 +1283,11 @@ from django.db.models import Sum
 
 
 from django.db.models import Sum
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from .forms import DailySaleForm, DailySaleItemFormSet, DeliveryFormSet
-from .models import DailySale
 @admin_or_manager_required
 def add_daily_sale(request):
     user = request.user
-    sale = DailySale()  # empty instance
+
+    sale = DailySale()  # create empty instance
 
     form = DailySaleForm(request.POST or None, user=user, instance=sale)
     item_formset = DailySaleItemFormSet(request.POST or None, prefix='items', instance=sale)
@@ -1298,7 +1295,7 @@ def add_daily_sale(request):
 
     if request.method == "POST":
         if form.is_valid() and item_formset.is_valid() and delivery_formset.is_valid():
-            # Save main sale
+            # Save main form
             sale = form.save(commit=False)
             if user.user_type == 0:
                 sale.branch = form.cleaned_data.get('branch')
@@ -1307,11 +1304,7 @@ def add_daily_sale(request):
             sale.created_by = user
             sale.save()
 
-            # 🔑 Assign saved instance to formsets
-            item_formset.instance = sale
-            delivery_formset.instance = sale
-
-            # Save inline formsets
+            # Save formsets
             item_formset.save()
             delivery_formset.save()
 
@@ -1325,11 +1318,6 @@ def add_daily_sale(request):
             update_cashbook(sale.branch, sale.date)
             messages.success(request, "Daily Sale Added Successfully ✅")
             return redirect('daily_sales_dashboard')
-        else:
-            # Debug: print errors to console
-            print("Form errors:", form.errors)
-            print("Item formset errors:", item_formset.errors)
-            print("Delivery formset errors:", delivery_formset.errors)
 
     return render(request, 'sales/daily_sale_form.html', {
         'form': form,

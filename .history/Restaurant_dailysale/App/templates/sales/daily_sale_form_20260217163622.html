@@ -98,7 +98,6 @@
             {{ form.item_name.errors|join:", " }}
         </div>
         {% endif %}
-        
       
     </td>
 
@@ -284,15 +283,16 @@ function updateMandatoryStars(tableSelector) {
     });
 }
 
-// Run on input
+// Initial run
 document.addEventListener('input', function(e) {
     if (e.target.closest('#mealTable')) updateMandatoryStars('#mealTable');
     if (e.target.closest('#deliveryTable')) updateMandatoryStars('#deliveryTable');
 });
 
-// Initial run to hide stars
-updateMandatoryStars('#mealTable');
-updateMandatoryStars('#deliveryTable');
+newRow.querySelectorAll(".mandatory-star").forEach(star => {
+    star.style.visibility = "hidden";
+});
+
 
 </script>
 

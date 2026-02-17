@@ -162,6 +162,36 @@ class ExpenseForm(forms.ModelForm):
             raise ValidationError("Amount must be greater than zero.")
 
         return cleaned_data
+class DeliverySaleForm(forms.ModelForm):
+    class Meta:
+        model = DeliverySale
+        fields = ('platform', 'amount')
+        widgets = {
+            'platform': forms.Select(attrs={'class': 'form-select delivery-field'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control delivery-field', 'step': '0.01'}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        platform = cleaned_data.get('platform')
+        amount = cleaned_data.get('amount')
+
+        # Ignore completely empty row
+        if not platform and not amount:
+            self.cleaned_data = {}
+            return cleaned_data
+
+        # Conditional required: only if any field filled
+        if not platform:
+            self.add_error('platform', 'This field is required.')
+        if amount is None:
+            self.add_error('amount', 'This field is required.')
+        elif amount <= 0:
+            self.add_error('amount', 'Amount must be greater than 0.')
+
+        return cleaned_data
+
+
 from .models import DailySale, DailySaleItem, DeliverySale, DeliveryPlatform
 class DailySaleForm(forms.ModelForm):
     class Meta:
@@ -169,7 +199,7 @@ class DailySaleForm(forms.ModelForm):
         fields = ['date', 'branch', 'pos_amount', 'pos_type']
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control', 'required': True}),
-            'branch': forms.Select(attrs={'class': 'form-select'}),
+            'branch': forms.Select(attrs={'class': 'form-select', 'required': True}),
             'pos_amount': forms.NumberInput(attrs={'class': 'form-control'}),
             'pos_type': forms.Select(attrs={'class': 'form-select'}),
         }
@@ -178,33 +208,25 @@ class DailySaleForm(forms.ModelForm):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
-        if self.user:
-            if self.user.user_type == 0:  # Admin
-                self.fields['branch'].required = True
-            elif self.user.user_type == 1:  # Manager
-                self.fields['branch'].widget = forms.HiddenInput()
-                self.fields['branch'].required = False
-                if not self.instance.pk:
-                    self.initial['branch'] = self.user.branch
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        if self.user and self.user.user_type == 1:
-            instance.branch = self.user.branch
-        if commit:
-            instance.save()
-        return instance
+        # Admin: branch required
+        if self.user and self.user.user_type == 0:
+            self.fields['branch'].required = True
+        # Manager: hide branch
+        elif self.user and self.user.user_type == 1:
+            self.fields['branch'].widget = forms.HiddenInput()
+            self.fields['branch'].required = False
+            if not self.instance.pk:
+                self.initial['branch'] = self.user.branch
 
 
-# ----------------- Meal Item Form -----------------
 class DailySaleItemForm(forms.ModelForm):
     class Meta:
         model = DailySaleItem
         fields = ('meal_type', 'item_name', 'amount')
         widgets = {
-            'meal_type': forms.Select(attrs={'class': 'form-select'}),
-            'item_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter item name'}),
-            'amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'meal_type': forms.Select(attrs={'class': 'form-select meal-field'}),
+            'item_name': forms.TextInput(attrs={'class': 'form-control meal-field', 'placeholder': 'Enter item name'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control meal-field', 'step': '0.01'}),
         }
 
     def clean(self):
@@ -213,68 +235,43 @@ class DailySaleItemForm(forms.ModelForm):
         item_name = cleaned_data.get('item_name')
         amount = cleaned_data.get('amount')
 
-        # If all fields are empty, formset will ignore this row
+        # Ignore completely empty row
         if not meal and not item_name and not amount:
+            # Mark row as empty to ignore it
+            self.cleaned_data = {}
             return cleaned_data
 
-        # Conditional required if any field is filled
+        # Conditional required: only if any field filled
         if not meal:
             self.add_error('meal_type', 'This field is required.')
         if not item_name:
             self.add_error('item_name', 'This field is required.')
         if amount is None:
             self.add_error('amount', 'This field is required.')
+        
         elif amount <= 0:
             self.add_error('amount', 'Amount must be greater than 0.')
 
         return cleaned_data
+
 
 
 DailySaleItemFormSet = forms.inlineformset_factory(
     DailySale,
     DailySaleItem,
-    form=DailySaleItemForm,
+   form=DailySaleItemForm, 
     extra=1,
     can_delete=True
 )
-
-
-# ----------------- Delivery Form -----------------
-class DeliverySaleForm(forms.ModelForm):
-    class Meta:
-        model = DeliverySale
-        fields = ('platform', 'amount')
-        widgets = {
-            'platform': forms.Select(attrs={'class': 'form-select'}),
-            'amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-        }
-
-    def clean(self):
-        cleaned_data = super().clean()
-        platform = cleaned_data.get('platform')
-        amount = cleaned_data.get('amount')
-
-        if not platform and (amount is None or amount == ''):
-            return cleaned_data  # empty row, formset will ignore
-
-        
-        if amount is None:
-            self.add_error('amount', 'This field is required.')
-        elif amount <= 0:
-            self.add_error('amount', 'Amount must be greater than 0.')
-
-        return cleaned_data
 
 
 DeliveryFormSet = forms.inlineformset_factory(
     DailySale,
     DeliverySale,
-    form=DeliverySaleForm,
+     form=DeliverySaleForm,
     extra=1,
     can_delete=True
 )
-
-from .models import DailySale, DailySaleItem, DeliverySale, DeliveryPlatform
 
 
 from django import forms

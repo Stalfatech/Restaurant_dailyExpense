@@ -257,7 +257,8 @@ class DeliverySaleForm(forms.ModelForm):
         if not platform and (amount is None or amount == ''):
             return cleaned_data  # empty row, formset will ignore
 
-        
+        if not platform:
+            self.add_error('platform', '.')
         if amount is None:
             self.add_error('amount', 'This field is required.')
         elif amount <= 0:

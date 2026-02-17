@@ -409,7 +409,7 @@ class DailySaleItem(models.Model):
 
     meal_type = models.CharField(max_length=20, choices=MEAL_CHOICES)
     item_name = models.CharField(max_length=100,null=True, blank=True)
-    amount = models.DecimalField(max_digits=10, decimal_places=2,null=True, blank=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2,null)
 
     def __str__(self):
         return f"{self.sale.date} - {self.meal_type} - {self.item_name}"

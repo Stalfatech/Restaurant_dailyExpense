@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% load static %}
+{% block 'content' %}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>{{ page_title }}</h4>
+        <a href="{% url 'daily_sales_dashboard' %}" class="btn btn-secondary">← Back to Sales</a>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST" id="salesForm">
+                {% csrf_token %}
+
+                <!-- ================= BASIC DETAILS ================= -->
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Date <span class="text-danger">*</span></label>
+                        {{ form.date }}
+                        <div class="text-danger">{{ form.date.errors }}</div>
+                    </div>
+
+                    {% if user_type == 0 %}
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Branch <span class="text-danger">*</span></label>
+                        {{ form.branch }}
+                        <div class="text-danger">{{ form.branch.errors }}</div>
+                    </div>
+                    {% endif %}
+
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">POS Type</label>
+                        {{ form.pos_type }}
+                        <div class="text-danger">{{ form.pos_type.errors }}</div>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">POS Amount</label>
+                        {{ form.pos_amount }}
+                        <div class="text-danger">{{ form.pos_amount.errors }}</div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- ================= MEAL ITEMS ================= -->
+                <h5>Meal Items</h5>
+                {{ item_formset.management_form }}
+                <table class="table" id="mealTable">
+                    <thead>
+                        <tr>
+                            <th>Meal</th>
+                            <th>Item</th>
+                            <th>Amount</th>
+                            <th width="80">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for form in item_formset %}
+                        <tr class="meal-form">
+                            {{ form.id }}
+                            <td>{{ form.meal_type }}<div class="text-danger small">{{ form.meal_type.errors|join:", " }}</div></td>
+                            <td>{{ form.item_name }}<div class="text-danger small">{{ form.item_name.errors|join:", " }}</div></td>
+                            <td>{{ form.amount }}<div class="text-danger small">{{ form.amount.errors|join:", " }}</div></td>
+                            <td>{{ form.DELETE }}<button type="button" class="btn btn-sm btn-danger remove-row">❌</button></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <button type="button" class="btn btn-sm btn-primary" id="addMeal">+ Add Meal</button>
+
+                <hr>
+
+                <!-- ================= DELIVERY ================= -->
+                <h5>Delivery Platforms</h5>
+                {{ delivery_formset.management_form }}
+                <table class="table" id="deliveryTable">
+                    <thead>
+                        <tr>
+                            <th>Platform</th>
+                            <th>Amount</th>
+                            <th width="80">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for form in delivery_formset %}
+                        <tr class="delivery-form">
+                            {{ form.id }}
+                            <td>{{ form.platform }}<div class="text-danger small">{{ form.platform.errors|join:", " }}</div></td>
+                            <td>{{ form.amount }}<div class="text-danger small">{{ form.amount.errors|join:", " }}</div></td>
+                            <td>{{ form.DELETE }}<button type="button" class="btn btn-sm btn-danger remove-row">❌</button></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <button type="button" class="btn btn-sm btn-primary" id="addDelivery">+ Add Delivery</button>
+
+                <hr>
+                <button type="submit" class="btn btn-success w-100">Save Daily Sale</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ================= JAVASCRIPT ================= -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    function updateMandatoryStars(tableSelector) {
+        let table = document.querySelector(tableSelector);
+        if (!table) return;
+
+        table.querySelectorAll("tbody tr").forEach(row => {
+            let inputs = row.querySelectorAll("input, select");
+            let anyFilled = Array.from(inputs).some(input => input.value && input.value.trim() !== "");
+
+            table.querySelectorAll("thead th").forEach((th, idx) => {
+                if (idx < inputs.length) {
+                    if (anyFilled) th.innerHTML = th.innerHTML.replace(/\*?/g, '') + ' <span class="text-danger">*</span>';
+                    else th.innerHTML = th.innerHTML.replace(/\*|<span class="text-danger"><\/span>/g, '');
+                }
+            });
+
+            inputs.forEach(input => {
+                if (!anyFilled) input.removeAttribute('required');
+                else input.setAttribute('required', 'required');
+            });
+        });
+    }
+
+    updateMandatoryStars('#mealTable');
+    updateMandatoryStars('#deliveryTable');
+
+    document.addEventListener('input', function(e) {
+        if (e.target.closest('#mealTable')) updateMandatoryStars('#mealTable');
+        if (e.target.closest('#deliveryTable')) updateMandatoryStars('#deliveryTable');
+    });
+
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-row')) {
+            let row = e.target.closest('tr');
+            let deleteCheckbox = row.querySelector("input[type='checkbox']");
+            if (deleteCheckbox) {
+                deleteCheckbox.checked = true;
+                row.style.display = "none";
+            } else {
+                row.remove();
+            }
+            updateMandatoryStars('#mealTable');
+            updateMandatoryStars('#deliveryTable');
+        }
+    });
+
+    document.getElementById('addMeal').addEventListener('click', function() {
+        let tableBody = document.querySelector('#mealTable tbody');
+        let totalForms = document.querySelector('#id_items-TOTAL_FORMS');
+        let formCount = parseInt(totalForms.value);
+
+        let newRow = document.querySelector('.meal-form').cloneNode(true);
+
+        newRow.querySelectorAll('input, select').forEach(input => {
+            if (input.name) input.name = input.name.replace(/\-\d+\-/, `-${formCount}-`);
+            if (input.id) input.id = input.id.replace(/\-\d+\-/, `-${formCount}-`);
+
+            if (input.tagName.toLowerCase() === 'select') input.selectedIndex = 0;
+            else if (input.type !== "hidden" && input.type !== "checkbox") input.value = '';
+            if (input.type === "checkbox") input.checked = false;
+            input.removeAttribute('required');
+        });
+
+        tableBody.appendChild(newRow);
+        totalForms.value = formCount + 1;
+        updateMandatoryStars('#mealTable');
+    });
+
+    document.getElementById('addDelivery').addEventListener('click', function() {
+        let tableBody = document.querySelector('#deliveryTable tbody');
+        let totalForms = document.querySelector('#id_deliveries-TOTAL_FORMS');
+        let formCount = parseInt(totalForms.value);
+
+        let newRow = document.querySelector('.delivery-form').cloneNode(true);
+
+        newRow.querySelectorAll('input, select').forEach(input => {
+            if (input.name) input.name = input.name.replace(/\-\d+\-/, `-${formCount}-`);
+            if (input.id) input.id = input.id.replace(/\-\d+\-/, `-${formCount}-`);
+
+            if (input.tagName.toLowerCase() === 'select') input.selectedIndex = 0;
+            else if (input.type !== "hidden" && input.type !== "checkbox") input.value = '';
+            if (input.type === "checkbox") input.checked = false;
+            input.removeAttribute('required');
+        });
+
+        tableBody.appendChild(newRow);
+        totalForms.value = formCount + 1;
+        updateMandatoryStars('#deliveryTable');
+    });
+
+   
+
+});
+</script>
+
+<style>
+/* Keep DELETE checkboxes off-screen but focusable */
+input[type="checkbox"][name$="DELETE"] {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+}
+</style>
+
+{% endblock %}

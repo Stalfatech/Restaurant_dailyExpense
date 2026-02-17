@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% load static %}
+{% block 'content' %}
+
+<div class="container mt-4">
+<div class="card shadow border-0 rounded-4">
+
+<div class="card-header bg-dark text-white">
+<h5 class="mb-0">Edit Salary</h5>
+</div>
+
+<div class="card-body">
+
+<form method="post">
+{% csrf_token %}
+
+<div class="row g-3">
+
+<!-- Staff (readonly) -->
+<div class="col-md-6">
+<label class="form-label">Staff</label>
+<input type="text" class="form-control" value="{{ salary.staff.name }}" readonly>
+</div>
+
+<div class="col-md-6">
+<label class="form-label">Salary Period</label>
+<input type="text" class="form-control"
+       value="{{ salary.salary_month }} {{ salary.salary_year }}"
+       readonly>
+</div>
+
+<div class="col-md-6">
+<label class="form-label">Salary Amount</label>
+<input type="number" step="0.01"
+       name="salary_amount"
+       id="salary_amount"
+       class="form-control"
+       value="{{ salary.salary_amount }}">
+</div>
+
+<div class="col-md-6">
+<label class="form-label">Already Taken Advance (Total)</label>
+<input type="text"
+       id="total_advance"
+       class="form-control bg-light"
+       value="{{ total_advance }}"
+       readonly>
+</div>
+
+<div class="col-md-6">
+<label class="form-label">Add New Advance</label>
+<input type="number" step="0.01"
+       name="salary_advance"
+       id="new_advance"
+       class="form-control"
+       placeholder="Enter new advance">
+</div>
+
+<div class="col-md-6">
+<label class="form-label">Paid Amount</label>
+<input type="number" step="0.01"
+       name="paid_amount"
+       id="paid_amount"
+       class="form-control"
+       value="{{ salary.paid_amount }}">
+</div>
+
+<div class="col-md-6">
+<label class="form-label">Next Month Advance</label>
+<input type="number" step="0.01"
+       name="next_month_advance"
+       class="form-control"
+       value="{{ salary.next_month_advance_amount }}">
+</div>
+
+<div class="col-md-6">
+<label class="form-label">Balance (Preview)</label>
+<input type="text"
+       id="balance_preview"
+       class="form-control bg-light"
+       readonly>
+</div>
+
+<div class="col-md-6">
+<label class="form-label">Payment Date</label>
+<input type="date"
+       name="payment_date"
+       class="form-control"
+       value="{{ salary.payment_date|date:'Y-m-d' }}">
+</div>
+
+<div class="col-md-6">
+<label class="form-label">Payment Mode</label>
+<select name="payment_mode" class="form-select">
+<option value="">Select</option>
+<option value="Cash" {% if salary.payment_mode == 'Cash' %}selected{% endif %}>Cash</option>
+<option value="Bank" {% if salary.payment_mode == 'Bank' %}selected{% endif %}>Bank</option>
+</select>
+</div>
+
+</div>
+
+
+</tbody>
+</table>
+
+<div class="text-end mt-3">
+<button class="btn btn-dark">Update Salary</button>
+</div>
+
+</form>
+
+</div>
+</div>
+</div>
+
+
+<script>
+const salaryInput = document.getElementById('salary_amount');
+const paidInput   = document.getElementById('paid_amount');
+const newAdvance  = document.getElementById('new_advance');
+const totalAdvanceInput = document.getElementById('total_advance');
+const balancePreview = document.getElementById('balance_preview');
+
+function calculateBalance() {
+
+    const salary = parseFloat(salaryInput.value) || 0;
+    const paid   = parseFloat(paidInput.value) || 0;
+    const oldAdv = parseFloat(totalAdvanceInput.value) || 0;
+    const newAdv = parseFloat(newAdvance.value) || 0;
+
+    const total = oldAdv + newAdv;
+
+    const bal = salary - (paid + total);
+
+    balancePreview.value = bal.toFixed(2);
+}
+
+salaryInput.addEventListener('input', calculateBalance);
+paidInput.addEventListener('input', calculateBalance);
+newAdvance.addEventListener('input', calculateBalance);
+
+document.addEventListener("DOMContentLoaded", calculateBalance);
+</script>
+
+{% endblock %}

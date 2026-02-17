@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+{% load static %}
+{% block 'content' %}
+<style>
+    .premium-card {
+        border-radius: 18px;
+        overflow: hidden;
+        background: #ffffff;
+    }
+
+    .premium-table thead {
+        background-color: #212529;
+        color: #ffffff;
+        font-weight: 600;
+    }
+
+    .premium-table thead th {
+        padding: 14px 10px;
+        border: 1px solid #dee2e6;
+        font-size: 14px;
+    }
+
+    .premium-table td {
+        padding: 12px 10px;
+        font-size: 14px;
+        vertical-align: middle;
+        border: 1px solid #dee2e6;
+    }
+
+    .premium-table tbody tr:hover {
+        background-color: #f8f9fa;
+        transition: 0.2s ease-in-out;
+    }
+
+    .badge-balance {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+    }
+
+    .action-btn {
+        border-radius: 6px;
+        padding: 5px 12px;
+        font-size: 13px;
+    }
+
+    .btn-black {
+        background-color: #212529;
+        color: #fff;
+        border-radius: 6px;
+        padding: 6px 18px;
+        font-size: 14px;
+    }
+
+    .btn-black:hover {
+        background-color: #000;
+        color: #fff;
+    }
+</style>
+
+<div class="container mt-5">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Header -->
+    <div class="card premium-card shadow p-3 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+
+            <h4 class="fw-bold mb-0">SALARY LIST</h4>
+
+            <a href="{% url 'add_salary' %}" class="btn btn-dark">
+                + Add Salary
+            </a>
+
+        </div>
+    </div>
+
+    <!-- Total paid -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-6 col-lg-5">
+            <div class="card text-center border-0 shadow"
+                 style="background:#dc3545;color:white;border-radius:12px;">
+                <div class="card-body py-4">
+                    <div class="fw-semibold">TOTAL PAID SALARY</div>
+                    <h2 class="fw-bold mt-2"> {{ total_paid }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ✅ Date Filter Form -->
+    <form method="get" class="mb-4">
+
+    <div class="row align-items-end">
+
+        <!-- LEFT : Date filter -->
+        <div class="col-md-6">
+
+            <div class="row g-2 align-items-end">
+
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Filter by date</label>
+                    <input type="date"
+                           name="date"
+                           value="{{ selected_date }}"
+                           class="form-control">
+                </div>
+
+                <div class="col-md-6 d-flex gap-2">
+                    <button type="submit" class="btn btn-dark px-4">
+                        Filter
+                    </button>
+
+                    <a href="{% url 'salary_list' %}" class="btn btn-secondary px-4">
+                        Clear
+                    </a>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT : Staff name search -->
+        <div class="col-md-6">
+
+            <div class="d-flex gap-2 justify-content-end">
+
+                <input type="text"
+                       name="staff"
+                       value="{{ staff_name }}"
+                       class="form-control form-control-lg"
+                       style="max-width:300px"
+                       placeholder="Search by staff name...">
+
+                <div class="d-flex gap-2">
+
+    <button type="submit" class="btn btn-primary px-4">
+        <i class="bi bi-search"></i> Search
+    </button>
+
+    <a href="{% url 'salary_list' %}" class="btn btn-secondary px-4">
+        Clear
+    </a>
+
+</div>
+
+
+            </div>
+
+        </div>
+
+    </div>
+
+</form>
+<!-- Daily & Monthly Report Buttons -->
+    <div class="mb-4 d-flex gap-2">
+        <a href="{% url 'daily_salary_report' %}?date={{ today_date }}" class="btn btn-outline-primary">
+            <i class="bi bi-calendar-day"></i> Daily Report
+        </a>
+        <a href="{% url 'admin_monthly_salary_report' %}?month={{ current_month }}" class="btn btn-outline-success">
+            <i class="bi bi-calendar3"></i> Monthly Report
+        </a>
+    </div>
+
+
+
+
+    <!-- Table -->
+    <div class="card shadow">
+        <div class="table-responsive">
+
+            <table class="table table-bordered table-hover mb-0 premium-table">
+
+                <thead class="table-dark text-center">
+                    <tr>
+                        <th>#</th>
+                        <th>Staff</th>
+                        <th>Branch</th>
+                        <th>Month</th>
+                        <th>Year</th>
+                        <th>Total Salary</th>
+                        <th>Advance Adjusted</th>
+                        <th>Paid</th>
+                        <th>Balance</th>
+                        <th>Mode</th>
+                        <th>Payment Date</th>
+                        <th>Next Adv Amt</th>
+                        <th>Next Month</th>
+                        <th>Next Year</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                {% for salary in salaries %}
+                    <tr class="text-center">
+
+                        <td class="fw-bold">{{ forloop.counter }}</td>
+
+                        <td class="fw-semibold text-start">
+                            {{ salary.staff.name }}
+                        </td>
+
+                        <td>{{ salary.branch.name }}</td>
+
+                        <td>{{ salary.salary_month }}</td>
+                        <td>{{ salary.salary_year }}</td>
+
+                        <td class="fw-bold text-primary">
+                            {{ salary.salary_amount }}
+                        </td>
+
+                        <td class="text-warning fw-semibold">
+                            {{ salary.adjusted_advance }}
+                        </td>
+
+                        <td class="text-success fw-semibold">
+                            {{ salary.paid_amount }}
+                        </td>
+
+                        <td>
+                            {% if salary.balance_salary > 0 %}
+                                <span class="badge bg-danger badge-balance">
+                                    {{ salary.balance_salary }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-success badge-balance">
+                                    Cleared
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <span class="badge bg-secondary">
+                                {{ salary.payment_mode }}
+                            </span>
+                        </td>
+
+                        <td>{{ salary.payment_date }}</td>
+
+                        <td class="text-info fw-semibold">
+                            {{ salary.next_month_advance_amount }}
+                        </td>
+
+                        <td>{{ salary.next_month|default:"-" }}</td>
+                        <td>{{ salary.next_month_year|default:"-" }}</td>
+
+                        <td>
+                            <a href="{% url 'edit_salary' salary.id %}"
+                               class="btn btn-sm btn-primary action-btn">
+                                Edit
+                            </a>
+
+                            <a href="{% url 'delete_salary' salary.id %}"
+                               class="btn btn-sm btn-danger action-btn"
+                               onclick="return confirm('Delete this salary record?');">
+                                Delete
+                            </a>
+                        </td>
+
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="15" class="text-center py-4">
+                            No salary records found.
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

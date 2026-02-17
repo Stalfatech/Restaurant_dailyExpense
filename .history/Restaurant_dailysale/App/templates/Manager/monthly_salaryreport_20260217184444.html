@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% load static %}
+{% block 'content' %}
+
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<div class="container-fluid mt-5">
+
+    <!-- Header -->
+    <div class="text-center mb-4">
+        <h2 class="fw-bold">Monthly Salary Report</h2>
+    </div>
+
+
+
+    <!-- Summary Cards -->
+<div class="row justify-content-center mb-4">
+
+    <!-- Total Paid -->
+    <div class="col-md-3">
+        <div class="card text-center shadow border-0"
+             style="background:#198754;color:white;">
+            <div class="card-body">
+                <h5>Total Paid</h5>
+                <h3> {{ total_paid }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Advance -->
+    <div class="col-md-3">
+        <div class="card text-center shadow border-0"
+             style="background:#0d6efd;color:white;">
+            <div class="card-body">
+                <h5>Total Advance for This Month</h5>
+                <h3> {{ total_advance }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Next Month Advance -->
+    <div class="col-md-3">
+        <div class="card text-center shadow border-0"
+             style="background:#ffc107;color:black;">
+            <div class="card-body">
+                <h5>Next Month Advance</h5>
+                <h3> {{ total_next_advance }}</h3>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Salary Table -->
+<div class="card shadow">
+    <div class="card-body p-0 table-responsive">
+        <table class="table table-bordered table-striped mb-0 text-center table-sm">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Staff</th>
+                    <th>Branch</th>
+                    <th>Month</th>
+                    <th>Year</th>
+                    <th>Total Salary</th>
+                    <th>Advance Adjusted</th>
+                    <th>Paid</th>
+                    <th>Balance</th>
+                    <th>Mode</th>
+                    <th>Payment Date</th>
+                    <th>Next Adv Amt</th>
+                    <th>Next Month</th>
+                    <th>Next Year</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for salary in salaries %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ salary.staff.name }}</td>
+                    <td>{{ salary.branch.name }}</td>
+                    <td>{{ salary.salary_month }}</td>
+                    <td>{{ salary.salary_year }}</td>
+                    <td>{{ salary.salary_amount }}</td>
+                    <td>{{ salary.adjusted_advance }}</td>
+                    <td>{{ salary.paid_amount }}</td>
+                    <td>{{ salary.balance_salary }}</td>
+                    <td>{{ salary.payment_mode }}</td>
+                    <td>{{ salary.payment_date }}</td>
+                    <td>{{ salary.next_month_advance_amount }}</td>
+                    <td>{{ salary.next_month }}</td>
+                    <td>{{ salary.next_month_year }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="14">No records found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Print Button -->
+<div class="d-flex justify-content-center mt-3 no-print">
+    <button onclick="window.print()" class="btn btn-success">
+        Print Report
+    </button>
+</div>
+
+</div>
+
+<style>
+/* Table styling */
+table {
+    table-layout: fixed; /* makes columns fit evenly */
+    width: 100%;
+    font-size: 12px; /* slightly smaller to fit all columns */
+}
+th, td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 6px 8px !important; /* smaller padding */
+}
+
+/* PRINT SETTINGS */
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 12mm;
+    }
+
+    .no-print, form, button, select, input {
+        display: none !important;
+    }
+
+    body {
+        background: white !important;
+    }
+
+    table {
+        font-size: 11px;
+    }
+
+    th, td {
+        padding: 4px 5px !important;
+    }
+
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .table-responsive {
+        overflow: visible !important; /* show full table on print */
+    }
+}
+</style>
+
+{% endblock %}

@@ -2401,7 +2401,8 @@ def delivery_performance_report(request):
 
     order_id = request.GET.get('order_id')
     staff_id = request.GET.get('staff')
-    selected_date = request.GET.get('date')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
 
     deliveries = DeliverySale.objects.select_related(
         'staff',
@@ -2424,11 +2425,12 @@ def delivery_performance_report(request):
     if staff_id:
         deliveries = deliveries.filter(staff__id=staff_id)
 
-    # 📅 Single Date filter
-    if selected_date:
+    # 📅 Date range filter
+    if start_date and end_date:
         try:
-            filter_date = datetime.strptime(selected_date, "%Y-%m-%d").date()
-            deliveries = deliveries.filter(sale__date=filter_date)
+            start = datetime.strptime(start_date, "%Y-%m-%d").date()
+            end = datetime.strptime(end_date, "%Y-%m-%d").date()
+            deliveries = deliveries.filter(sale__date__range=[start, end])
         except ValueError:
             pass
 
@@ -2452,5 +2454,4 @@ def delivery_performance_report(request):
         'deliveries': deliveries,
         'grand_total': grand_total,
         'staff_list': staff_list,
-        'selected_date': selected_date,
     })

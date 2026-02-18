@@ -243,11 +243,10 @@ DailySaleItemFormSet = forms.inlineformset_factory(
 class DeliverySaleForm(forms.ModelForm):
     class Meta:
         model = DeliverySale
-        fields = ('staff', 'platform','order_id', 'amount')
+        fields = ('staff', 'platform', 'amount')
         widgets = {
             'staff': forms.Select(attrs={'class': 'form-select'}),
             'platform': forms.Select(attrs={'class': 'form-select'}),
-            'order_id': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter Order ID'}),
             'amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
         }
     def __init__(self, *args, **kwargs):
@@ -265,14 +264,11 @@ class DeliverySaleForm(forms.ModelForm):
         platform = cleaned_data.get('platform')
         amount = cleaned_data.get('amount')
 
-        order_id = cleaned_data.get('order_id')
-        if not staff and not platform and not order_id and not amount:
+        if not staff and not platform and not amount:
             return cleaned_data
 
         if not staff:
             self.add_error('staff', 'This field is required.')
-        if not order_id:
-            self.add_error('order_id', 'This field is required.')
         if amount is None:
             self.add_error('amount', 'This field is required.')
         elif amount <= 0:

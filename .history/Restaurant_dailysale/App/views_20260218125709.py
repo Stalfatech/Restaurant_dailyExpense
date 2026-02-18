@@ -2394,14 +2394,14 @@ from django.db.models import Sum, Count
 from datetime import datetime
 from .models import DeliverySale
 
-from datetime import datetime
-
 @admin_or_manager_required
 def delivery_performance_report(request):
 
+    month = request.GET.get('month')
+    start = request.GET.get('start')
+    end = request.GET.get('end')
     order_id = request.GET.get('order_id')
     staff_id = request.GET.get('staff')
-    selected_date = request.GET.get('date')
 
     deliveries = DeliverySale.objects.select_related(
         'staff',
@@ -2416,7 +2416,7 @@ def delivery_performance_report(request):
     if user.user_type != 0:
         deliveries = deliveries.filter(sale__branch=user.branch)
 
-    # 🔎 Order ID filter
+    # 🔎 Order ID search
     if order_id:
         deliveries = deliveries.filter(order_id__icontains=order_id)
 
@@ -2424,11 +2424,25 @@ def delivery_performance_report(request):
     if staff_id:
         deliveries = deliveries.filter(staff__id=staff_id)
 
-    # 📅 Single Date filter
-    if selected_date:
+    # 📅 Month filter
+    if month:
         try:
-            filter_date = datetime.strptime(selected_date, "%Y-%m-%d").date()
-            deliveries = deliveries.filter(sale__date=filter_date)
+            year, month_num = map(int, month.split('-'))
+            deliveries = deliveries.filter(
+                sale__date__year=year,
+                sale__date__month=month_num
+            )
+        except ValueError:
+            pass
+
+    # 📅 Date range filter
+    elif start and end:
+        try:
+            start_date = datetime.strptime(start, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end, "%Y-%m-%d").date()
+            deliveries = deliveries.filter(
+                sale__date__range=[start_date, end_date]
+            )
         except ValueError:
             pass
 
@@ -2445,6 +2459,7 @@ def delivery_performance_report(request):
         total=Sum('amount')
     )['total'] or 0
 
+    # 👤 Staff list for dropdown
     staff_list = Staff.objects.filter(role='Delivery', status='Active')
 
     return render(request, 'sales/delivery_report.html', {
@@ -2452,5 +2467,4 @@ def delivery_performance_report(request):
         'deliveries': deliveries,
         'grand_total': grand_total,
         'staff_list': staff_list,
-        'selected_date': selected_date,
     })

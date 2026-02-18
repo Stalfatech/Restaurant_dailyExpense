@@ -41,7 +41,7 @@ class ResetPasswordForm(forms.Form):
 
 
 from django import forms
-from .models import Branch, DeliverySale, Expense, Staff, Supplier, Product
+from .models import Branch, DeliverySale, Expense, Supplier, Product
 from django.core.exceptions import ValidationError
 
 
@@ -243,36 +243,21 @@ DailySaleItemFormSet = forms.inlineformset_factory(
 class DeliverySaleForm(forms.ModelForm):
     class Meta:
         model = DeliverySale
-        fields = ('staff', 'platform','order_id', 'amount')
+        fields = ('''platform', 'amount')
         widgets = {
-            'staff': forms.Select(attrs={'class': 'form-select'}),
             'platform': forms.Select(attrs={'class': 'form-select'}),
-            'order_id': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter Order ID'}),
             'amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
         }
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        # Show only Delivery role staff
-        self.fields['staff'].queryset = Staff.objects.filter(
-            role='Delivery',
-            status='Active'
-        )
 
     def clean(self):
         cleaned_data = super().clean()
-        staff = cleaned_data.get('staff')
         platform = cleaned_data.get('platform')
         amount = cleaned_data.get('amount')
 
-        order_id = cleaned_data.get('order_id')
-        if not staff and not platform and not order_id and not amount:
-            return cleaned_data
+        if not platform and (amount is None or amount == ''):
+            return cleaned_data  # empty row, formset will ignore
 
-        if not staff:
-            self.add_error('staff', 'This field is required.')
-        if not order_id:
-            self.add_error('order_id', 'This field is required.')
+        
         if amount is None:
             self.add_error('amount', 'This field is required.')
         elif amount <= 0:

@@ -132,8 +132,6 @@
                 <table class="table" id="deliveryTable">
                     <thead>
                         <tr>
-                            <th>Order ID<span class="text-danger">*</span> </th>
-
                             
                             <th>Staff <span class="text-danger">*</span></th>
                             <th>Platform <span class="text-danger">*</span></th>
@@ -145,11 +143,6 @@
                         {% for form in delivery_formset %}
 <tr class="delivery-form">
     {{ form.id }}
-   <td>
-    {{ form.order_id }}
-    <div class="text-danger small">{{ form.order_id.errors }}</div>
-</td>
-
     <td>
         {{ form.staff }}
         <div class="text-danger small">

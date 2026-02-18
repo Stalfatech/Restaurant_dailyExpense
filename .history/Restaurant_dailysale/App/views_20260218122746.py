@@ -1,5 +1,5 @@
 
-from .models import  DeliveryPlatform, User,Register,Manager,Staff
+from .models import  DeliveryPlatform, DeliverySale, User,Register,Manager,Staff
 from django.contrib.auth.hashers import make_password,check_password
 from django.shortcuts import render, redirect,get_object_or_404
 from django.contrib import messages
@@ -630,35 +630,18 @@ def get_opening_balance(branch, selected_date):
 
     return Decimal('0.00')
 
-from decimal import Decimal
-from django.db.models import Sum
-from .models import CashBook, DailySale, Expense
-
-
 def update_cashbook(branch, selected_date):
-
-    # 🛑 Safety guard
-    if not branch:
-        return
-
-    # 🔹 Get or create safely
+    
     cashbook, created = CashBook.objects.get_or_create(
         branch=branch,
-        date=selected_date,
-        defaults={
-            'opening_balance': Decimal('0.00'),
-            'cash_sales': Decimal('0.00'),
-            'expenses': Decimal('0.00'),
-            'closing_balance': Decimal('0.00'),
-            'is_closed': False,
-        }
+        date=selected_date
     )
 
-    # 🔹 Get previous valid cashbook (exclude null branch)
+    # ✅ Always update opening balance
     previous_cashbook = CashBook.objects.filter(
         branch=branch,
         date__lt=selected_date
-    ).exclude(branch__isnull=True).order_by('-date').first()
+    ).order_by('-date').first()
 
     if previous_cashbook:
         cashbook.opening_balance = previous_cashbook.closing_balance
@@ -681,7 +664,7 @@ def update_cashbook(branch, selected_date):
     cashbook.cash_sales = total_cash
     cashbook.expenses = total_expenses
 
-    # 🔹 Closing balance formula
+    # 🔹 Closing formula
     cashbook.closing_balance = (
         cashbook.opening_balance +
         cashbook.cash_sales -
@@ -689,7 +672,6 @@ def update_cashbook(branch, selected_date):
     )
 
     cashbook.save()
-
 
 
 
@@ -2391,66 +2373,15 @@ def adminmonthly_salary_report(request):
     
     
 from django.db.models import Sum, Count
-from datetime import datetime
-from .models import DeliverySale
 
-from datetime import datetime
-
-@admin_or_manager_required
-def delivery_performance_report(request):
-
-    order_id = request.GET.get('order_id')
-    staff_id = request.GET.get('staff')
-    selected_date = request.GET.get('date')
-
-    deliveries = DeliverySale.objects.select_related(
-        'staff',
-        'sale'
-    ).prefetch_related(
-        'sale__items'
-    )
-
-    user = request.user
-
-    # 🔒 Branch restriction
-    if user.user_type != 0:
-        deliveries = deliveries.filter(sale__branch=user.branch)
-
-    # 🔎 Order ID filter
-    if order_id:
-        deliveries = deliveries.filter(order_id__icontains=order_id)
-
-    # 👤 Staff filter
-    if staff_id:
-        deliveries = deliveries.filter(staff__id=staff_id)
-
-    # 📅 Single Date filter
-    if selected_date:
-        try:
-            filter_date = datetime.strptime(selected_date, "%Y-%m-%d").date()
-            deliveries = deliveries.filter(sale__date=filter_date)
-        except ValueError:
-            pass
-
-    # 📊 Staff summary
-    performance = deliveries.values(
-        'staff__id',
+def delivery_performance(request):
+    performance = DeliverySale.objects.values(
         'staff__name'
     ).annotate(
         total_amount=Sum('amount'),
         total_orders=Count('id')
     ).order_by('-total_amount')
 
-    grand_total = deliveries.aggregate(
-        total=Sum('amount')
-    )['total'] or 0
-
-    staff_list = Staff.objects.filter(role='Delivery', status='Active')
-
     return render(request, 'sales/delivery_report.html', {
-        'performance': performance,
-        'deliveries': deliveries,
-        'grand_total': grand_total,
-        'staff_list': staff_list,
-        'selected_date': selected_date,
+        'performance': performance
     })

@@ -2394,45 +2394,48 @@ from django.db.models import Sum, Count
 from datetime import datetime
 from .models import DeliverySale
 
-from datetime import datetime
-
 @admin_or_manager_required
 def delivery_performance_report(request):
 
-    order_id = request.GET.get('order_id')
-    staff_id = request.GET.get('staff')
-    selected_date = request.GET.get('date')
+    month = request.GET.get('month')
+    start = request.GET.get('start')
+    end = request.GET.get('end')
 
     deliveries = DeliverySale.objects.select_related(
         'staff',
         'sale'
     ).prefetch_related(
-        'sale__items'
+        'sale__items'   # 🔥 IMPORTANT
     )
 
     user = request.user
 
-    # 🔒 Branch restriction
     if user.user_type != 0:
         deliveries = deliveries.filter(sale__branch=user.branch)
 
-    # 🔎 Order ID filter
-    if order_id:
-        deliveries = deliveries.filter(order_id__icontains=order_id)
-
-    # 👤 Staff filter
-    if staff_id:
-        deliveries = deliveries.filter(staff__id=staff_id)
-
-    # 📅 Single Date filter
-    if selected_date:
+    # Month filter
+    if month:
         try:
-            filter_date = datetime.strptime(selected_date, "%Y-%m-%d").date()
-            deliveries = deliveries.filter(sale__date=filter_date)
+            year, month_num = map(int, month.split('-'))
+            deliveries = deliveries.filter(
+                sale__date__year=year,
+                sale__date__month=month_num
+            )
         except ValueError:
             pass
 
-    # 📊 Staff summary
+    # Date range filter
+    elif start and end:
+        try:
+            start_date = datetime.strptime(start, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end, "%Y-%m-%d").date()
+            deliveries = deliveries.filter(
+                sale__date__range=[start_date, end_date]
+            )
+        except ValueError:
+            pass
+
+    # Staff summary
     performance = deliveries.values(
         'staff__id',
         'staff__name'
@@ -2445,12 +2448,8 @@ def delivery_performance_report(request):
         total=Sum('amount')
     )['total'] or 0
 
-    staff_list = Staff.objects.filter(role='Delivery', status='Active')
-
     return render(request, 'sales/delivery_report.html', {
         'performance': performance,
         'deliveries': deliveries,
-        'grand_total': grand_total,
-        'staff_list': staff_list,
-        'selected_date': selected_date,
+        'grand_total': grand_total
     })

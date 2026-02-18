@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+    <h4>Delivery Performance Report</h4>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Staff Name</th>
+                <th>Total Orders</th>
+                <th>Total Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in performance %}
+            <tr>
+                <td>{{ row.staff__name }}</td>
+                <td>{{ row.total_orders }}</td>
+                <td>{{ row.total_amount }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3" class="text-center">No records found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="text-end">
+        <h5>Total Delivery Collection: {{ grand_total }}</h5>
+    </div>
+</div>
+
+{% endblock %}

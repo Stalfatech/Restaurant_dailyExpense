@@ -266,8 +266,7 @@ class DeliverySaleForm(forms.ModelForm):
         amount = cleaned_data.get('amount')
 
         order_id = cleaned_data.get('order_id')
-        if not staff and not platform and not order_id and not amount:
-            return cleaned_data
+        
 
         if not staff:
             self.add_error('staff', 'This field is required.')

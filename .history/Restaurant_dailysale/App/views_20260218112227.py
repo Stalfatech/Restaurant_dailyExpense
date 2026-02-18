@@ -1493,14 +1493,7 @@ def edit_daily_sale(request, pk):
     sale = get_object_or_404(DailySale, pk=pk)
     user = request.user
 
-    # 🔒 BLOCK IF DAY IS CLOSED
-    if CashBook.objects.filter(
-        date=sale.date,
-        branch=sale.branch,
-        is_closed=True
-    ).exists():
-        messages.info(request, "Day is closed. Cannot edit Daily Sale.")
-        return redirect('daily_sales_dashboard')
+    
 
     form = DailySaleForm(
         request.POST or None,
@@ -1524,9 +1517,7 @@ def edit_daily_sale(request, pk):
 
         if form.is_valid() and item_formset.is_valid() and delivery_formset.is_valid():
 
-            old_date = sale.date
-            old_branch = sale.branch
-
+            # 🔥 SAME LOGIC AS ADD
             sale = form.save(commit=False)
 
             if user.user_type == 0:
@@ -1545,8 +1536,6 @@ def edit_daily_sale(request, pk):
             sale.calculate_totals()
             sale.save()
 
-            # 🔄 Recalculate old and new date cashbook
-            update_cashbook(old_branch, old_date)
             update_cashbook(sale.branch, sale.date)
 
             messages.success(request, "Sale Updated Successfully ✅")

@@ -5,22 +5,17 @@
 
    <div class="d-flex justify-content-between align-items-center mb-3">
     <h3 class="fw-bold">{{ page_title }}</h3>
-    <a href="{% url 'add_delivery_platform' %}" class="btn btn-success">
-        <i class="fa fa-plus"></i> Add Platform
-    </a>
-</div>
 
-<div class="d-flex justify-content mb-3">
-    <form method="GET" class="d-flex gap-2 align-items-center">
-        <input type="text" name="q" placeholder="Search Platform"
-               value="{{ request.GET.q|default:'' }}" class="form-control" style="max-width:250px;">
-        <button type="submit" class="btn btn-primary" style="width:120px;">
-            <i class="fa fa-search"></i> Search
-        </button>
-        <a href="{% url 'delivery_platform_list' %}" class="btn btn-secondary" style="width:120px;">
-            <i class="fa fa-times"></i> Clear
-        </a>
+    <form method="get" class="d-flex" style="gap: 5px;">
+        <input type="text" name="q" class="form-control" placeholder="Search by name"
+               value="{{ search_query }}">
+        <button type="submit" class="btn btn-primary">Search</button>
+        <a href="{% url 'delivery_platform_list' %}" class="btn btn-secondary">Clear</a>
     </form>
+
+    <a href="{% url 'add_delivery_platform' %}" class="btn btn-success">
+        + Add Platform
+    </a>
 </div>
 
 

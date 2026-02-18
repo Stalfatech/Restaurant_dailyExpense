@@ -1,6 +1,5 @@
 from sys import platform
 from django import forms
-from urllib3 import request
 
 class LoginForm(forms.Form):
     email = forms.EmailField(
@@ -302,7 +301,6 @@ DeliveryFormSet = forms.inlineformset_factory(
     form=DeliverySaleForm,
     extra=1,
     can_delete=True,
- 
 )
 
 from .models import DailySale, DailySaleItem, DeliverySale, DeliveryPlatform

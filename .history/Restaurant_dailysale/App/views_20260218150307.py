@@ -1346,13 +1346,7 @@ def add_daily_sale(request):
 
     form = DailySaleForm(request.POST or None, user=user, instance=sale)
     item_formset = DailySaleItemFormSet(request.POST or None, prefix='items', instance=sale)
-    delivery_formset = DeliveryFormSet(
-    request.POST or None,
-    prefix='deliveries',
-    instance=sale,
-    form_kwargs={'user': request.user}   # ✅ PASS USER HERE
-)
-
+    delivery_formset = DeliveryFormSet(request.POST or None, prefix='deliveries', instance=sale)
 
     if request.method == "POST":
         if form.is_valid() and item_formset.is_valid() and delivery_formset.is_valid():

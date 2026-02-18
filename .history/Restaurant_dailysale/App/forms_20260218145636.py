@@ -302,7 +302,7 @@ DeliveryFormSet = forms.inlineformset_factory(
     form=DeliverySaleForm,
     extra=1,
     can_delete=True,
- 
+     form_kwargs={'user': request.user}
 )
 
 from .models import DailySale, DailySaleItem, DeliverySale, DeliveryPlatform

@@ -2402,8 +2402,6 @@ from datetime import datetime
 from .models import DeliverySale
 
 from datetime import datetime
-from django.db.models import Q, Sum, Count
-from datetime import datetime
 
 @admin_or_manager_required
 

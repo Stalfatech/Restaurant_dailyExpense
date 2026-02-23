@@ -2402,43 +2402,36 @@ from datetime import datetime
 from .models import DeliverySale
 
 from datetime import datetime
-from django.db.models import Q, Sum, Count
-from datetime import datetime
 
 @admin_or_manager_required
-
-
 def delivery_performance_report(request):
-    user = request.user
 
     order_id = request.GET.get('order_id')
     staff_id = request.GET.get('staff')
     selected_date = request.GET.get('date')
 
-    # Staff visibility
-    if user.user_type == 0:
-        staff_list = Staff.objects.filter(role='Delivery', status='Active')
-    else:
-        staff_list = Staff.objects.filter(
-            role='Delivery',
-            status='Active'
-        ).filter(
-            Q(branch=user.branch) |
-            Q(created_by__user_type=0) |
-            Q(created_by=user)
-        ).distinct()
-
     deliveries = DeliverySale.objects.select_related(
-        'staff', 'sale'
-    ).filter(staff__in=staff_list)
+        'staff',
+        'sale'
+    ).prefetch_related(
+        'sale__items'
+    )
 
-    # Filters
+    user = request.user
+
+    # 🔒 Branch restriction
+    if user.user_type != 0:
+        deliveries = deliveries.filter(sale__branch=user.branch)
+
+    # 🔎 Order ID filter
     if order_id:
         deliveries = deliveries.filter(order_id__icontains=order_id)
 
+    # 👤 Staff filter
     if staff_id:
         deliveries = deliveries.filter(staff__id=staff_id)
 
+    # 📅 Single Date filter
     if selected_date:
         try:
             filter_date = datetime.strptime(selected_date, "%Y-%m-%d").date()
@@ -2446,7 +2439,7 @@ def delivery_performance_report(request):
         except ValueError:
             pass
 
-    # Performance
+    # 📊 Staff summary
     performance = deliveries.values(
         'staff__id',
         'staff__name'
@@ -2455,7 +2448,11 @@ def delivery_performance_report(request):
         total_orders=Count('id')
     ).order_by('-total_amount')
 
-    grand_total = deliveries.aggregate(total=Sum('amount'))['total'] or 0
+    grand_total = deliveries.aggregate(
+        total=Sum('amount')
+    )['total'] or 0
+
+    staff_list = Staff.objects.filter(role='Delivery', status='Active')
 
     return render(request, 'sales/delivery_report.html', {
         'performance': performance,

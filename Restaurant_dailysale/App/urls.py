@@ -84,6 +84,14 @@ path(
     path("manager-salary/edit/<int:pk>/",views.manager_salary_edit,name="manager_salary_edit"),
     path('manager-salary/delete/<int:pk>/', views.managerdelete_salary, name='managerdelete_salary'),
     path("manager-monthly-report/",views.manager_monthly_report,name="manager_monthly_report"),
+    path(
+        'salary/monthly-report/',
+        views.adminmonthly_salary_report,
+        name='admin_monthly_salary_report'
+    ),
+    path('delivery-report/', views.delivery_performance_report, name='delivery_report'),
+
+
 
 
 

@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block 'content' %}
+
+<div class="container mt-4">
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Header Section (Screen Only) -->
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <h3 class="fw-bold">CashBook Dashboard</h3>
+
+        <button class="btn btn-primary btn-sm" onclick="window.print()">
+            <i class="fas fa-print me-1"></i> Print
+        </button>
+    </div>
+
+    <!-- Filter Section (Screen Only) -->
+    <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+
+        <!-- Date Filter -->
+        <form method="GET" class="d-flex gap-2 align-items-center">
+            <input type="date" name="date"
+                   value="{{ selected_date|default:'' }}"
+                   class="form-control" style="max-width:200px;">
+            <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+            <a href="{% url 'cashbook_dashboard' %}" class="btn btn-secondary btn-sm">Reset</a>
+        </form>
+
+        <!-- Branch Search (Admin Only) -->
+        {% if request.user.user_type == 0 %}
+        <div class="input-group no-print" style="max-width:250px;">
+            <input type="text" id="branchSearchInput"
+                   placeholder="Search Branch"
+                   class="form-control">
+        </div>
+        {% endif %}
+
+    </div>
+
+    <!-- PRINT AREA START -->
+    <div class="card shadow print-area">
+        <div class="card-body">
+
+            <!-- Print Heading -->
+            <div class="text-center mb-3">
+                <h3 class="fw-bold">CashBook Dashboard</h3>
+
+                {% if selected_date %}
+                    <p class="mb-1"><strong>Date:</strong> {{ selected_date|date:"d-m-Y" }}</p>
+                {% endif %}
+
+                <p class="mb-0">
+                    <strong>Printed On:</strong>
+                    <script>
+                        document.write(new Date().toLocaleString());
+                    </script>
+                </p>
+            </div>
+
+            <!-- CashBook Table -->
+            <table class="table table-bordered" id="cashbookTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Date</th>
+                        <th>Branch</th>
+                        <th>Opening</th>
+                        <th>Cash Sales</th>
+                        <th>Expenses</th>
+                        <th>Closing</th>
+                        <th>Status</th>
+                        {% if request.user.user_type == 0 %}
+                            <th class="no-print">Action</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for cash in cashbooks %}
+                        <tr>
+                            <td>{{ cash.date|date:"d-m-Y" }}</td>
+                            <td class="branch-name">{{ cash.branch.name }}</td>
+                            <td>{{ cash.opening_balance }}</td>
+                            <td>{{ cash.cash_sales }}</td>
+                            <td>{{ cash.expenses }}</td>
+                            <td><strong>{{ cash.closing_balance }}</strong></td>
+                            <td>
+                                {% if cash.is_closed %}
+                                    <span class="badge bg-danger">Closed</span>
+                                {% else %}
+                                    <span class="badge bg-success">Open</span>
+                                {% endif %}
+                            </td>
+
+                            {% if request.user.user_type == 0 %}
+                                <td class="no-print">
+                                    {% if not cash.is_closed %}
+                                        <a href="{% url 'toggle_day' cash.branch.id cash.date %}"
+                                           class="btn btn-sm btn-danger">
+                                            Close Day
+                                        </a>
+                                    {% else %}
+                                        <a href="{% url 'toggle_day' cash.branch.id cash.date %}"
+                                           class="btn btn-sm btn-success">
+                                            Reopen Day
+                                        </a>
+                                    {% endif %}
+                                </td>
+                            {% endif %}
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="{% if request.user.user_type == 0 %}8{% else %}7{% endif %}"
+                                class="text-center">
+                                No Data Found
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+    <!-- PRINT AREA END -->
+
+</div>
+
+<!-- Branch Search Script -->
+<script>
+document.getElementById('branchSearchInput')?.addEventListener('keyup', function() {
+    const filter = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#cashbookTable tbody tr');
+
+    rows.forEach(row => {
+        const branchName = row.querySelector('.branch-name')?.textContent.toLowerCase();
+        row.style.display = branchName && branchName.includes(filter) ? '' : 'none';
+    });
+});
+</script>
+
+<!-- Print Styling -->
+<style>
+@media print {
+
+    body * {
+        visibility: hidden;
+    }
+
+    .print-area, .print-area * {
+        visibility: visible;
+    }
+
+    .print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+
+    table {
+        font-size: 12px;
+    }
+
+    h3 {
+        margin-bottom: 10px;
+    }
+}
+</style>
+
+{% endblock %}

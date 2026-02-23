@@ -631,18 +631,35 @@ def get_opening_balance(branch, selected_date):
 
     return Decimal('0.00')
 
+from decimal import Decimal
+from django.db.models import Sum
+from .models import CashBook, DailySale, Expense
+
+
 def update_cashbook(branch, selected_date):
-    
+
+    # 🛑 Safety guard
+    if not branch:
+        return
+
+    # 🔹 Get or create safely
     cashbook, created = CashBook.objects.get_or_create(
         branch=branch,
-        date=selected_date
+        date=selected_date,
+        defaults={
+            'opening_balance': Decimal('0.00'),
+            'cash_sales': Decimal('0.00'),
+            'expenses': Decimal('0.00'),
+            'closing_balance': Decimal('0.00'),
+            'is_closed': False,
+        }
     )
 
-    # ✅ Always update opening balance
+    # 🔹 Get previous valid cashbook (exclude null branch)
     previous_cashbook = CashBook.objects.filter(
         branch=branch,
         date__lt=selected_date
-    ).order_by('-date').first()
+    ).exclude(branch__isnull=True).order_by('-date').first()
 
     if previous_cashbook:
         cashbook.opening_balance = previous_cashbook.closing_balance
@@ -665,7 +682,7 @@ def update_cashbook(branch, selected_date):
     cashbook.cash_sales = total_cash
     cashbook.expenses = total_expenses
 
-    # 🔹 Closing formula
+    # 🔹 Closing balance formula
     cashbook.closing_balance = (
         cashbook.opening_balance +
         cashbook.cash_sales -
@@ -673,6 +690,7 @@ def update_cashbook(branch, selected_date):
     )
 
     cashbook.save()
+
 
 
 
@@ -1376,24 +1394,57 @@ def add_daily_sale(request):
 
     form = DailySaleForm(request.POST or None, user=user, instance=sale)
     item_formset = DailySaleItemFormSet(request.POST or None, prefix='items', instance=sale)
-    delivery_formset = DeliveryFormSet(request.POST or None, prefix='deliveries', instance=sale)
+    delivery_formset = DeliveryFormSet(
+    request.POST or None,
+    prefix='deliveries',
+    instance=sale,
+    form_kwargs={'user': request.user}   # ✅ PASS USER HERE
+)
+
 
     if request.method == "POST":
         if form.is_valid() and item_formset.is_valid() and delivery_formset.is_valid():
-            # Save main sale
-            sale = form.save(commit=False)
-            if user.user_type == 0:
-                sale.branch = form.cleaned_data.get('branch')
+
+            # Determine branch
+            if user.user_type == 0:  # Admin
+                branch = form.cleaned_data.get('branch')
+                if not branch:
+                    messages.info(request, "Please select a branch.")
+                    return render(request, 'sales/daily_sale_form.html', {
+                        'form': form,
+                        'item_formset': item_formset,
+                        'delivery_formset': delivery_formset,
+                        'page_title': 'Add Daily Sale',
+                        'user_type': user.user_type
+                    })
             else:
-                sale.branch = user.branch
+                branch = user.branch
+                if not branch:
+                    messages.info(request, "You are not assigned to any branch.")
+                    return redirect('daily_sales_dashboard')
+
+            sale_date = form.cleaned_data.get('date')
+
+            # 🔒 Prevent adding for closed day
+            if CashBook.objects.filter(
+                date=sale_date,
+                branch=branch,
+                is_closed=True
+            ).exists():
+                messages.info(request, "Cannot add daily sale for a closed day.")
+                return redirect('daily_sales_dashboard')
+
+            # ✅ Save main sale
+            sale = form.save(commit=False)
+            sale.branch = branch
             sale.created_by = user
             sale.save()
 
-            # 🔑 Assign saved instance to formsets
+            # Assign saved instance to formsets
             item_formset.instance = sale
             delivery_formset.instance = sale
+            
 
-            # Save inline formsets
             item_formset.save()
             delivery_formset.save()
 
@@ -1405,10 +1456,11 @@ def add_daily_sale(request):
             ])
 
             update_cashbook(sale.branch, sale.date)
+
             messages.success(request, "Daily Sale Added Successfully ✅")
             return redirect('daily_sales_dashboard')
+
         else:
-            # Debug: print errors to console
             print("Form errors:", form.errors)
             print("Item formset errors:", item_formset.errors)
             print("Delivery formset errors:", delivery_formset.errors)
@@ -1514,7 +1566,14 @@ def edit_daily_sale(request, pk):
     sale = get_object_or_404(DailySale, pk=pk)
     user = request.user
 
-    
+    # 🔒 BLOCK IF DAY IS CLOSED
+    if CashBook.objects.filter(
+        date=sale.date,
+        branch=sale.branch,
+        is_closed=True
+    ).exists():
+        messages.info(request, "Day is closed. Cannot edit Daily Sale.")
+        return redirect('daily_sales_dashboard')
 
     form = DailySaleForm(
         request.POST or None,
@@ -1538,7 +1597,9 @@ def edit_daily_sale(request, pk):
 
         if form.is_valid() and item_formset.is_valid() and delivery_formset.is_valid():
 
-            # 🔥 SAME LOGIC AS ADD
+            old_date = sale.date
+            old_branch = sale.branch
+
             sale = form.save(commit=False)
 
             if user.user_type == 0:
@@ -1557,6 +1618,8 @@ def edit_daily_sale(request, pk):
             sale.calculate_totals()
             sale.save()
 
+            # 🔄 Recalculate old and new date cashbook
+            update_cashbook(old_branch, old_date)
             update_cashbook(sale.branch, sale.date)
 
             messages.success(request, "Sale Updated Successfully ✅")
@@ -2408,6 +2471,7 @@ def adminmonthly_salary_report(request):
         'selected_branch': branch_id,
     }
 
+
     return render(request, 'Admin/adminmontly_salaryreport.html', context)
 
 @login_required
@@ -2938,4 +3002,80 @@ def manager_monthly_report(request):
         "years": range(2022, 2031),
     }
 
-    return render(request, "Admin/manager_monthlyreport.html", context)
+
+    return render(
+        request,
+        'Admin/adminmontly_salaryreport.html',
+        context
+    )
+    
+    
+    
+from django.db.models import Sum, Count
+from datetime import datetime
+from .models import DeliverySale
+
+from datetime import datetime
+from django.db.models import Q, Sum, Count
+from datetime import datetime
+
+@admin_or_manager_required
+
+
+def delivery_performance_report(request):
+    user = request.user
+
+    order_id = request.GET.get('order_id')
+    staff_id = request.GET.get('staff')
+    selected_date = request.GET.get('date')
+
+    # Staff visibility
+    if user.user_type == 0:
+        staff_list = Staff.objects.filter(role='Delivery', status='Active')
+    else:
+        staff_list = Staff.objects.filter(
+            role='Delivery',
+            status='Active'
+        ).filter(
+            Q(branch=user.branch) |
+            Q(created_by__user_type=0) |
+            Q(created_by=user)
+        ).distinct()
+
+    deliveries = DeliverySale.objects.select_related(
+        'staff', 'sale'
+    ).filter(staff__in=staff_list)
+
+    # Filters
+    if order_id:
+        deliveries = deliveries.filter(order_id__icontains=order_id)
+
+    if staff_id:
+        deliveries = deliveries.filter(staff__id=staff_id)
+
+    if selected_date:
+        try:
+            filter_date = datetime.strptime(selected_date, "%Y-%m-%d").date()
+            deliveries = deliveries.filter(sale__date=filter_date)
+        except ValueError:
+            pass
+
+    # Performance
+    performance = deliveries.values(
+        'staff__id',
+        'staff__name'
+    ).annotate(
+        total_amount=Sum('amount'),
+        total_orders=Count('id')
+    ).order_by('-total_amount')
+
+    grand_total = deliveries.aggregate(total=Sum('amount'))['total'] or 0
+
+    return render(request, 'sales/delivery_report.html', {
+        'performance': performance,
+        'deliveries': deliveries,
+        'grand_total': grand_total,
+        'staff_list': staff_list,
+        'selected_date': selected_date,
+    })
+

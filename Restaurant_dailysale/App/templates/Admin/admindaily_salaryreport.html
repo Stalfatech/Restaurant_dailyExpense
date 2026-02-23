@@ -6,7 +6,7 @@
 <div class="container-fluid mt-5">
 
     <!-- Header (Hidden While Printing) -->
-    <div class="text-center mb-4 no-print">
+    <div class="text-center mb-4 ">
         <h2 class="fw-bold">Daily Salary Report</h2>
     </div>
 
@@ -148,6 +148,10 @@
 
     <!-- Print Button (Hidden While Printing) -->
     <div class="text-end mt-3 no-print">
+        <a href="{% url 'admin_salary_list' %}"
+       class="btn btn-secondary px-4">
+        Cancel
+    </a>
         <button onclick="window.print()" class="btn btn-success">
             Print Report
         </button>
@@ -156,7 +160,6 @@
 </div>
 
 <style>
-
 /* Table Styling */
 th, td {
     white-space: nowrap;
@@ -164,45 +167,69 @@ th, td {
     font-size: 15px;
 }
 
-/* Remove horizontal scroll */
+/* Remove horizontal scroll on screen */
 body {
     overflow-x: hidden;
+}
+
+/* Summary Cards */
+.card {
+    border-radius: 12px;
 }
 
 /* PRINT SETTINGS */
 @media print {
 
+    /* Page Setup */
     @page {
         size: A4 landscape;
         margin: 12mm;
     }
 
+    /* Hide elements with no-print class */
     .no-print {
         display: none !important;
     }
 
-    body {
+    /* Force visible overflow */
+    body, html {
+        overflow: visible !important;
         background: white !important;
     }
 
+    .card, .card-body {
+        border: none !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+    }
+
+    /* Table adjustments for print */
     table {
         width: 100% !important;
         font-size: 14px;
+        border-collapse: collapse !important;
     }
 
     th, td {
-        white-space: nowrap;
-        padding: 14px 24px !important;
+        white-space: normal !important; /* wrap long text */
+        padding: 10px 12px !important;
+        font-size: 12px;
     }
 
-    .card {
-        border: none !important;
-        box-shadow: none !important;
+    /* Adjust table headers */
+    th {
+        background-color: #000 !important; /* solid black header */
+        color: #fff !important;
+        -webkit-print-color-adjust: exact;
     }
 
+    /* Page break if table is too long */
+    table, tr, td, th {
+        page-break-inside: avoid !important;
+    }
 }
-
 </style>
+
 
 
 {% endblock %}

@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+{% load static %}
+{% block 'content' %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+
+@media print {
+
+    .no-print{
+        display:none !important;
+    }
+
+    body{
+        background:white !important;
+        font-size:12px;
+    }
+
+    .container-fluid{
+        margin-top:0 !important;
+        padding:0 !important;
+    }
+
+    .card{
+        box-shadow:none !important;
+        border:none !important;
+    }
+
+     /* Center the heading */
+    .card-header{
+        width:100%;
+        text-align:center !important;
+        justify-content:center !important;
+        align-items:center !important;
+        display:flex !important;
+        font-size:20px;
+        font-weight:600;
+        padding:10px 0;
+    }
+
+    /* Total box smaller */
+    .card.text-center{
+        max-width:280px;
+        margin:auto;
+    }
+
+    .card.text-center h2{
+        font-size:18px;
+        margin:4px 0;
+    }
+
+    .card.text-center .fw-semibold{
+        font-size:12px;
+    }
+
+    /* Table compact */
+    table{
+        font-size:11px;
+    }
+
+    th, td{
+        padding:4px !important;
+        white-space:nowrap;
+    }
+
+    thead{
+        background:#000 !important;
+        color:#fff !important;
+    }
+
+}
+
+
+</style>
+
+<div class="container-fluid mt-4">
+
+<div class="card shadow-lg border-0">
+
+<div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+<h4 class="mb-0">Manager Monthly Salary Report</h4>
+
+
+
+</div>
+
+
+<div class="card-body">
+
+<!-- TOTAL CARD -->
+
+<div class="row justify-content-center mb-4">
+<div class="col-md-5">
+
+<div class="card text-center border-0 shadow"
+     style="background:#dc3545;color:white;border-radius:12px;">
+
+<div class="card-body py-4">
+
+<div class="fw-semibold">TOTAL PAID SALARY</div>
+
+<h2 class="fw-bold mt-2">₹ {{ total_paid }}</h2>
+
+</div>
+</div>
+</div>
+</div>
+
+<!-- FILTERS -->
+
+<form method="GET" class="row g-3 mb-4 no-print">
+
+<div class="col-md-3">
+<label class="fw-semibold">Manager</label>
+<select name="manager" class="form-select">
+<option value="">All</option>
+
+{% for m in managers %}
+<option value="{{ m.id }}" {% if request.GET.manager == m.id|stringformat:"s" %}selected{% endif %}>
+{{ m }}
+</option>
+{% endfor %}
+
+</select>
+</div>
+
+
+<div class="col-md-2">
+<label class="fw-semibold">Month</label>
+<select name="month" class="form-select">
+<option value="">All</option>
+
+{% for m,v in month_choices %}
+<option value="{{ m }}" {% if request.GET.month == m %}selected{% endif %}>
+{{ v }}
+</option>
+{% endfor %}
+
+</select>
+</div>
+
+
+{% comment %} <div class="col-md-2">
+<label class="fw-semibold">Year</label>
+<select name="year" class="form-select">
+<option value="">All</option>
+
+{% for y in years %}
+<option value="{{ y }}" {% if request.GET.year == y|stringformat:"s" %}selected{% endif %}>
+{{ y }}
+</option>
+{% endfor %}
+
+</select>
+</div> {% endcomment %}
+
+
+<div class="col-md-3">
+<label class="fw-semibold">Branch</label>
+<select name="branch" class="form-select">
+<option value="">All</option>
+
+{% for b in branches %}
+<option value="{{ b.id }}" {% if request.GET.branch == b.id|stringformat:"s" %}selected{% endif %}>
+{{ b.name }}
+</option>
+{% endfor %}
+
+</select>
+</div>
+
+
+<div class="col-md-2">
+<label style="visibility:hidden">Search</label>
+
+<div class="d-flex gap-2">
+    <button type="submit" class="btn btn-dark w-100">
+        Filter
+    </button>
+
+    <a href="{% url 'manager_monthly_report' %}" class="btn btn-secondary w-100">
+        Clear
+    </a>
+</div>
+
+</div>
+
+</form>
+<div class="d-flex justify-content-end mb-3 no-print">
+
+<button onclick="window.print()" class="btn btn-outline-dark shadow-sm">
+<i class="bi bi-printer"></i> Print Report
+</button>
+
+</div>
+
+
+<!-- TABLE -->
+
+<div class="table-responsive">
+
+<table class="table table-bordered table-hover">
+
+<thead class="table-dark">
+<tr>
+<th>#</th>
+<th>Manager</th>
+<th>Branch</th>
+<th>Month</th>
+<th>Year</th>
+<th>Salary</th>
+<th>Advance</th>
+<th>Paid</th>
+<th>Balance</th>
+<th>Date</th>
+</tr>
+</thead>
+
+<tbody>
+
+{% for s in salaries %}
+
+<tr>
+<td>{{ forloop.counter }}</td>
+<td>{{ s.manager }}</td>
+<td>{{ s.branch.name }}</td>
+<td>{{ s.salary_month }}</td>
+<td>{{ s.salary_year }}</td>
+<td>₹ {{ s.salary_amount }}</td>
+<td>₹ {{ s.adjusted_advance }}</td>
+<td>₹ {{ s.paid_amount }}</td>
+<td>₹ {{ s.balance_salary }}</td>
+<td>{{ s.payment_date }}</td>
+</tr>
+
+{% empty %}
+
+<tr>
+<td colspan="10" class="text-center text-danger">
+No Data Found
+</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+</div>
+</div>
+
+{% endblock %}

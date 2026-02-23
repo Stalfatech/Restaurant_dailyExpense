@@ -1,5 +1,5 @@
 
-from .models import  DeliveryPlatform, User,Register,Manager,Staff
+from .models import  DeliveryPlatform, User,Register,Manager,Staff,ManagerSalary
 from django.contrib.auth.hashers import make_password,check_password
 from django.shortcuts import render, redirect,get_object_or_404
 from django.contrib import messages
@@ -14,7 +14,8 @@ from .models import  User,Register,Manager,Branch,Expense,CashBook
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import get_user_model
 from django.db.models import OuterRef, Subquery
-
+from django.utils import timezone
+from django.utils.dateparse import parse_date
 
 
 from django.db.models import Sum
@@ -1274,39 +1275,86 @@ def delete_staff(request, id):
 
 User = get_user_model()
 
+# def adminview_staff(request):
+#     user = request.user
+#     selected_role = request.GET.get('role')
+
+#     # Base queryset
+#     if user.user_type == 0:  # Admin
+#         staffs = Staff.objects.select_related('created_by', 'branch')
+#     else:  # Manager
+#         staffs = Staff.objects.select_related('created_by', 'branch').filter(
+#             branch=user.branch
+#         )
+
+#     # Role filter
+#     if selected_role:
+#         staffs = staffs.filter(role=selected_role)
+
+#     staffs = staffs.order_by('id')
+
+#     # Unique roles for dropdown
+#     if user.user_type == 0:
+#         roles = Staff.objects.values_list('role', flat=True).distinct()
+#     else:
+#         roles = Staff.objects.filter(
+#             branch=user.branch
+#         ).values_list('role', flat=True).distinct()
+
+#     return render(request, 'Admin/stafflist_view.html', {
+#         'staffs': staffs,
+#         'roles': roles,
+#         'selected_role': selected_role
+#     })
+
 def adminview_staff(request):
     user = request.user
+
+    # Get filter values
     selected_role = request.GET.get('role')
+    selected_name = request.GET.get('name')
+    selected_branch = request.GET.get('branch')
 
     # Base queryset
     if user.user_type == 0:  # Admin
-        staffs = Staff.objects.select_related('created_by', 'branch')
+        staffs = Staff.objects.select_related('created_by', 'branch').all()
     else:  # Manager
         staffs = Staff.objects.select_related('created_by', 'branch').filter(
             branch=user.branch
         )
 
-    # Role filter
+    # 🔎 Name filter
+    if selected_name:
+        staffs = staffs.filter(name__icontains=selected_name)
+
+    # 🎭 Role filter
     if selected_role:
         staffs = staffs.filter(role=selected_role)
+
+    # 🏢 Branch filter (Admin only)
+    if selected_branch and user.user_type == 0:
+        staffs = staffs.filter(branch_id=selected_branch)
 
     staffs = staffs.order_by('id')
 
     # Unique roles for dropdown
     if user.user_type == 0:
         roles = Staff.objects.values_list('role', flat=True).distinct()
+        branches = Branch.objects.all()
     else:
         roles = Staff.objects.filter(
             branch=user.branch
         ).values_list('role', flat=True).distinct()
+        branches = Branch.objects.filter(id=user.branch.id)
 
     return render(request, 'Admin/stafflist_view.html', {
         'staffs': staffs,
         'roles': roles,
-        'selected_role': selected_role
+        'branches': branches,
+        'selected_role': selected_role,
+        'selected_name': selected_name,
+        'selected_branch': selected_branch,
     })
-
-
 
 
 from .models import DailySale, CashBook
@@ -1792,6 +1840,10 @@ from django.db import transaction
 from django.http import JsonResponse
 import calendar
 from .models import Salary,SalaryAdvance
+from django.db.models.functions import Coalesce
+from django.db.models import F, Sum,DecimalField, Value
+from decimal import Decimal
+
 
 @login_required
 def add_salary(request):
@@ -1812,8 +1864,7 @@ def add_salary(request):
         payment_date = request.POST.get('payment_date')
         payment_mode = request.POST.get('payment_mode')
 
-        # ✅ month is STRING
-        salary_month = request.POST.get('salary_month')   # "March"
+        salary_month = request.POST.get('salary_month')
         salary_year = int(request.POST.get('salary_year'))
 
         need_advance = request.POST.get('need_advance')
@@ -1824,6 +1875,7 @@ def add_salary(request):
             branch=request.user.branch
         )
 
+        # Prevent duplicate
         if Salary.objects.filter(
             staff=staff,
             salary_month=salary_month,
@@ -1836,21 +1888,45 @@ def add_salary(request):
         if need_advance == "yes" and advance_input > 0:
             adjusted_advance = advance_input
 
-        balance_salary = salary_amount - (paid_amount + adjusted_advance)
+        # Get previous month data
+        previous_row = Salary.objects.filter(
+            staff=staff,
+            next_month=salary_month,
+            next_month_year=salary_year
+        ).order_by('-id').first()
+
+        previous_advance = Decimal('0')
+        previous_balance = Decimal('0')
+
+        if previous_row:
+            previous_advance = previous_row.next_month_advance_amount or Decimal('0')
+            previous_balance = previous_row.balance_salary or Decimal('0')
+
+        # Effective salary
+        effective_salary = salary_amount - previous_advance + previous_balance
+
+        if effective_salary < 0:
+            effective_salary = Decimal('0')
+
+        # ✅ Balance calculation (correct)
+        balance_salary = effective_salary - paid_amount
+
         if balance_salary < 0:
             balance_salary = Decimal('0')
 
+        # SAVE
         with transaction.atomic():
 
             Salary.objects.create(
                 staff=staff,
-                salary_month=salary_month,   # ✅ string
-                salary_year=salary_year,
+                branch=request.user.branch,
                 salary_amount=salary_amount,
                 adjusted_advance=adjusted_advance,
-                paid_amount=paid_amount,
+                paid_amount=paid_amount,  # ❌ no advance added here
                 balance_salary=balance_salary,
                 next_month_advance_amount=next_month_advance,
+                salary_month=salary_month,
+                salary_year=salary_year,
                 payment_date=payment_date,
                 payment_mode=payment_mode,
                 created_by=request.user
@@ -1865,25 +1941,18 @@ def add_salary(request):
         'years': years,
         'current_year': current_year,
     })
+
+
+
 @login_required
 def get_previous_salary_data(request):
 
     staff_id = request.GET.get('staff_id')
-    salary_month = request.GET.get('salary_month')   # "March"
-    salary_year = request.GET.get('salary_year')
 
     previous_balance = Decimal('0')
     previous_next_month_advance = Decimal('0')
 
-    if not salary_month or not salary_year:
-        return JsonResponse({
-            'previous_balance': '0',
-            'previous_next_month_advance': '0'
-        })
-
-    try:
-        salary_year = int(salary_year)
-    except:
+    if not staff_id:
         return JsonResponse({
             'previous_balance': '0',
             'previous_next_month_advance': '0'
@@ -1900,14 +1969,10 @@ def get_previous_salary_data(request):
             'previous_next_month_advance': '0'
         })
 
-    # ✅ VERY IMPORTANT
-    # We match selected month with previous record's next_month
-
+    # ✅ Get latest salary record
     salary_row = Salary.objects.filter(
-        staff=staff,
-        next_month=salary_month,          # "March"
-        next_month_year=salary_year
-    ).order_by('-id').first()
+        staff=staff
+    ).order_by('-salary_year', '-salary_month', '-id').first()
 
     if salary_row:
         previous_balance = salary_row.balance_salary or Decimal('0')
@@ -1919,28 +1984,22 @@ def get_previous_salary_data(request):
     })
 
 
-
 @login_required
 def salary_list(request):
-    """
-    View to list salaries filtered by staff branch,
-    staff name, and optionally by specific date or month.
-    """
-    # Base queryset: salaries for staff in the same branch as the logged-in user
+
     salaries = Salary.objects.filter(
         staff__branch=request.user.branch
-    ).select_related('staff')
+    ).select_related("staff", "branch")
 
-    # Get filters from GET parameters
-    selected_staff_name = request.GET.get("staff")  # staff name
-    selected_date = request.GET.get("date")        # expected format: 'YYYY-MM-DD'
-    selected_month = request.GET.get("month")      # expected format: 'YYYY-MM'
+    staff_name = request.GET.get("staff")
+    selected_date = request.GET.get("date")
+    selected_month = request.GET.get("month")
 
-    # Filter by staff name if provided (case-insensitive, partial match)
-    if selected_staff_name:
-        salaries = salaries.filter(staff__name__icontains=selected_staff_name)
+    # Staff filter
+    if staff_name:
+        salaries = salaries.filter(staff__name__icontains=staff_name)
 
-    # Apply daily filter if a date is provided
+    # Date filter
     if selected_date:
         try:
             date_obj = datetime.strptime(selected_date, "%Y-%m-%d").date()
@@ -1948,7 +2007,7 @@ def salary_list(request):
         except ValueError:
             selected_date = None
 
-    # Apply monthly filter if a month is provided
+    # Month filter (YYYY-MM)
     if selected_month:
         try:
             year, month = map(int, selected_month.split("-"))
@@ -1959,25 +2018,32 @@ def salary_list(request):
         except ValueError:
             selected_month = None
 
-    # Calculate total paid for the filtered queryset
-    total_paid = salaries.aggregate(total=Sum("paid_amount"))["total"] or 0
+   
 
-    # Order the salaries by year and month descending
-    salaries = salaries.order_by("-salary_year", "-salary_month")
+    salaries = salaries.order_by("-salary_year", "-salary_month", "-id")
+    # ✅ TOTAL ONLY PAID AMOUNT
+    total_paid = salaries.aggregate(
+    total=Coalesce(
+        Sum("paid_amount"),
+        Value(0),
+        output_field=DecimalField()
+    )
+    )["total"]
 
-    # Get all staff in the branch for the filter dropdown (optional)
-    staff_list = Staff.objects.filter(branch=request.user.branch).order_by("name")
 
     context = {
         "salaries": salaries,
         "total_paid": total_paid,
-        "selected_staff_name": selected_staff_name,  # fixed name
+        "staff_name": staff_name,
         "selected_date": selected_date,
         "selected_month": selected_month,
-        "staff_list": staff_list,
+        "today_date": timezone.now().date(),
+        "current_month": timezone.now().strftime("%Y-%m"),
     }
 
     return render(request, "Manager/salary_list.html", context)
+
+
 @login_required
 def edit_salary(request, pk):
 
@@ -2087,43 +2153,48 @@ def delete_salary(request, pk):
 
 @login_required
 def daily_salary_report(request):
-    """
-    View for daily salary report.
-    Filters by staff name and selected date.
-    """
-    # Base queryset: salaries for staff in the user's branch
-    salaries = Salary.objects.filter(staff__branch=request.user.branch).select_related('staff', 'branch')
 
-    # Get filters from GET parameters
-    selected_date = request.GET.get("date") or date.today().strftime("%Y-%m-%d")  # default today
+    salaries = Salary.objects.filter(
+        branch=request.user.branch,
+        staff__salary_type="Daily"
+    ).select_related('staff', 'branch')
+
+    selected_date = request.GET.get("date")
     staff_name = request.GET.get("staff", "")
 
-    # Filter by date
-    try:
-        date_obj = datetime.strptime(selected_date, "%Y-%m-%d").date()
-        salaries = salaries.filter(payment_date=date_obj)
-    except ValueError:
-        # invalid date
-        selected_date = date.today().strftime("%Y-%m-%d")
+    # ✅ Apply date filter ONLY if user selects date
+    if selected_date:
+        try:
+            date_obj = datetime.strptime(selected_date, "%Y-%m-%d").date()
+            salaries = salaries.filter(payment_date=date_obj)
+        except ValueError:
+            pass
 
-    # Filter by staff name if provided
+    # Staff filter
     if staff_name:
         salaries = salaries.filter(staff__name__icontains=staff_name)
 
-    # Total paid for the filtered queryset
-    total_paid = salaries.aggregate(total=Sum("paid_amount"))["total"] or 0
-    total_advance = salaries.aggregate(total=Sum("adjusted_advance"))["total"] or 0
+    total_paid = salaries.aggregate(
+        total=Sum("paid_amount")
+    )["total"] or 0
+
+    total_advance = salaries.aggregate(
+        total=Sum("adjusted_advance")
+    )["total"] or 0
 
     context = {
         "salaries": salaries,
         "total_paid": total_paid,
-        "total_advance": total_advance, 
+        "total_advance": total_advance,
         "selected_date": selected_date,
         "staff_name": staff_name,
         "today_date": date.today().strftime("%Y-%m-%d"),
     }
 
     return render(request, "Manager/daily_salaryreport.html", context)
+
+
+
 
 @login_required
 def monthly_salary_report(request):
@@ -2175,97 +2246,96 @@ def monthly_salary_report(request):
     return render(request, "Manager/monthly_salaryreport.html", context)
 
 
-
+@login_required
 def adminsalary_list(request):
-    """Admin view: list all salaries with filters."""
 
-    salaries = Salary.objects.select_related('staff', 'branch') \
-                              .all() \
-                              .order_by('-id')
+    salaries = Salary.objects.select_related('staff', 'branch').all()
 
-    # 🔎 Get filter values from GET
-    staff_name = request.GET.get('staff', '')
-    selected_date = request.GET.get('date', '')
-    selected_branch = request.GET.get('branch', '')
+    staff_name = request.GET.get('staff', '').strip()
+    selected_date = request.GET.get('date', '').strip()
+    selected_branch = request.GET.get('branch', '').strip()
 
-    # ✅ Staff filter
+    # 🔹 Restrict branch only if admin=0 AND no branch filter selected
+    if hasattr(request.user, "admin") and request.user.admin == 0:
+        if not selected_branch:
+            salaries = salaries.filter(staff__branch=request.user.branch)
+
+    # 🔹 Filter by staff name
     if staff_name:
         salaries = salaries.filter(staff__name__icontains=staff_name)
 
-    # ✅ Date filter (change 'date' to your actual field name)
-    if selected_date:
-        salaries = salaries.filter(date=selected_date)
+    # 🔹 Filter by branch
+    if selected_branch and selected_branch.isdigit():
+        salaries = salaries.filter(staff__branch_id=int(selected_branch))
 
-    # ✅ Branch filter
-    if selected_branch:
-        salaries = salaries.filter(branch_id=selected_branch)
-
-    # ✅ Dynamic total (after filtering)
-    total_paid = salaries.aggregate(
-        total=Sum('paid_amount')
-    )['total'] or 0
-
-    # ✅ Get all branches for dropdown
-    branches = Branch.objects.all()
-
-    context = {
-        'salaries': salaries,
-        'total_paid': total_paid,
-        'branches': branches,
-
-        # Keep selected values
-        'staff_name': staff_name,
-        'selected_date': selected_date,
-        'selected_branch': selected_branch,
-    }
-
-    return render(request, 'Admin/salary_list.html', context)
-
-def admindailysalary_list(request):
-    """Admin view: list all salaries with filters."""
-
-    salaries = Salary.objects.select_related('staff', 'branch').all().order_by('-id')
-
-    # GET parameters
-    staff_name = request.GET.get('staff', '')
-    selected_date = request.GET.get('date', '')
-    selected_branch = request.GET.get('branch', '')
-
-    # Filter by staff name
-    if staff_name:
-        salaries = salaries.filter(staff__name__icontains=staff_name)
-
-    # Filter by date
+    # 🔹 Filter by date
     if selected_date:
         try:
             date_obj = datetime.strptime(selected_date, "%Y-%m-%d").date()
             salaries = salaries.filter(payment_date=date_obj)
         except ValueError:
-            selected_date = ''
+            pass
 
-    # Filter by branch
-    if selected_branch:
-        salaries = salaries.filter(branch_id=int(selected_branch))
+    salaries = salaries.order_by("-salary_year", "-payment_date", "-id")
 
-    # Dynamic totals
-    total_paid = salaries.aggregate(total=Sum('paid_amount'))['total'] or 0
-    total_advance = salaries.aggregate(total=Sum('adjusted_advance'))['total'] or 0
-    total_next_advance = salaries.aggregate(total=Sum('next_month_advance_amount'))['total'] or 0
+    total_paid = salaries.aggregate(
+        total=Sum('paid_amount')
+    )['total'] or 0
 
-    # Branches for dropdown
     branches = Branch.objects.all()
 
     context = {
-        'salaries': salaries,
-        'total_paid': total_paid,
-        'total_advance': total_advance,
-        'total_next_advance': total_next_advance,
-        'staff_name': staff_name,
-        'selected_date': selected_date,
-        'branches': branches,
-        'selected_branch': selected_branch,
-        'today_date': date.today().strftime("%Y-%m-%d"),
-        'current_month': date.today().strftime("%B"),
+        "salaries": salaries,
+        "total_paid": total_paid,
+        "branches": branches,
+        "staff_name": staff_name,
+        "selected_date": selected_date,
+        "selected_branch": selected_branch,
+    }
+
+    return render(request, "Admin/salary_list.html", context)
+
+
+def admindailysalary_list(request):
+
+    salaries = Salary.objects.filter(
+        staff__salary_type="Daily"
+    ).select_related('staff', 'branch')
+
+    selected_date = request.GET.get("date", "")
+    staff_name = request.GET.get("staff", "")
+    selected_branch = request.GET.get("branch", "")
+
+    # DATE FILTER (ONLY IF SELECTED)
+    if selected_date:
+        try:
+            date_obj = datetime.strptime(selected_date, "%Y-%m-%d").date()
+            salaries = salaries.filter(payment_date=date_obj)
+        except ValueError:
+            pass
+
+    # STAFF FILTER
+    if staff_name:
+        salaries = salaries.filter(staff__name__icontains=staff_name)
+
+    # BRANCH FILTER
+    if selected_branch and selected_branch.isdigit():
+        salaries = salaries.filter(branch_id=int(selected_branch))
+
+    # TOTALS
+    total_paid = sum(s.paid_amount for s in salaries)
+    total_advance = sum(s.adjusted_advance for s in salaries)
+
+    branches = Branch.objects.all()
+
+    context = {
+        "salaries": salaries,
+        "total_paid": total_paid,
+        "total_advance": total_advance,
+        "selected_date": selected_date,
+        "staff_name": staff_name,
+        "selected_branch": selected_branch,
+        "branches": branches,
     }
 
     return render(request, 'Admin/admindaily_salaryreport.html', context)
@@ -2276,21 +2346,31 @@ from django.shortcuts import render
 from django.db.models import Sum
 
 def adminmonthly_salary_report(request):
-
-    salaries = Salary.objects.select_related(
-        'staff', 'branch'
-    ).order_by('-id')
-
+    """
+    Show monthly salary report for all branches by default.
+    Filters are optional. Default shows all branches.
+    """
+    # Get optional filters
     staff_name = request.GET.get('staff', '').strip()
-    month = request.GET.get('month', '').strip()
-    year = request.GET.get('year', '').strip()
+    month = request.GET.get('month', '').strip()  # e.g., "February"
+    year = request.GET.get('year', '').strip()    # e.g., "2026"
     branch_id = request.GET.get('branch', '').strip()
 
+
+# )
+    salaries = Salary.objects.select_related('staff', 'branch').filter(
+    staff__salary_type="Monthly"  # Include all Monthly staff
+)
+
+
+
+
+    # Apply optional filters
     if staff_name:
         salaries = salaries.filter(staff__name__icontains=staff_name)
 
     if month:
-        salaries = salaries.filter(salary_month=month)
+        salaries = salaries.filter(salary_month__iexact=month)
 
     if year:
         try:
@@ -2298,10 +2378,11 @@ def adminmonthly_salary_report(request):
         except ValueError:
             pass
 
-    # ✅ NEW – branch filter
-    if branch_id:
-        salaries = salaries.filter(branch_id=branch_id)
+    
+    if branch_id and branch_id.isdigit():
+        salaries = salaries.filter(branch_id=int(branch_id))
 
+    # Aggregate totals
     totals = salaries.aggregate(
         total_paid=Sum('paid_amount'),
         total_advance=Sum('adjusted_advance'),
@@ -2309,25 +2390,552 @@ def adminmonthly_salary_report(request):
         total_balance=Sum('balance_salary'),
     )
 
+    # For template filters
     branches = Branch.objects.all()
+    month_list = [m[0] for m in Salary.MONTH_CHOICES]
 
     context = {
-        'salaries': salaries,
+        'salaries': salaries.order_by('-salary_year', '-salary_month'),
         'branches': branches,
-
+        'month_list': month_list,
         'total_paid': totals['total_paid'] or 0,
         'total_advance': totals['total_advance'] or 0,
         'total_next_advance': totals['total_next_advance'] or 0,
         'total_balance': totals['total_balance'] or 0,
-
         'staff_name': staff_name,
         'selected_month': month,
         'selected_year': year,
         'selected_branch': branch_id,
     }
 
-    return render(
-        request,
-        'Admin/adminmontly_salaryreport.html',
-        context
-    )
+    return render(request, 'Admin/adminmontly_salaryreport.html', context)
+
+@login_required
+def admin_add_staff(request):
+    # Get all managers
+    managers = Manager.objects.select_related('user').all()
+
+    if request.method == "POST":
+        staff_id = request.POST.get("staff_id").strip()
+        name = request.POST.get("name").strip()
+        gender = request.POST.get("gender")
+        role = request.POST.get("role")
+        contact = request.POST.get("contact").strip()
+        dob = request.POST.get("dob") or None
+        joining_date = request.POST.get("joining_date")
+        salary_type = request.POST.get("salary_type")
+        status = request.POST.get("status")
+        manager_id = request.POST.get("manager")
+
+        # Get selected manager
+        manager = Manager.objects.filter(id=manager_id).first() if manager_id else None
+
+        if not manager:
+            messages.error(request, "Please select a valid manager.")
+            return redirect("admin_add_staff")
+
+        # Staff branch = manager's branch
+        branch = manager.user.branch
+
+        # Check duplicate staff_id
+        if Staff.objects.filter(staff_id=staff_id).exists():
+            messages.error(request, f"Staff ID {staff_id} already exists!")
+            return redirect("admin_add_staff")
+
+        # Save staff
+        Staff.objects.create(
+            staff_id=staff_id,
+            name=name,
+            gender=gender,
+            role=role,
+            contact=contact,
+            dob=dob,
+            joining_date=joining_date,
+            salary_type=salary_type,
+            status=status,
+            branch=branch,
+            created_by=request.user
+        )
+
+        messages.success(request, f"Staff '{name}' added successfully ✅")
+        # return redirect("admin_add_staff")
+        return redirect("adminview_staff")
+  # Make sure this URL exists
+
+    return render(request, "Admin/adminstaff_add.html", {
+        "managers": managers
+    })
+
+@login_required
+def admin_edit_staff(request, id):
+    staff = get_object_or_404(Staff, id=id)
+    managers = Manager.objects.select_related('user').all()
+
+    if request.method == "POST":
+        staff_id_input = request.POST.get("staff_id", "").strip()
+        name = request.POST.get("name", "").strip()
+        gender = request.POST.get("gender")
+        role = request.POST.get("role")
+        contact = request.POST.get("contact", "").strip()
+        dob = request.POST.get("dob") or None
+        joining_date = request.POST.get("joining_date")
+        salary_type = request.POST.get("salary_type")
+        status = request.POST.get("status")
+        manager_id = request.POST.get("manager")
+
+        # ✅ Duplicate check
+        if Staff.objects.filter(staff_id=staff_id_input).exclude(id=staff.id).exists():
+            messages.error(request, f"Staff ID {staff_id_input} already exists!")
+            return redirect("edit_staff", id=staff.id)
+
+        # ✅ Update basic fields
+        staff.staff_id = staff_id_input
+        staff.name = name
+        staff.gender = gender
+        staff.role = role
+        staff.contact = contact
+        staff.dob = dob
+        staff.joining_date = joining_date
+        staff.salary_type = salary_type
+        staff.status = status
+
+        # ✅ IMPORTANT: Update manager (created_by)
+        if manager_id:
+            manager = Manager.objects.filter(id=manager_id).first()
+            if manager:
+                staff.branch = manager.user.branch
+                staff.created_by = manager.user   # ⭐ THIS LINE FIXES YOUR ISSUE
+            else:
+                messages.error(request, "Invalid manager selected.")
+                return redirect("edit_staff", id=staff.id)
+
+        staff.save()
+
+        messages.success(request, f"Staff '{name}' updated successfully ✅")
+        return redirect("adminview_staff")
+
+    return render(request, "Admin/admin_edit_staff.html", {
+        "staff": staff,
+        "managers": managers
+    })
+
+   
+
+
+
+def admindelete_staff(request, id):
+    staff = get_object_or_404(Staff, id=id)
+
+    staff.delete()
+
+    messages.success(request, "Staff deleted successfully 🗑️")
+    return redirect('adminview_staff')
+
+
+
+@login_required
+def adminadd_salary(request):
+
+    staffs = Staff.objects.all()
+    month_choices = Salary.MONTH_CHOICES
+
+    current_year = datetime.now().year
+    years = list(range(current_year - 5, current_year + 3))
+
+    if request.method == "POST":
+
+        staff_id = request.POST.get('staff')
+        salary_month = request.POST.get('salary_month')
+        salary_year = request.POST.get('salary_year')
+
+        salary_amount = Decimal(request.POST.get('salary_amount') or 0)
+        paid_amount = Decimal(request.POST.get('paid_amount') or 0)
+
+        # ✅ FIXED NAME HERE
+        next_month_advance_amount = Decimal(
+            request.POST.get('next_month_advance') or 0
+        )
+
+        payment_mode = request.POST.get('payment_mode')
+        payment_date = request.POST.get('payment_date')
+
+        if not staff_id or not salary_month or not salary_year:
+            messages.error(request, "All fields are required.")
+            return redirect('admin_salary_list')
+
+        staff = get_object_or_404(Staff, id=staff_id)
+
+        # Prevent duplicate
+        if Salary.objects.filter(
+            staff=staff,
+            salary_month=salary_month,
+            salary_year=int(salary_year)
+        ).exists():
+            messages.error(request, "Salary already added for this month.")
+            return redirect('admin_salary_list')
+
+        balance_salary = salary_amount - paid_amount
+
+        Salary.objects.create(
+            staff=staff,
+            salary_amount=salary_amount,
+            paid_amount=paid_amount,
+            balance_salary=balance_salary,
+            salary_month=salary_month,
+            salary_year=int(request.POST.get("salary_year")), 
+            payment_mode=payment_mode,
+            payment_date=payment_date,  # ✅ added
+            next_month_advance_amount=next_month_advance_amount,  # ✅ fixed
+            created_by=request.user
+        )
+
+        messages.success(request, "Salary Added Successfully.")
+        return redirect('admin_salary_list')
+
+    return render(request, 'Admin/admin_add_salary.html', {
+        'staffs': staffs,
+        'years': years,
+        'month_choices': month_choices,
+        'current_year': current_year,  # ✅ added
+    })
+
+@login_required
+def adminedit_salary(request, pk):
+
+    # ✅ Your real admin check
+    if request.user.user_type == 0:
+        # Admin can edit ALL salaries (all branches)
+        salary = get_object_or_404(Salary, pk=pk)
+        staffs = Staff.objects.all()
+    else:
+        # Non admin → only own branch
+        salary = get_object_or_404(
+            Salary,
+            pk=pk,
+            branch=request.user.branch
+        )
+        staffs = Staff.objects.filter(branch=request.user.branch)
+
+    current_year = datetime.now().year
+    years = list(range(current_year - 5, current_year + 3))
+
+    total_advance = SalaryAdvance.objects.filter(
+        staff=salary.staff,
+        start_month=salary.salary_month,
+        start_year=salary.salary_year
+    ).aggregate(total=Sum('advance_amount'))['total'] or Decimal('0')
+
+    advances = SalaryAdvance.objects.filter(
+        staff=salary.staff,
+        start_month=salary.salary_month,
+        start_year=salary.salary_year
+    ).order_by('-advance_date')
+
+    if request.method == "POST":
+
+        salary_amount = Decimal(request.POST.get('salary_amount') or 0)
+        new_advance = Decimal(request.POST.get('salary_advance') or 0)
+        paid_amount = Decimal(request.POST.get('paid_amount') or 0)
+        next_month_advance = Decimal(request.POST.get('next_month_advance') or 0)
+
+        payment_date = request.POST.get('payment_date')
+        payment_mode = request.POST.get('payment_mode')
+
+        if new_advance > 0:
+            SalaryAdvance.objects.create(
+                staff=salary.staff,
+                branch=salary.staff.branch,
+                start_month=salary.salary_month,
+                start_year=salary.salary_year,
+                advance_amount=new_advance,
+                created_by=request.user
+            )
+
+        total_advance = SalaryAdvance.objects.filter(
+            staff=salary.staff,
+            start_month=salary.salary_month,
+            start_year=salary.salary_year
+        ).aggregate(total=Sum('advance_amount'))['total'] or Decimal('0')
+
+        balance_salary = salary_amount - (paid_amount + total_advance)
+
+        if balance_salary < 0:
+            balance_salary = Decimal('0')
+
+        salary.salary_amount = salary_amount
+        salary.adjusted_advance = total_advance
+        salary.paid_amount = paid_amount
+        salary.balance_salary = balance_salary
+        salary.next_month_advance_amount = next_month_advance
+        salary.payment_date = payment_date
+        salary.payment_mode = payment_mode
+
+        salary.save()
+
+        messages.success(request, "Salary updated successfully")
+        return redirect('admin_salary_list')
+
+    return render(request, 'Admin/adminsalary_edit.html', {
+        'salary': salary,
+        'staffs': staffs,
+        'total_advance': total_advance,
+        'advances': advances,
+        'month_choices': Salary.MONTH_CHOICES,
+        'years': years,
+    })
+
+@login_required
+def admindelete_salary(request, pk):
+
+    # ✅ real admin (user_type = 0)
+    if request.user.user_type == 0:
+        # admin → can delete any salary
+        salary = get_object_or_404(Salary, pk=pk)
+    else:
+        # others → only own branch
+        salary = get_object_or_404(
+            Salary,
+            pk=pk,
+            branch=request.user.branch
+        )
+
+    salary.delete()
+
+    messages.success(request, "Salary deleted successfully.")
+
+    return redirect('admin_salary_list')
+
+@login_required
+def manager_salary(request):
+
+    managers = Manager.objects.select_related("user")
+
+    if request.method == "POST":
+
+        manager_id = request.POST.get("manager")
+
+        salary_amount = Decimal(request.POST.get("salary_amount") or 0)
+        paid_amount = Decimal(request.POST.get("paid_amount") or 0)
+        adjusted_advance = Decimal(request.POST.get("salary_advance") or 0)
+        next_month_advance = Decimal(request.POST.get("next_month_advance") or 0)
+
+        ManagerSalary.objects.create(
+            manager_id=manager_id,
+            branch_id=request.POST.get("branch"),
+            salary_amount=salary_amount,
+            paid_amount=paid_amount,
+            adjusted_advance=adjusted_advance,
+            salary_month=request.POST.get("salary_month"),
+            salary_year=int(request.POST.get("salary_year")), 
+            payment_date=request.POST.get("payment_date"),
+            payment_mode=request.POST.get("payment_mode"),
+            next_month_advance_amount=next_month_advance,
+            created_by=request.user,
+        )
+
+        return redirect("manager_salary_list")
+
+    context = {
+        "managers": managers,
+        "month_choices": ManagerSalary.MONTH_CHOICES,
+        "years": range(2022, 2031),
+        "current_year": datetime.now().year,
+    }
+
+    # ✅ PASS CONTEXT HERE
+    return render(request, 'Admin/manager_salary.html', context)
+
+
+@login_required
+def manager_salary_list(request):
+
+    salaries = ManagerSalary.objects.select_related(
+        "manager__user__branch",
+        "branch"
+    ).order_by("-salary_year", "-salary_month")
+
+    # Get Filters
+    manager = request.GET.get("manager")
+    month = request.GET.get("month")
+    year = request.GET.get("year")
+    branch = request.GET.get("branch")   # ✅ Added
+
+    # Apply Filters
+    if branch:
+        salaries = salaries.filter(branch_id=branch)
+
+    if manager:
+        salaries = salaries.filter(manager_id=manager)
+
+    if month:
+        salaries = salaries.filter(salary_month=month)
+
+    if year:
+        salaries = salaries.filter(salary_year=year)
+
+    # Calculate total dynamically AFTER filtering
+    total_paid = salaries.aggregate(
+        total=Sum("paid_amount")
+    )["total"] or Decimal("0.00")
+
+    context = {
+        "salaries": salaries,
+        "total_paid": total_paid,
+        "managers": Manager.objects.all(),
+        "branches": Branch.objects.all(),   # ✅ Pass branches
+        "month_choices": ManagerSalary.MONTH_CHOICES,
+        "years": range(2022, 2031),
+    }
+
+    return render(request, "Admin/managersalary_list.html", context)
+
+
+@login_required
+def manager_salary_edit(request, pk):
+
+    salary = get_object_or_404(ManagerSalary, pk=pk)
+
+    managers = Manager.objects.all()
+    branches = Branch.objects.all()
+
+    current_year = datetime.now().year
+    years = list(range(current_year - 5, current_year + 5))
+
+    if request.method == "POST":
+
+        salary.manager_id = request.POST.get("manager")
+        salary.branch_id = request.POST.get("branch")
+
+        salary.salary_month = request.POST.get("salary_month")
+        salary.salary_year = request.POST.get("salary_year")
+
+        salary.salary_amount = Decimal(request.POST.get("salary_amount") or 0)
+
+        salary.adjusted_advance = Decimal(request.POST.get("salary_advance") or 0)
+
+        salary.paid_amount = Decimal(request.POST.get("paid_amount") or 0)
+
+        salary.balance_salary = (
+            salary.salary_amount
+            - salary.adjusted_advance
+            - salary.paid_amount
+        )
+
+        salary.payment_mode = request.POST.get("payment_mode")
+        salary.payment_date = request.POST.get("payment_date")
+
+        salary.next_month_advance_amount = Decimal(
+            request.POST.get("next_month_advance") or 0
+        )
+
+        salary.next_month = request.POST.get("next_month") or None
+        salary.next_month_year = request.POST.get("next_month_year") or None
+
+        salary.save()
+
+        messages.success(request, "Manager salary updated successfully")
+        return redirect("manager_salary_list")
+
+    context = {
+        "salary": salary,
+        "managers": managers,
+        "branches": branches,
+        "month_choices": ManagerSalary.MONTH_CHOICES,
+        "years": years,
+        "current_year": current_year,
+    }
+
+    return render(request, "Admin/managersalary_edit.html", context)
+
+@login_required
+def managerdelete_salary(request, pk):
+
+
+    salary = get_object_or_404(ManagerSalary, pk=pk)
+
+    salary.delete()
+
+    messages.success(request, "Manager salary deleted successfully")
+
+    return redirect("manager_salary_list")
+
+
+
+# @login_required
+# def manager_monthly_report(request):
+
+#     salaries = ManagerSalary.objects.select_related(
+#         "manager__user__branch",
+#         "branch"
+#     ).order_by("-salary_year", "-salary_month")
+
+#     manager = request.GET.get("manager")
+#     month = request.GET.get("month")
+#     year = request.GET.get("year")
+#     branch = request.GET.get("branch")
+
+#     if manager:
+#         salaries = salaries.filter(manager_id=manager)
+
+#     if month:
+#         salaries = salaries.filter(salary_month=month)
+
+#     if year:
+#         salaries = salaries.filter(salary_year=year)
+
+#     if branch:
+#         salaries = salaries.filter(branch_id=branch)
+
+#     total_paid = salaries.aggregate(
+#         total=Sum("paid_amount")
+#     )["total"] or Decimal("0.00")
+
+#     context = {
+#         "salaries": salaries,
+#         "total_paid": total_paid,
+#         "managers": Manager.objects.all(),
+#         "branches": Branch.objects.all(),
+#         "month_choices": ManagerSalary.MONTH_CHOICES,
+#         "years": range(2022, 2031),
+#     }
+
+#     return render(request, "Admin/manager_monthlyreport.html", context)
+@login_required
+def manager_monthly_report(request):
+
+    salaries = ManagerSalary.objects.select_related(
+        "manager__user__branch",
+        "branch"
+    ).order_by("-salary_year", "-salary_month")
+
+    manager = request.GET.get("manager")
+    month = request.GET.get("month")
+    year = request.GET.get("year")
+    branch = request.GET.get("branch")
+
+    if manager and manager != "":
+        salaries = salaries.filter(manager_id=int(manager))
+
+    if month and month != "":
+        salaries = salaries.filter(salary_month=month)
+
+    if year and year != "":
+        salaries = salaries.filter(salary_year=int(year))
+
+    if branch and branch != "":
+        salaries = salaries.filter(branch_id=int(branch))
+
+    total_paid = salaries.aggregate(
+        total=Sum("paid_amount")
+    )["total"] or Decimal("0.00")
+
+    context = {
+        "salaries": salaries,
+        "total_paid": total_paid,
+        "managers": Manager.objects.all(),
+        "branches": Branch.objects.all(),
+        "month_choices": ManagerSalary.MONTH_CHOICES,
+        "years": range(2022, 2031),
+    }
+
+    return render(request, "Admin/manager_monthlyreport.html", context)

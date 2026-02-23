@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% load static %}
+{% block 'content' %}
+
+<div class="container mt-5">
+
+<div class="card shadow border-0 rounded-4">
+
+<div class="card-header bg-dark text-white">
+<h4 class="mb-0">Edit Manager Salary</h4>
+</div>
+
+<div class="card-body">
+
+<form method="POST">
+{% csrf_token %}
+
+<div class="row g-3">
+
+<!-- Branch -->
+<div class="col-md-6">
+<label class="form-label">Branch</label>
+<select name="branch" class="form-select" required>
+{% for b in branches %}
+<option value="{{ b.id }}" {% if salary.branch.id == b.id %}selected{% endif %}>
+{{ b.name }}
+</option>
+{% endfor %}
+</select>
+</div>
+
+<!-- Manager -->
+<div class="col-md-6">
+<label class="form-label">Manager</label>
+<select name="manager" class="form-select" required>
+{% for m in managers %}
+<option value="{{ m.id }}" {% if salary.manager.id == m.id %}selected{% endif %}>
+{{ m }}
+</option>
+{% endfor %}
+</select>
+</div>
+
+<!-- Month -->
+<div class="col-md-6">
+<label class="form-label">Month</label>
+<select name="salary_month" class="form-select" required>
+
+{% for m,v in month_choices %}
+<option value="{{ m }}" {% if salary.salary_month == m %}selected{% endif %}>
+{{ v }}
+</option>
+{% endfor %}
+
+</select>
+</div>
+
+<!-- Year -->
+<div class="col-md-6">
+<label class="form-label">Year</label>
+<select name="salary_year" class="form-select">
+
+{% for y in years %}
+<option value="{{ y }}" {% if salary.salary_year == y %}selected{% endif %}>
+{{ y }}
+</option>
+{% endfor %}
+
+</select>
+</div>
+
+<!-- Salary -->
+<div class="col-md-6">
+<label class="form-label">Salary Amount</label>
+<input type="number" step="0.01" name="salary_amount" value="{{ salary.salary_amount }}" class="form-control">
+</div>
+
+<!-- Advance -->
+<div class="col-md-6">
+<label class="form-label">Advance</label>
+<input type="number" step="0.01" name="salary_advance" value="{{ salary.adjusted_advance }}" class="form-control">
+</div>
+
+<!-- Paid -->
+<div class="col-md-6">
+<label class="form-label">Paid Amount</label>
+<input type="number" step="0.01" name="paid_amount" value="{{ salary.paid_amount }}" class="form-control">
+</div>
+
+<!-- Balance -->
+<div class="col-md-6">
+<label class="form-label">Balance</label>
+<input type="text" value="{{ salary.balance_salary }}" class="form-control bg-light" readonly>
+</div>
+
+<!-- Payment Mode -->
+<div class="col-md-6">
+<label class="form-label">Payment Mode</label>
+<select name="payment_mode" class="form-select">
+
+<option value="Cash" {% if salary.payment_mode == "Cash" %}selected{% endif %}>Cash</option>
+<option value="Bank" {% if salary.payment_mode == "Bank" %}selected{% endif %}>Bank</option>
+
+</select>
+</div>
+
+<!-- Date -->
+<div class="col-md-6">
+<label class="form-label">Payment Date</label>
+<input type="date" name="payment_date" value="{{ salary.payment_date|date:'Y-m-d' }}" class="form-control">
+</div>
+
+<!-- Next Month Advance -->
+<div class="col-md-6">
+<label class="form-label">Next Month Advance</label>
+<input type="number" step="0.01" name="next_month_advance" value="{{ salary.next_month_advance_amount }}" class="form-control">
+</div>
+
+<!-- Next Month -->
+<div class="col-md-6">
+<label class="form-label">Next Month</label>
+<select name="next_month" class="form-select">
+
+<option value="">Select Month</option>
+
+{% for m,v in month_choices %}
+<option value="{{ m }}" {% if salary.next_month == m %}selected{% endif %}>
+{{ v }}
+</option>
+{% endfor %}
+
+</select>
+</div>
+
+<!-- Next Year -->
+<div class="col-md-6">
+<label class="form-label">Next Year</label>
+<select name="next_month_year" class="form-select">
+
+<option value="">Select Year</option>
+
+{% for y in years %}
+<option value="{{ y }}" {% if salary.next_month_year == y %}selected{% endif %}>
+{{ y }}
+</option>
+{% endfor %}
+
+</select>
+</div>
+
+</div>
+
+<div class="text-end mt-4">
+
+<a href="{% url 'manager_salary_list' %}" class="btn btn-secondary">
+Cancel
+</a>
+
+<button type="submit" class="btn btn-success">
+Update Salary
+</button>
+
+</div>
+
+</form>
+
+</div>
+</div>
+</div>
+
+{% endblock %}
+
+

@@ -65,6 +65,9 @@
         <div class="d-flex justify-content-between align-items-center">
 
             <h4 class="fw-bold mb-0">STAFF SALARY LIST</h4>
+            <a href="{% url 'admin_add_salary' %}" class="btn btn-dark">
+                + Add Salary
+            </a>
 
             
 
@@ -175,6 +178,7 @@
                         <th>Next Adv Amt</th>
                         <th>Next Month</th>
                         <th>Next Year</th>
+                        <th>Actions</th>
                         
                     </tr>
                 </thead>
@@ -232,6 +236,39 @@
 
                         <td>{{ salary.next_month|default:"-" }}</td>
                         <td>{{ salary.next_month_year|default:"-" }}</td>
+                        {% comment %} <td>
+                            <a href="{% url 'admin_edit_salary' salary.id %}"
+                               class="btn btn-sm btn-primary action-btn">
+                                Edit
+                            </a>
+
+                            <a href="{% url 'admindelete_salary' salary.id %}"
+                               class="btn btn-sm btn-danger action-btn"
+                               onclick="return confirm('Delete this salary record?');">
+                                Delete
+                            </a>
+                        </td> {% endcomment %}
+                        <td>
+    <div class="d-flex justify-content-center gap-2">
+
+        <!-- Edit -->
+        <a href="{% url 'admin_edit_salary' salary.id %}"
+           class="btn btn-sm btn-outline-primary action-btn"
+           title="Edit Salary">
+            <i class="bi bi-pencil-square"></i>
+        </a>
+
+        <!-- Delete -->
+        <a href="{% url 'admindelete_salary' salary.id %}"
+           class="btn btn-sm btn-outline-danger action-btn"
+           title="Delete Salary"
+           onclick="return confirm('Delete this salary record?');">
+            <i class="bi bi-trash"></i>
+        </a>
+
+    </div>
+</td>
+
 
                         
 

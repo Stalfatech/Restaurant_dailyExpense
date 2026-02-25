@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Delivery Report</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        h4 {
+            margin-top: 20px;
+            margin-bottom: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        table, th, td {
+            border: 1px solid #000;
+        }
+
+        th {
+            background: #f2f2f2;
+            padding: 5px;
+            text-align: left;
+        }
+
+        td {
+            padding: 5px;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .total {
+            text-align: right;
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h2>Delivery Performance Report</h2>
+
+<h4>Staff Performance Summary</h4>
+<table>
+    <thead>
+        <tr>
+            <th>Staff</th>
+            <th class="text-center">Orders</th>
+            <th class="text-right">Amount</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in performance %}
+        <tr>
+            <td>{{ row.staff__name }}</td>
+            <td class="text-center">{{ row.total_orders }}</td>
+            <td class="text-right">{{ row.total_amount }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="3" class="text-center">No data</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h4>Detailed Delivery Records</h4>
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Order ID</th>
+            <th>Staff</th>
+                <th>Meal Type (Items)</th>
+            <th>Platform</th>
+            <th class="text-right">Amount</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for d in deliveries %}
+        <tr>
+            <td>{{ d.sale.date|date:"d-m-Y" }}</td>
+            <td>{{ d.order_id }}</td>
+            <td>{{ d.staff.name }}</td>
+            <td>{{ d.platform }}</td>
+            <td class="text-right">{{ d.amount }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5" class="text-center">No records</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="total">
+    Total Delivery Collection: {{ grand_total }}
+</div>
+
+</body>
+</html>

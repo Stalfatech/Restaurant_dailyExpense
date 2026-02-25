@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block 'content' %}
+
+<div class="container mt-4">
+    <h3>Send {{ report_type|title }} Report</h3>
+  {% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-danger">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+    <form method="post" action="{% url 'send_report' report_type %}?{{ query_params }}">
+        {% csrf_token %}
+
+       <div class="mb-3">
+    <label for="sendVia" class="form-label">Send Via</label>
+    <select id="sendVia" name="send_via" class="form-select">
+        <option value="email">Email</option>
+        <option value="whatsapp">WhatsApp</option>
+    </select>
+</div>
+
+        <div class="mb-3">
+            <label>Email *</label>
+            <input type="email" name="email" class="form-control">
+        </div>
+      <div class="mb-3">
+        OR
+        </div>
+            
+
+        <div class="mb-4">
+            <label>WhatsApp Number (with country code)</label>
+            <input type="text" name="whatsapp" class="form-control" placeholder="e.g. 91**********">
+        </div>
+
+        <button class="btn btn-primary">Send</button>
+        <a href="{% url 'delivery_report' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+{% endblock %}

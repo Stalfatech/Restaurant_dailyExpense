@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+{% load static %}
+{% block 'content' %}
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<div class="container mt-4">
+<div class="card shadow-lg border-0 rounded-4">
+
+<div class="card-body p-4">
+
+<form method="POST">
+{% csrf_token %}
+
+<div class="row g-4">
+
+<!-- Branch -->
+
+<!-- Manager -->
+<div class="col-md-6">
+<label class="form-label fw-semibold">Staff</label>
+<select class="form-select" disabled>
+<option>{{ salary.staff.name }}</option>
+</select>
+</div>
+
+<!-- Month -->
+<div class="col-md-6">
+<label class="form-label fw-semibold">Month</label>
+<input type="text" class="form-control"
+value="{{ salary.salary_month }}" readonly>
+</div>
+
+<!-- Year -->
+<div class="col-md-6">
+<label class="form-label fw-semibold">Year</label>
+<input type="text" class="form-control"
+value="{{ salary.salary_year }}" readonly>
+</div>
+
+<!-- Salary Amount -->
+<div class="col-md-6">
+<label class="form-label fw-semibold">Salary Amount</label>
+<input id="salary_amount"
+type="number"
+step="0.01"
+name="salary_amount"
+value="{{ salary.salary_amount }}"
+class="form-control">
+</div>
+
+<!-- Advance -->
+<div class="col-md-6">
+<label class="form-label fw-semibold">Advance</label>
+<input id="advance_amount"
+type="number"
+step="0.01"
+name="salary_advance"
+value="{{ total_advance }}"
+class="form-control" readonly>
+</div>
+
+<!-- Already Paid -->
+<div class="col-md-6">
+<label class="form-label fw-semibold">Already Paid</label>
+<input id="already_paid"
+type="number"
+class="form-control"
+value="{{ salary.paid_amount }}"
+readonly>
+</div>
+
+<!-- Pay Now -->
+<div class="col-md-6">
+    <label for="pay_now" class="form-label fw-semibold">Pay Now</label>
+    <input 
+        id="pay_now"
+        type="number"
+        step="0.01"
+        name="paid_amount"
+        class="form-control"
+        placeholder="Enter amount"
+        min="0"
+    >
+</div>
+
+
+<!-- Balance -->
+<!-- Balance Preview -->
+<div class="col-md-6">
+    <label class="form-label fw-semibold">Balance (Preview)</label>
+    <input type="text"
+           id="balance_preview"
+           class="form-control"
+           value="{{ salary.balance_salary }}"
+           readonly>
+    <!-- Hidden input to send value to backend -->
+    <input type="hidden" name="balance_salary" id="balance_hidden" value="{{ salary.balance_salary }}">
+</div>
+
+
+<!-- Payment Mode -->
+<div class="col-md-6">
+<label class="form-label fw-semibold">Payment Mode</label>
+<select name="payment_mode" class="form-select">
+<option value="Cash" {% if salary.payment_mode == "Cash" %}selected{% endif %}>Cash</option>
+<option value="Bank" {% if salary.payment_mode == "Bank" %}selected{% endif %}>Bank</option>
+</select>
+</div>
+
+<!-- Payment Date -->
+<div class="col-md-6">
+<label class="form-label fw-semibold">Payment Date</label>
+<input type="date"
+name="payment_date"
+value="{{ salary.payment_date|date:'Y-m-d' }}"
+class="form-control">
+</div>
+
+<!-- Next Month Advance -->
+<div class="col-md-6">
+<label class="form-label fw-semibold">Next Month Advance</label>
+<input type="number"
+step="0.01"
+name="next_month_advance"
+class="form-control"
+value="{{ salary.next_month_advance_amount }}">
+</div>
+
+<!-- Next Month -->
+<div class="col-md-6">
+<label class="form-label fw-semibold">Next Month</label>
+<input type="text"
+class="form-control"
+value="{{ salary.next_month }}"
+readonly>
+</div>
+
+<!-- Next Year -->
+<div class="col-md-6">
+<label class="form-label fw-semibold">Next Year</label>
+<input type="text"
+class="form-control"
+value="{{ salary.next_month_year }}"
+readonly>
+</div>
+
+</div>
+
+<!-- Buttons -->
+<div class="d-flex justify-content-end mt-4">
+
+<a href="{% url 'admin_salary_list' %}" class="btn btn-secondary me-2">
+Cancel
+</a>
+
+<button type="submit" class="btn btn-success">
+Update Salary
+</button>
+
+</div>
+
+</form>
+
+</div>
+</div>
+</div>
+
+
+{% comment %} <script>
+
+function calculateBalance() {
+    let salary = parseFloat(document.getElementById("salary_amount").value) || 0;
+    let alreadyPaid = parseFloat(document.getElementById("already_paid").value) || 0;
+    let payNow = parseFloat(document.getElementById("pay_now").value) || 0;
+
+    // Formula: Balance = (Salary Amount - Already Paid) - Pay Now
+    let balance = (salary - alreadyPaid) - payNow;
+
+    if (balance < 0) balance = 0;
+
+    document.getElementById("balance_preview").value = balance.toFixed(2);
+}
+
+// Listen for input changes
+document.getElementById("pay_now").addEventListener("input", calculateBalance);
+document.getElementById("salary_amount").addEventListener("input", calculateBalance);
+</script> {% endcomment %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const salaryInput = document.getElementById("salary_amount");
+    const alreadyPaidInput = document.getElementById("already_paid");
+    const payNowInput = document.getElementById("pay_now");
+    const balancePreview = document.getElementById("balance_preview");
+    const balanceHidden = document.getElementById("balance_hidden");
+
+    function calculateBalance() {
+        const salary = parseFloat(salaryInput.value) || 0;
+        const alreadyPaid = parseFloat(alreadyPaidInput.value) || 0;
+        const payNow = parseFloat(payNowInput.value) || 0;
+
+        let balance = salary - (alreadyPaid + payNow);
+
+        if (balance < 0) balance = 0;
+
+        // Update visible preview and hidden input
+        balancePreview.value = balance.toFixed(2);
+        if (balanceHidden) balanceHidden.value = balance.toFixed(2);
+    }
+
+    // Listen for changes
+    payNowInput.addEventListener("input", calculateBalance);
+    salaryInput.addEventListener("input", calculateBalance);
+    alreadyPaidInput.addEventListener("input", calculateBalance);
+
+    // Initial calculation
+    calculateBalance();
+});
+</script>
+
+
+
+{% endblock %}
+
+

@@ -57,8 +57,6 @@
 
         .form-control,
         .form-control:focus {
-            color: #ffffff !important;
-            caret-color: #ffffff;
             box-shadow: none;
         }
 
@@ -69,48 +67,48 @@
             padding: 12px;
             font-weight: 600;
         }
-      .email-input,
-.email-input:focus {
-    background: #ffffff !important;
-    color: #000000 !important;
-    caret-color: #000000;
-}
-.password-input,
-.password-input:focus {
-    background: #ffffff !important;
-    color: #000000 !important;
-    caret-color: #000000;
-}
 
-/* Autofill fix (Chrome) */
-.email-input:-webkit-autofill,
-.password-input:-webkit-autofill,
-.email-input:-webkit-autofill:hover,
-.password-input:-webkit-autofill:hover,
-.email-input:-webkit-autofill:focus,
-.password-input:-webkit-autofill:focus {
-    -webkit-text-fill-color: #000000 !important;
-    -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
-}
+        /* Email input (white background + black text) */
+        .email-input,
+        .email-input:focus {
+            background: #ffffff !important;
+            color: #000000 !important;
+            caret-color: #000000;
+        }
 
+        /* Password input (white background + black text) */
+        .password-input,
+        .password-input:focus {
+            background: #ffffff !important;
+            color: #000000 !important;
+            caret-color: #000000;
+        }
+
+        /* Autofill fix (Chrome) */
+        .email-input:-webkit-autofill,
+        .password-input:-webkit-autofill,
+        .email-input:-webkit-autofill:hover,
+        .password-input:-webkit-autofill:hover,
+        .email-input:-webkit-autofill:focus,
+        .password-input:-webkit-autofill:focus {
+            -webkit-text-fill-color: #000000 !important;
+            -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+        }
     </style>
 </head>
 
 <body>
-
 <div class="login-overlay">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-4 col-md-6 col-sm-10">
-
                 <div class="login-card">
-
                     <div class="text-center mb-4">
                         <h4>Welcome Back</h4>
                         <p class="text-muted">Login to continue</p>
                     </div>
 
-                    <!-- 🔴 ERROR MESSAGE -->
+                    <!-- ERROR MESSAGES -->
                     {% if messages %}
                         {% for message in messages %}
                             <div class="alert alert-danger text-center">
@@ -119,38 +117,42 @@
                         {% endfor %}
                     {% endif %}
 
-                    <!-- ✅ LOGIN FORM -->
+                    <!-- LOGIN FORM -->
                     <form method="post">
                         {% csrf_token %}
 
+                        <!-- Email -->
                         <div class="mb-3">
                             <label class="form-label">Email</label>
                             <input
-    type="email"
-    name="email"
-    class="form-control email-input"
-    placeholder="example@gmail.com"
-    required
->
+                                type="email"
+                                name="email"
+                                class="form-control email-input"
+                                placeholder="example@gmail.com"
+                                required
+                            >
                         </div>
 
+                        <!-- Password -->
                         <div class="mb-3">
                             <label class="form-label">Password</label>
                             <input
-    type="password"
-    name="password"
-    class="form-control password-input"
-    placeholder="Enter password"
-    required
->
+                                type="password"
+                                name="password"
+                                class="form-control password-input"
+                                placeholder="Enter 8 characters only"
+                                minlength="8"
+                                maxlength="8"
+                                required
+                            >
+                            <small class="text-muted">Password must be exactly 8 characters</small>
                         </div>
+
                         <div class="mb-3 text-end">
-<a href="{% url 'forgot_password' %}" class="text-primary small">
-    Forgot password?
-</a>
-</div>
+                            <a href="{% url 'forgot_password' %}" class="text-primary small">Forgot password?</a>
+                        </div>
 
-
+                        <!-- Submit -->
                         <button type="submit" class="btn btn-primary w-100">
                             Log In <i class="fas fa-sign-in-alt ms-1"></i>
                         </button>
@@ -164,11 +166,9 @@
                     </div>
 
                 </div>
-
             </div>
         </div>
     </div>
 </div>
-
 </body>
 </html>

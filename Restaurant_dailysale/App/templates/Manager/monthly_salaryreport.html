@@ -163,10 +163,18 @@
 </div>
 
 <!-- Print Button -->
-<div class="d-flex justify-content-center mt-3 no-print">
-    <button onclick="window.print()" class="btn btn-success">
+<div class="d-flex justify-content-center gap-3 mt-3 no-print">
+    
+    <a href="{% url 'salary_list' %}"
+       class="btn btn-secondary px-4">
+        Cancel
+    </a>
+
+    <button onclick="window.print()" 
+            class="btn btn-success px-4">
         Print Report
     </button>
+
 </div>
 
 </div>

@@ -61,13 +61,6 @@
                                 <span>Staff Salary</span>
                             </a>
                         </li><!--end nav-item-->
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'manager_salary_list' %}">
-                                <i class="iconoir-user-bag menu-icon"></i>
-
-                                <span>Managers Salary</span>
-                            </a>
-                        </li><!--end nav-item-->
                  <li class="nav-item">
                     <a class="nav-link" href="{% url 'supplier_list' %}">
                     <i class="iconoir-shop menu-icon"></i>
@@ -127,7 +120,7 @@
                 </a>
             </li>
             <li class="nav-item">
-    <a class="nav-link" href="{% url 'history_expenses' %}">
+    <a class="nav-link" href="{% url 'hist' %}">
         <i class="iconoir-wallet menu-icon"></i>
         <span>Expense History</span>
     </a>
@@ -180,31 +173,6 @@
         <i class="iconoir-wallet menu-icon"></i>
         <span>CashBook</span>
     </a>
-</li>
-<li class="nav-item">
-    <a class="nav-link" data-bs-toggle="collapse" href="#reportsMenu">
-    <i class="bi bi-bar-chart-line menu-icon"></i>
-
-        <span>Reports</span>
-    </a>
-    <div class="collapse" id="reportsMenu">
-        <ul class="nav flex-column sub-menu">
-
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'delivery_report' %}">
-                    <i class="iconoir-delivery menu-icon"></i>
-                    <span>Delivery Report</span>
-                </a>
-            </li>
-            <li class="nav-item">
-    <a class="nav-link" href="{% url 'history_expenses' %}">
-        <i class="iconoir-wallet menu-icon"></i>
-        <span>Expense History</span>
-    </a>
-</li>
-
-        </ul>
-    </div>
 </li>
 
 

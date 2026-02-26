@@ -48,7 +48,21 @@
     <div class="card shadow print-area">
         <div class="card-body">
 
-           
+            <!-- Print Heading -->
+            <div class="text-center mb-3">
+                <h3 class="fw-bold">CashBook Dashboard</h3>
+
+                {% if selected_date %}
+                    <p class="mb-1"><strong>Date:</strong> {{ selected_date|date:"d-m-Y" }}</p>
+                {% endif %}
+
+                <p class="mb-0">
+                    <strong>Printed On:</strong>
+                    <script>
+                        document.write(new Date().toLocaleString());
+                    </script>
+                </p>
+            </div>
 
             <!-- CashBook Table -->
             <table class="table table-bordered" id="cashbookTable">
@@ -138,28 +152,29 @@ document.getElementById('branchSearchInput')?.addEventListener('keyup', function
         visibility: hidden;
     }
 
-    /* Show print area */
     .print-area, .print-area * {
-        visibility: visible;
-    }
-
-    /* ALSO show the heading */
-    h3.fw-bold {
         visibility: visible;
     }
 
     .print-area {
         position: absolute;
-        top: 100px;
         left: 0;
+        top: 0;
         width: 100%;
     }
 
-    .btn {
+    .no-print {
         display: none !important;
+    }
+
+    table {
+        font-size: 12px;
+    }
+
+    h3 {
+        margin-bottom: 10px;
     }
 }
 </style>
-
 
 {% endblock %}

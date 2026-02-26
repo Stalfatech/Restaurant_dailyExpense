@@ -1,6 +1,5 @@
 from sys import platform
 from django import forms
-from urllib3 import request
 
 class LoginForm(forms.Form):
     email = forms.EmailField(
@@ -244,35 +243,20 @@ DailySaleItemFormSet = forms.inlineformset_factory(
 class DeliverySaleForm(forms.ModelForm):
     class Meta:
         model = DeliverySale
-        fields = ('staff', 'platform','order_id', 'amount')
+        fields = ('staff', 'platform', 'amount')
         widgets = {
             'staff': forms.Select(attrs={'class': 'form-select'}),
             'platform': forms.Select(attrs={'class': 'form-select'}),
-            'order_id': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter Order ID'}),
             'amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
         }
     def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
         # Show only Delivery role staff
-        staff_queryset = Staff.objects.filter(
+        self.fields['staff'].queryset = Staff.objects.filter(
             role='Delivery',
             status='Active'
         )
-        
-        if user:
-            # Admin → See all staff
-            if user.user_type == 0:
-                self.fields['staff'].queryset = staff_queryset
-
-            # Manager → Only staff in their branch
-            else:
-                self.fields['staff'].queryset = staff_queryset.filter(
-                    branch=user.branch
-                )
-        else:
-            self.fields['staff'].queryset = staff_queryset.none()
 
     def clean(self):
         cleaned_data = super().clean()
@@ -280,14 +264,10 @@ class DeliverySaleForm(forms.ModelForm):
         platform = cleaned_data.get('platform')
         amount = cleaned_data.get('amount')
 
-        order_id = cleaned_data.get('order_id')
-        if not staff and not platform and not order_id and not amount:
+        if not staff and not platform and not amount:
             return cleaned_data
 
-        if not staff:
-            self.add_error('staff', 'This field is required.')
-        if not order_id:
-            self.add_error('order_id', 'This field is required.')
+        
         if amount is None:
             self.add_error('amount', 'This field is required.')
         elif amount <= 0:
@@ -301,8 +281,7 @@ DeliveryFormSet = forms.inlineformset_factory(
     DeliverySale,
     form=DeliverySaleForm,
     extra=1,
-    can_delete=True,
- 
+    can_delete=True
 )
 
 from .models import DailySale, DailySaleItem, DeliverySale, DeliveryPlatform

@@ -48,7 +48,21 @@
     <div class="card shadow print-area">
         <div class="card-body">
 
-           
+            <!-- Print Heading -->
+            <div class="text-center mb-3">
+                <h3 class="fw-bold">CashBook Dashboard</h3>
+
+                {% if selected_date %}
+                    <p class="mb-1"><strong>Date:</strong> {{ selected_date|date:"d-m-Y" }}</p>
+                {% endif %}
+
+                <p class="mb-0">
+                    <strong>Printed On:</strong>
+                    <script>
+                        document.write(new Date().toLocaleString());
+                    </script>
+                </p>
+            </div>
 
             <!-- CashBook Table -->
             <table class="table table-bordered" id="cashbookTable">

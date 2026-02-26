@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block 'content' %}
+
+<div class="container mt-4">
+
+    <h3 class="fw-bold mb-4">Delivery Performance Report</h3>
+
+    <!-- ============================= -->
+    <!-- 🔹 STAFF PERFORMANCE SUMMARY -->
+    <!-- ============================= -->
+
+    <div class="card shadow mb-4">
+        <div class="card-header bg-dark text-white">
+            Staff Performance Summary
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-bordered mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Staff Name</th>
+                        <th>Total Orders</th>
+                        <th>Total Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in performance %}
+                    <tr>
+                        <td>{{ row.staff__name }}</td>
+                        <td>{{ row.total_orders }}</td>
+                        <td><strong>{{ row.total_amount }}</strong></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center text-muted">
+                            No performance data found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+    <!-- ============================= -->
+    <!-- 🔹 DETAILED DELIVERY RECORDS -->
+    <!-- ============================= -->
+
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            Detailed Delivery Records
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-bordered table-striped mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Date</th>
+                        <th>Order ID</th>
+                        <th>Staff</th>
+                        <th>Meal Type (Items)</th>
+                        <th>Platform</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in deliveries %}
+                    <tr>
+                        <td>{{ d.sale.date|date:"d-m-Y" }}</td>
+                        <td>{{ d.order_id }}</td>
+                        <td>{{ d.staff.name }}</td>
+
+                        <!-- 🔥 Meal Type with Items in Brackets -->
+                        <td>
+                            {% regroup d.sale.items.all by meal_type as meal_groups %}
+                            {% for group in meal_groups %}
+                                <strong>{{ group.grouper }}</strong>
+                                (
+                                {% for item in group.list %}
+                                    {{ item.item_name }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                                )
+                                {% if not forloop.last %}<br>{% endif %}
+                            {% endfor %}
+                        </td>
+
+                        <td>{{ d.platform }}</td>
+                        <td><strong>{{ d.amount }}</strong></td>
+                    </tr>
+
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">
+                            No delivery records found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+    <!-- ============================= -->
+    <!-- 🔹 GRAND TOTAL -->
+    <!-- ============================= -->
+
+    <div class="text-end mt-4">
+        <h5>
+            Total Delivery Collection:
+            <span class="text-success fw-bold">
+                 {{ grand_total }}
+            </span>
+        </h5>
+    </div>
+
+</div>
+
+{% endblock %}

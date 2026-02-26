@@ -1,6 +1,5 @@
 from sys import platform
 from django import forms
-from urllib3 import request
 
 class LoginForm(forms.Form):
     email = forms.EmailField(
@@ -252,7 +251,6 @@ class DeliverySaleForm(forms.ModelForm):
             'amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
         }
     def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
         # Show only Delivery role staff
@@ -260,7 +258,7 @@ class DeliverySaleForm(forms.ModelForm):
             role='Delivery',
             status='Active'
         )
-        
+        user = self.user if hasattr(self, 'user') else None
         if user:
             # Admin → See all staff
             if user.user_type == 0:
@@ -302,7 +300,7 @@ DeliveryFormSet = forms.inlineformset_factory(
     form=DeliverySaleForm,
     extra=1,
     can_delete=True,
- 
+    form_kwargs={'user': user} 
 )
 
 from .models import DailySale, DailySaleItem, DeliverySale, DeliveryPlatform

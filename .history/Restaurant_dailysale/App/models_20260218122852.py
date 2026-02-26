@@ -91,7 +91,6 @@ class Manager(models.Model):
     
 from django.db import models
 from django.core.validators import MinValueValidator
-
 class Branch(models.Model):
     name = models.CharField(max_length=100)
     location = models.TextField()
@@ -310,7 +309,6 @@ class Staff(models.Model):
     salary_type = models.CharField(max_length=10, choices=SALARY_TYPE_CHOICES)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE,null=True,blank=True)
-    manager = models.ForeignKey(Manager, on_delete=models.SET_NULL, null=True, blank=True)
     def __str__(self):
         return self.name
     
@@ -433,7 +431,7 @@ class DeliverySale(models.Model):
         on_delete=models.CASCADE,
         related_name='deliveries'
     )
-    order_id = models.CharField(max_length=100, null=True, blank=True,unique=True)
+    order_id = models.CharField(max_length=100, null=True, blank=True)
 
     staff = models.ForeignKey(
         Staff,
@@ -481,7 +479,6 @@ class Salary(models.Model):
     adjusted_advance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     paid_amount = models.DecimalField(max_digits=10, decimal_places=2)
     balance_salary = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
-    
     salary_month = models.CharField(
     max_length=20,
     choices=MONTH_CHOICES,
@@ -517,47 +514,18 @@ class Salary(models.Model):
         blank=True
     )
 
-    # def save(self, *args, **kwargs):
-
-    #     if self.staff and self.staff.branch:
-    #         self.branch = self.staff.branch
-
-        
-    #     # self.balance_salary = self.salary_amount - self.paid_amount
-    #     if self.next_month_advance_amount and self.next_month_advance_amount > 0:
-
-    #         month_list = [m[0] for m in self.MONTH_CHOICES]
-    #         current_index = month_list.index(self.salary_month)
-
-    #         if current_index == 11:  # December
-    #             self.next_month = month_list[0]
-    #             self.next_month_year = self.salary_year + 1
-    #         else:
-    #             self.next_month = month_list[current_index + 1]
-    #             self.next_month_year = self.salary_year
-    #     else:
-    #         self.next_month = None
-    #         self.next_month_year = None
-
-    #     super().save(*args, **kwargs)
     def save(self, *args, **kwargs):
 
         if self.staff and self.staff.branch:
             self.branch = self.staff.branch
 
-    # ---------- next month calculation ----------
-        if (
-        self.next_month_advance_amount and
-        self.next_month_advance_amount > 0 and
-        self.salary_month and
-        self.salary_year
-    ):
+        self.balance_salary = self.salary_amount - (
+            self.adjusted_advance + self.paid_amount
+        )
+        if self.next_month_advance_amount and self.next_month_advance_amount > 0:
 
             month_list = [m[0] for m in self.MONTH_CHOICES]
-
-            if self.salary_month in month_list:
-
-                current_index = month_list.index(self.salary_month)
+            current_index = month_list.index(self.salary_month)
 
             if current_index == 11:  # December
                 self.next_month = month_list[0]
@@ -565,24 +533,16 @@ class Salary(models.Model):
             else:
                 self.next_month = month_list[current_index + 1]
                 self.next_month_year = self.salary_year
-
         else:
             self.next_month = None
             self.next_month_year = None
 
         super().save(*args, **kwargs)
-    
 
-
-
-    @property   
-    def total_paid(self):
-        return (self.paid_amount or 0) + (self.next_month_advance_amount or 0)
         
 
     def __str__(self):
         return f"{self.staff.name} - {self.salary_month} {self.salary_year}"
-    
 
 
     
@@ -659,126 +619,3 @@ class SalaryAdvance(models.Model):
 
     def __str__(self):
         return f"{self.staff.name} - {self.start_month} {self.start_year} ({self.months_covered} months)"
-    
-
-
-class ManagerSalary(models.Model):
-
-    MONTH_CHOICES = Salary.MONTH_CHOICES
-
-    PAYMENT_MODE_CHOICES = [
-        ('Cash', 'Cash'),
-        ('Bank', 'Bank'),
-    ]
-
-    manager = models.ForeignKey(
-        Manager,
-        on_delete=models.CASCADE,
-        related_name="manager_salaries"
-    )
-
-    branch = models.ForeignKey(
-        Branch,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True
-    )
-
-    salary_amount = models.DecimalField(max_digits=10, decimal_places=2)
-
-    adjusted_advance = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=0
-    )
-
-    paid_amount = models.DecimalField(
-        max_digits=10,
-        decimal_places=2
-    )
-
-    balance_salary = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        blank=True
-    )
-
-    salary_month = models.CharField(
-        max_length=20,
-        choices=MONTH_CHOICES
-    )
-
-    salary_year = models.IntegerField()
-
-    payment_date = models.DateField(default=timezone.now)
-
-    payment_mode = models.CharField(
-        max_length=10,
-        choices=PAYMENT_MODE_CHOICES
-    )
-
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
-    )
-
-    # Next month advance
-    next_month_advance_amount = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=0
-    )
-
-    next_month = models.CharField(
-        max_length=20,
-        choices=MONTH_CHOICES,
-        null=True,
-        blank=True
-    )
-
-    next_month_year = models.IntegerField(
-        null=True,
-        blank=True
-    )
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def save(self, *args, **kwargs):
-
-        # ensure decimals
-        self.salary_amount = Decimal(self.salary_amount or 0)
-        self.adjusted_advance = Decimal(self.adjusted_advance or 0)
-        self.paid_amount = Decimal(self.paid_amount or 0)
-        self.next_month_advance_amount = Decimal(self.next_month_advance_amount or 0)
-
-        # ✅ only next month fields handled here
-        if self.next_month_advance_amount > 0:
-
-            month_list = [m[0] for m in self.MONTH_CHOICES]
-            current_index = month_list.index(self.salary_month)
-
-            if current_index == 11:
-                self.next_month = month_list[0]
-                self.next_month_year = self.salary_year + 1
-            else:
-                self.next_month = month_list[current_index + 1]
-                self.next_month_year = self.salary_year
-
-        else:
-            self.next_month = None
-            self.next_month_year = None
-
-        super().save(*args, **kwargs)
-    
-
-
-    @property
-    def total_paid(self):
-        return (self.paid_amount or 0) + (self.next_month_advance_amount or 0)
-
-    def __str__(self):
-        return f"{self.manager.user.name or self.manager.user.email} - {self.salary_month} {self.salary_year}"
-
-    

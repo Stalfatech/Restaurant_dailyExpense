@@ -88,7 +88,7 @@ path(
     "get_previous_manager_salary_data/",
     views.get_previous_manager_salary_data,
     name="get_previous_manager_salary_data"
-),path(
+),path
         'salary/monthly-report/',
         views.adminmonthly_salary_report,
         name='admin_monthly_salary_report'

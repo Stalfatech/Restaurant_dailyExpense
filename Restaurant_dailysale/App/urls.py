@@ -41,7 +41,7 @@ path('branch/delete/<int:id>/', views.delete_branch, name='branch_delete'),
     path('staff/', views.adminview_staff, name='adminview_staff'),
     path('daily-sales/', views.daily_sales_dashboard, name='daily_sales_dashboard'),
     path('staff/add/', views.admin_add_staff, name='admin_add_staff'),
-    path('staff/edit/<int:id>/', views.admin_edit_staff, name='edit_staff'), 
+    path('staff/edit/<int:id>/', views.admin_edit_staff, name='admin_edit_staff'), 
     path('delete-staff/<int:id>/', views.admindelete_staff, name='delete_staff'),
 
 path('daily-sales/add/', views.add_daily_sale, name='add_daily_sale'),
@@ -84,6 +84,11 @@ path(
     path("manager-salary/edit/<int:pk>/",views.manager_salary_edit,name="manager_salary_edit"),
     path('manager-salary/delete/<int:pk>/', views.managerdelete_salary, name='managerdelete_salary'),
     path("manager-monthly-report/",views.manager_monthly_report,name="manager_monthly_report"),
+    path(
+    "get_previous_manager_salary_data/",
+    views.get_previous_manager_salary_data,
+    name="get_previous_manager_salary_data"
+),
 
 
 

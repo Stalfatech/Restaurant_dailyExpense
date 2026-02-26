@@ -87,12 +87,11 @@
         </div>
     </div>
 
-    <!-- Filter Form -->
     <form method="get" class="mb-4">
-    <div class="row align-items-end">
+    <div class="row g-3 align-items-end">
 
         <!-- Date Filter -->
-        <div class="col-md-4">
+        <div class="col-md-3">
             <label class="form-label fw-semibold">Filter by Date</label>
             <input type="date"
                    name="date"
@@ -100,8 +99,17 @@
                    class="form-control">
         </div>
 
+        <!-- Month Filter -->
+        <div class="col-md-3">
+            <label class="form-label fw-semibold">Filter by Month</label>
+            <input type="month"
+                   name="month"
+                   value="{{ selected_month|default:'' }}"
+                   class="form-control">
+        </div>
+
         <!-- Staff Search -->
-        <div class="col-md-4">
+        <div class="col-md-3">
             <label class="form-label fw-semibold">Search Staff</label>
             <input type="text"
                    name="staff"
@@ -111,12 +119,12 @@
         </div>
 
         <!-- Buttons -->
-        <div class="col-md-4 d-flex gap-2">
-            <button type="submit" class="btn btn-dark w-50">
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-dark w-100">
                 Filter
             </button>
 
-            <a href="{% url 'salary_list' %}" class="btn btn-secondary w-50">
+            <a href="{% url 'salary_list' %}" class="btn btn-secondary w-100">
                 Clear
             </a>
         </div>
@@ -223,18 +231,6 @@
                         <td>{{ salary.next_month|default:"-" }}</td>
                         <td>{{ salary.next_month_year|default:"-" }}</td>
 
-                        {% comment %} <td>
-                            <a href="{% url 'edit_salary' salary.id %}"
-                               class="btn btn-sm btn-primary action-btn">
-                                Edit
-                            </a>
-
-                            <a href="{% url 'delete_salary' salary.id %}"
-                               class="btn btn-sm btn-danger action-btn"
-                               onclick="return confirm('Delete this salary record?');">
-                                Delete
-                            </a>
-                        </td> {% endcomment %}
                         <td>
     <div class="d-flex justify-content-center gap-2">
 

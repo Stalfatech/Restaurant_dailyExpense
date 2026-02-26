@@ -111,6 +111,18 @@
                    value="{{ selected_date }}"
                    class="form-control">
         </div>
+        <div class="col-md-3">
+    <label class="form-label fw-semibold">Month</label>
+    <select name="month" class="form-select">
+        <option value="">All Months</option>
+        {% for key, value in month_choices %}
+            <option value="{{ key }}"
+                {% if selected_month == key %} selected {% endif %}>
+                {{ value }}
+            </option>
+        {% endfor %}
+    </select>
+</div>
 
         <!-- Branch Filter -->
         <div class="col-md-3">
@@ -129,22 +141,11 @@
         </div>
 
         <!-- Buttons -->
-        <div class="col-md-3 d-flex gap-2">
-            <button type="submit" class="btn btn-primary w-50">
-                Filter
-            </button>
+        <!-- Filter & Daily/Monthly Buttons Row -->
+<div class="row mb-4 align-items-end g-3">
 
-            <a href="{% url 'admin_salary_list' %}" class="btn btn-secondary w-50">
-                Clear
-            </a>
-        </div>
-
-    </div>
-
-</form>
-
-<!-- Daily & Monthly Report Buttons -->
-    <div class="mb-4 d-flex gap-2">
+    <!-- Daily & Monthly Report Buttons (Left) -->
+    <div class="col-md-9 d-flex gap-2">
         <a href="{% url 'admin_daily_salary_list' %}?date={{ today_date }}" class="btn btn-outline-primary">
             <i class="bi bi-calendar-day"></i> Daily Report
         </a>
@@ -153,8 +154,18 @@
         </a>
     </div>
 
+    <!-- Filter & Clear Buttons (Right) -->
+    <div class="col-md-3 d-flex justify-content-end gap-2">
+        <button type="submit" class="btn btn-primary">
+            Filter
+        </button>
 
+        <a href="{% url 'admin_salary_list' %}" class="btn btn-secondary">
+            Clear
+        </a>
+    </div>
 
+</div>
 
     <!-- Table -->
     <div class="card shadow">

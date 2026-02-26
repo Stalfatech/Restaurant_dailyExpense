@@ -90,7 +90,7 @@
                             <td>{{ staff.branch.name|default:"-" }}</td>
                             <td>{{ staff.created_by.name|default:"-" }}</td>
                             <td>
-                            <a href="{% url 'edit_staff' staff.id %}"
+                            <a href="{% url 'admin_edit_staff' staff.id %}"
                                class="btn btn-sm btn-primary">
                                Edit
                             </a>

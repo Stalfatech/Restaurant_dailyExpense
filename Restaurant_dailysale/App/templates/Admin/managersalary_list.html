@@ -156,10 +156,10 @@
                         <td>{{ salary.get_salary_month_display }}</td>
                         <td>{{ salary.salary_year }}</td>
                         <td>{{ salary.salary_amount }}</td>
-                        <td>{{ salary.salary_advance|default:"0.00" }}</td>
+                        <td>{{ salary.adjusted_advance|default:"0.00" }}</td>
                         <td> {{ salary.paid_amount }}</td>
                         <td class="fw-bold text-danger">
-                             {{ salary.balance_amount|default:"0.00" }}
+                             {{ salary.balance_salary|default:"0.00" }}
                         </td>
                         <td>{{ salary.payment_mode }}</td>
                         <td>{{ salary.payment_date }}</td>

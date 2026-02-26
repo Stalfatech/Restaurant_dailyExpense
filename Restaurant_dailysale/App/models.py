@@ -662,6 +662,7 @@ class SalaryAdvance(models.Model):
     
 
 
+
 class ManagerSalary(models.Model):
 
     MONTH_CHOICES = Salary.MONTH_CHOICES
@@ -782,3 +783,20 @@ class ManagerSalary(models.Model):
         return f"{self.manager.user.name or self.manager.user.email} - {self.salary_month} {self.salary_year}"
 
     
+
+    
+    
+from django.db import models
+
+class CommunicationSettings(models.Model):
+    email_host = models.CharField(max_length=100, default='smtp.gmail.com',blank=True, null=True)
+    email_port = models.IntegerField(default=587,blank=True, null=True)
+    email_host_user = models.EmailField(blank=True, null=True)
+    email_host_password = models.CharField(max_length=200,blank=True, null=True)
+    use_tls = models.BooleanField(default=True)
+    whatsapp_number = models.CharField(max_length=20,blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.email_host_user
+

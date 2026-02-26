@@ -119,6 +119,12 @@
     </a>
     <div class="collapse" id="reportsMenu">
         <ul class="nav flex-column sub-menu">
+            <li class="nav-item"> 
+    <a class="nav-link" href="{% url 'reports_list' %}">
+     <i class="iconoir-mail menu-icon"></i>
+        <span>Export Reports</span>
+    </a>
+</li>
 
             <li class="nav-item">
                 <a class="nav-link" href="{% url 'delivery_report' %}">
@@ -130,6 +136,12 @@
     <a class="nav-link" href="{% url 'history_expenses' %}">
         <i class="iconoir-wallet menu-icon"></i>
         <span>Expense History</span>
+    </a>
+</li>
+<li class="nav-item"> 
+    <a class="nav-link" href="{% url 'history_sales' %}">
+        <i class="iconoir-shopping-bag menu-icon"></i>
+        <span>Sales History</span>
     </a>
 </li>
 
@@ -202,7 +214,12 @@
         <span>Expense History</span>
     </a>
 </li>
-
+<li class="nav-item"> 
+    <a class="nav-link" href="{% url 'history_sales' %}">
+        <i class="iconoir-shopping-bag menu-icon"></i>
+        <span>Sales History</span>
+    </a>
+</li>
         </ul>
     </div>
 </li>

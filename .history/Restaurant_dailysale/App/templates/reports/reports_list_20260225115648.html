@@ -1,0 +1,8 @@
+<h3>Reports</h3>
+<ul>
+{% for r in reports %}
+    <li>
+        <a href="{% url r.url %}">{{ r.name }}</a>
+    </li>
+{% endfor %}
+</ul>

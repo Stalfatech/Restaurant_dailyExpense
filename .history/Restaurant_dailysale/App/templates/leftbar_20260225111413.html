@@ -1,0 +1,214 @@
+{% load static %}
+
+<div class="brand">
+    <a href="#" class="logo">
+        <span>
+            <img src="{% static 'assets/images/logo-sm.png' %}" 
+                 alt="logo-small" class="logo-sm">
+        </span>
+        <span>
+            <img src="{% static 'assets/images/logo-light.png' %}" 
+                 alt="logo-large" class="logo-lg logo-light">
+            <img src="{% static 'assets/images/logo-dark.png' %}" 
+                 alt="logo-large" class="logo-lg logo-dark">
+        </span>
+    </a>
+</div>
+
+<div class="startbar-menu">
+    <div class="startbar-collapse" id="startbarCollapse" data-simplebar>
+        <div class="d-flex align-items-start flex-column w-100">
+
+            <ul class="navbar-nav mb-auto w-100">
+
+               
+
+                {% if request.session.usertype == 0 %}
+
+                <!-- ================= ADMIN MENU ================= -->
+
+                
+
+                <li class="nav-item">
+                            <a class="nav-link" href="{% url 'dashboard' %}">
+                                <i class="iconoir-report-columns menu-icon"></i>
+                                <span>Dashboard</span>
+                          
+                            </a>
+                        </li><!--end nav-item-->
+                             <li class="nav-item">
+                    <a class="nav-link" href="{% url 'branch_list' %}">
+                   <i class="iconoir-multiple-pages menu-icon"></i>
+
+                        <span>Branches</span>
+                    </a>
+                </li>
+                        <li class="nav-item">
+                    <a class="nav-link" href="{% url 'manager_view' %}">
+                        <i class="iconoir-group menu-icon"></i>
+                        <span>Managers</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                            <a class="nav-link" href="{% url 'adminview_staff' %}">
+                                <i class="iconoir-group menu-icon"></i>
+                                <span>Staff</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'admin_salary_list' %}">
+                                <i class="iconoir-wallet menu-icon"></i>
+                                <span>Staff Salary</span>
+                            </a>
+                        </li><!--end nav-item-->
+                 <li class="nav-item">
+                    <a class="nav-link" href="{% url 'supplier_list' %}">
+                    <i class="iconoir-shop menu-icon"></i>
+
+
+                        <span>Suppliers</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'product_list' %}">
+                <i class="iconoir-package menu-icon"></i>
+
+
+
+                        <span>Products</span>
+                    </a>
+                </li>
+                 <li class="nav-item">
+                    <a class="nav-link" href="{% url 'dashboard_expenses' %}">
+                      <i class="iconoir-wallet menu-icon"></i>
+
+                        <span>Expenses</span>
+                    </a>
+                </li>
+                       <li class="nav-item">
+    <a class="nav-link" href="{% url 'daily_sales_dashboard' %}">
+        <i class="iconoir-shopping-bag menu-icon"></i>
+        <span>Sales</span>
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="{% url 'delivery_platform_list' %}">
+        <i class="iconoir-delivery-truck menu-icon"></i>
+        <span>Delivery Platform</span>
+    </a>
+</li>
+
+   <li class="nav-item">
+    <a class="nav-link" href="{% url 'cashbook_dashboard' %}">
+        <i class="iconoir-wallet menu-icon"></i>
+        <span>CashBook</span>
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" data-bs-toggle="collapse" href="#reportsMenu">
+    <i class="bi bi-bar-chart-line menu-icon"></i>
+
+        <span>Reports</span>
+    </a>
+    <div class="collapse" id="reportsMenu">
+        <ul class="nav flex-column sub-menu">
+
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'delivery_report' %}">
+                    <i class="iconoir-delivery menu-icon"></i>
+                    <span>Delivery Report</span>
+                </a>
+            </li>
+            <li class="nav-item">
+    <a class="nav-link" href="{% url 'history_expenses' %}">
+        <i class="iconoir-wallet menu-icon"></i>
+        <span>Expense History</span>
+    </a>
+</li>
+
+        </ul>
+    </div>
+</li>
+
+
+                {% elif request.session.usertype == 1 %}
+
+                <!-- ================= MANAGER MENU ================= -->
+
+                <li class="nav-item">
+                            <a class="nav-link" href="{% url 'dashboard' %}">
+                                <i class="iconoir-report-columns menu-icon"></i>
+                                <span>Dashboard</span>
+                           
+                            </a>
+                        </li><!--end nav-item-->
+                                                 <li class="nav-item">
+                    <a class="nav-link" href="{% url 'dashboard_expenses' %}">
+                      <i class="iconoir-wallet menu-icon"></i>
+
+                        <span>Expenses</span>
+                    </a>
+                </li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'staff_list' %}">
+                                <i class="iconoir-group menu-icon"></i>
+                                <span>Staff</span>
+                            </a>
+                        </li><!--end nav-item-->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'salary_list' %}">
+                                <i class="iconoir-group menu-icon"></i>
+                                <span>Staff Salary</span>
+                            </a>
+                        </li><!--end nav-item-->
+                                             <li class="nav-item">
+    <a class="nav-link" href="{% url 'daily_sales_dashboard' %}">
+        <i class="iconoir-shopping-bag menu-icon"></i>
+        <span>Sales</span>
+    </a>
+</li>
+  <li class="nav-item">
+    <a class="nav-link" href="{% url 'cashbook_dashboard' %}">
+        <i class="iconoir-wallet menu-icon"></i>
+        <span>CashBook</span>
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" data-bs-toggle="collapse" href="#reportsMenu">
+    <i class="bi bi-bar-chart-line menu-icon"></i>
+
+        <span>Reports</span>
+    </a>
+    <div class="collapse" id="reportsMenu">
+        <ul class="nav flex-column sub-menu">
+
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'delivery_report' %}">
+                    <i class="iconoir-delivery menu-icon"></i>
+                    <span>Delivery Report</span>
+                </a>
+            </li>
+            <li class="nav-item">
+    <a class="nav-link" href="{% url 'history_expenses' %}">
+        <i class="iconoir-wallet menu-icon"></i>
+        <span>Expense History</span>
+    </a>
+</li>
+<li class="nav-item"> 
+    <a class="nav-link" href="{% url 'history_sales' %}">
+        <i class="iconoir-shopping-bag menu-icon"></i>
+        <span>Sales History</span>
+    </a>
+</li>
+        </ul>
+    </div>
+</li>
+
+
+{%endif%}
+            </ul>
+
+        </div>
+    </div>
+</div>

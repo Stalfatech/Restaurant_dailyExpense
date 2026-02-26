@@ -89,6 +89,23 @@ path(
     views.get_previous_manager_salary_data,
     name="get_previous_manager_salary_data"
 ),
+        'salary/monthly-report/',
+        views.adminmonthly_salary_report,
+        name='admin_monthly_salary_report'
+    ),
+    path('delivery-report/', views.delivery_performance_report, name='delivery_report'),
+
+    path('settings/communication/', views.communication_settings_list, name='communication_settings_list'),
+path('settings/communication/add/', views.communication_settings_add, name='communication_settings_add'),
+path('settings/communication/edit/<int:pk>/', views.communication_settings_edit, name='communication_settings_edit'),
+path('settings/communication/delete/<int:pk>/', views.communication_settings_delete, name='communication_settings_delete'),
+
+    path('reports/', views.reports_list, name='reports_list'),
+
+    path('reports/export/<str:report_type>/', views.export_report_page, name='export_report_page'),
+    path('reports/send/<str:report_type>/', views.send_report, name='send_report'),
+
+
 
 
 

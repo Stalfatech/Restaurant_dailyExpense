@@ -3367,3 +3367,207 @@ def delivery_performance_report(request):
         'selected_date': selected_date,
     })
 
+
+
+    
+    
+    
+from django.shortcuts import render, redirect
+from .models import CommunicationSettings
+from .forms import CommunicationSettingsForm
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from .models import CommunicationSettings
+from .forms import CommunicationSettingsForm
+
+
+# ================= LIST PAGE =================
+def communication_settings_list(request):
+    settings = CommunicationSettings.objects.all()
+    return render(request, 'Admin/communication_settings_list.html', {
+        'settings': settings
+    })
+
+
+# ================= ADD =================
+def communication_settings_add(request):
+    if request.method == 'POST':
+        form = CommunicationSettingsForm(request.POST)
+        if form.is_valid():
+            config = form.save()
+
+            if config.is_active:
+                   CommunicationSettings.objects.exclude(id=config.id).update(is_active=False)
+            messages.success(request, "Settings added successfully")
+            return redirect('communication_settings_list')
+    else:
+        form = CommunicationSettingsForm()
+
+    return render(request, 'Admin/communication_settings_form.html', {
+        'form': form,
+        'title': 'Add Communication Settings'
+    })
+
+
+# ================= EDIT =================
+def communication_settings_edit(request, pk):
+    config = get_object_or_404(CommunicationSettings, pk=pk)
+
+    if request.method == 'POST':
+        form = CommunicationSettingsForm(request.POST, instance=config)
+        if form.is_valid():
+            config = form.save()
+
+            if config.is_active:
+                
+                CommunicationSettings.objects.exclude(id=config.id).update(is_active=False)
+            messages.success(request, "Settings updated successfully")
+            return redirect('communication_settings_list')
+    else:
+        form = CommunicationSettingsForm(instance=config)
+
+    return render(request, 'Admin/communication_settings_form.html', {
+        'form': form,
+        'title': 'Edit Communication Settings'
+    })
+
+
+# ================= DELETE =================
+def communication_settings_delete(request, pk):
+    config = get_object_or_404(CommunicationSettings, pk=pk)
+    config.delete()
+    messages.success(request, "Settings deleted successfully")
+    return redirect('communication_settings_list')
+
+def reports_list(request):
+    reports = [
+        {"name": "Delivery Performance", "url": "delivery_report"},
+        {"name": "Sales History", "url": "history_sales"},
+        {"name": "Expense History", "url": "history_expenses"},
+    ]
+    return render(request, "reports/reports_list.html", {"reports": reports})
+
+def export_report_page(request, report_type):
+    query_params = request.GET.urlencode()
+    return render(request, "reports/export_page.html", {
+        "report_type": report_type,
+        "query_params": query_params
+    })
+    
+    
+from django.shortcuts import render, redirect
+from django.db.models import Sum, Count
+from datetime import datetime
+from .models import DeliverySale, Staff
+from .utils import generate_pdf, save_pdf_and_get_link, send_email_report, send_whatsapp, send_whatsapp_report
+
+
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from django.urls import reverse
+from datetime import datetime
+from django.db.models import Sum, Count
+
+def send_report(request, report_type):
+    user = request.user
+
+    # Keep filters
+    query_params = request.GET.urlencode()
+
+    # ===== Get filters =====
+    order_id = request.GET.get('order_id')
+    staff_id = request.GET.get('staff')
+    selected_date = request.GET.get('date')
+
+    # ===== Staff visibility =====
+    if user.user_type == 0:
+        staff_list = Staff.objects.filter(role='Delivery', status='Active')
+    else:
+        staff_list = Staff.objects.filter(
+            role='Delivery',
+            status='Active',
+            branch=user.branch
+        )
+
+    deliveries = DeliverySale.objects.select_related('staff', 'sale').filter(
+        staff__in=staff_list
+    )
+
+    # ===== Apply Filters =====
+    if order_id:
+        deliveries = deliveries.filter(order_id__icontains=order_id)
+
+    if staff_id:
+        deliveries = deliveries.filter(staff__id=staff_id)
+
+    if selected_date:
+        try:
+            filter_date = datetime.strptime(selected_date, "%Y-%m-%d").date()
+            deliveries = deliveries.filter(sale__date=filter_date)
+        except ValueError:
+            pass
+
+    # ===== Summary =====
+    performance = deliveries.values(
+        'staff__name'
+    ).annotate(
+        total_amount=Sum('amount'),
+        total_orders=Count('id')
+    )
+
+    grand_total = deliveries.aggregate(total=Sum('amount'))['total'] or 0
+
+    context = {
+        'deliveries': deliveries,
+        'performance': performance,
+        'grand_total': grand_total,
+        'selected_date': selected_date,
+    }
+
+    # ===== Generate PDF =====
+    pdf = generate_pdf("sales/delivery_report_export.html", context)
+
+    # ===== Send Action =====
+    if request.method == "POST":
+        send_via = request.POST.get("send_via")
+        email = request.POST.get("email")
+        number = request.POST.get("whatsapp")
+
+        # ===== Validation =====
+        if send_via == "email" and not email:
+            messages.error(request, "Please enter Email to send the report.")
+            return redirect(f"{reverse('export_report_page', args=[report_type])}?{query_params}")
+
+        if send_via == "whatsapp" and not number:
+            messages.error(request, "Please enter WhatsApp number to send the report.")
+            return redirect(f"{reverse('export_report_page', args=[report_type])}?{query_params}")
+
+        # ===== Email =====
+        if send_via == "email":
+            send_email_report(
+                email,
+                "Delivery Report",
+                f"Delivery Total: {grand_total}",
+                pdf
+            )
+            messages.success(request, "Report sent successfully via Email.")
+            return redirect(f"{reverse('delivery_report')}?{query_params}")
+
+        # ===== WhatsApp =====
+        elif send_via == "whatsapp":
+            pdf_link = save_pdf_and_get_link(request, pdf)
+
+            message = (
+                f"Delivery Report Total: {grand_total}\n"
+                f"Download PDF: {pdf_link}"
+            )
+
+            return send_whatsapp(number, message)
+
+    # ===== Open Export Page =====
+    return render(request, "reports/export_page.html", {
+        'report_type': report_type,
+        'query_params': query_params
+    })
+

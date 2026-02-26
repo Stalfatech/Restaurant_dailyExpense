@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block 'content' %}
+
+<div class="container mt-4">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white">
+            {{ title }}
+        </div>
+
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+
+                <h5>Email Settings (Optional)</h5>
+
+                <div class="mb-2">
+                    {{ form.email_host.label_tag }}
+                    {{ form.email_host }}
+                </div>
+
+                <div class="mb-2">
+                    {{ form.email_port.label_tag }}
+                    {{ form.email_port }}
+                </div>
+
+                <div class="mb-2">
+                    {{ form.email_host_user.label_tag }}
+                    {{ form.email_host_user }}
+                </div>
+
+                <div class="mb-2">
+                    {{ form.email_host_password.label_tag }}
+                    {{ form.email_host_password }}
+                </div>
+
+                <hr>
+
+                <h5>WhatsApp (Optional)</h5>
+
+                <div class="mb-2">
+                    {{ form.whatsapp_number.label_tag }}
+                    {{ form.whatsapp_number }}
+                </div>
+                <div class="mb-2">
+    {{ form.is_active.label_tag }}
+    {{ form.is_active }}
+</div>
+
+                <br>
+                <button class="btn btn-primary">Save</button>
+                <a href="{% url 'communication_settings_list' %}" class="btn btn-secondary">Back</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,24 @@
+<h3>Send {{ report_type|title }} Report</h3>
+
+<form method="post" action="{% url 'send_report' report_type %}?{{ query_params }}">
+    {% csrf_token %}
+
+    <label>Send Via</label>
+    <select name="send_via" class="form-control">
+        <option value="email">Email</option>
+        <option value="whatsapp">WhatsApp</option>
+    </select>
+
+    <br>
+
+    <label>Email</label>
+    <input type="email" name="email" class="form-control">
+
+    <br>
+
+    <label>WhatsApp Number (with country code)</label>
+    <input type="text" name="whatsapp" class="form-control">
+
+    <br>
+    <button class="btn btn-primary">Send</button>
+</form>

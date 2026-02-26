@@ -89,7 +89,7 @@
             <th>Purchase Type</th>
             <th>Amount</th>
             <th>Invoice</th>
-            
+            <th>Status</th>
             <th>Description</th>
         </tr>
     </thead>
@@ -112,6 +112,7 @@
                     No
                 {% endif %}
             </td>
+            <td class="text-center">{{ e.status|default:"-" }}</td>
             <td>{{ e.description|default:"-" }}</td>
         </tr>
         {% empty %}

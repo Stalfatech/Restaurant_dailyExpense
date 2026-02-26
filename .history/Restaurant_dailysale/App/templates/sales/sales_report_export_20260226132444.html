@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Sales Report</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .filters {
+            font-size: 10px;
+            margin-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+        }
+
+        table, th, td {
+            border: 1px solid #000;
+        }
+
+        th {
+            background: #f2f2f2;
+            padding: 4px;
+            text-align: left;
+        }
+
+        td {
+            padding: 4px;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .total-box {
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 12px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Sales Report</h2>
+
+<!-- Filters Info -->
+<div class="filters">
+    {% if start and end %}
+        Date: {{ start }} to {{ end }}<br>
+    {% endif %}
+
+    {% if month %}
+        Month: {{ month }}<br>
+    {% endif %}
+
+    {% if branch %}
+        Branch: {{ branch }}
+    {% endif %}
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Branch</th>
+            <th>Breakfast</th>
+            <th>Lunch</th>
+            <th>Dinner</th>
+            <th>Delivery</th>
+            <th>POS Amount</th>
+            <th>POS Type</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for sale in sales %}
+        <tr>
+            <td>{{ sale.date|date:"d-m-Y" }}</td>
+            <td>{{ sale.branch }}</td>
+            <td class="text-right">{{ sale.breakfast_total|default:0 }}</td>
+            <td class="text-right">{{ sale.lunch_total|default:0 }}</td>
+            <td class="text-right">{{ sale.dinner_total|default:0 }}</td>
+            <td class="text-right">{{ sale.delivery_total|default:0 }}</td>
+            <td class="text-right">{{ sale.pos_amount|default:0 }}</td>
+            <td class="text-center">
+                {% if sale.pos_type %}
+                    {{ sale.pos_type }}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="8" class="text-center">No records found</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+
+    <tfoot>
+        <tr>
+            <td colspan="2" class="text-right"><strong>Totals:</strong></td>
+
+            <td class="text-right">
+                {{ totals.total_breakfast }}
+                {% if totals.breakfast_items %}
+                    ({{ totals.breakfast_items }})
+                {% endif %}
+            </td>
+
+            <td class="text-right">
+                {{ totals.total_lunch }}
+                {% if totals.lunch_items %}
+                    ({{ totals.lunch_items }})
+                {% endif %}
+            </td>
+
+            <td class="text-right">
+                {{ totals.total_dinner }}
+                {% if totals.dinner_items %}
+                    ({{ totals.dinner_items }})
+                {% endif %}
+            </td>
+
+            <td class="text-right">{{ totals.total_delivery }}</td>
+            <td class="text-right">{{ totals.total_pos }}</td>
+            <td>-</td>
+        </tr>
+    </tfoot>
+</table>
+
+<div class="total-box">
+    Grand Total Sales: {{ grand_total }}
+</div>
+
+</body>
+</html>

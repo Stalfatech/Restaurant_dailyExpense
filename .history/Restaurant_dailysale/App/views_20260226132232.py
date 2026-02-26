@@ -3793,7 +3793,7 @@ def send_sales_report(request):
                 f"Download PDF: {pdf_link}"
             )
 
-          
+            messages.success(request, "Opening WhatsApp...")
             return send_whatsapp(number, message)
 
     # ===== Open Export Page =====

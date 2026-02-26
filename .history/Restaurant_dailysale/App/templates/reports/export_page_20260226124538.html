@@ -20,7 +20,12 @@
                     </div>
                 {% endfor %}
             {% endif %}
-<form method="post" action="{{ action_url }}?{{ query_params }}">
+<form method="post"
+action="{% if report_type == 'expense' %}
+            {% url 'send_expense_report' %}
+        {% else %}
+            {% url 'send_report' report_type %}
+        {% endif %}?{{ query_params }}">
                 {% csrf_token %}
 
                 <!-- Send Method -->

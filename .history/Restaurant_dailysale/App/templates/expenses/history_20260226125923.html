@@ -2,19 +2,10 @@
 {% block 'content' %} 
 
 <div class="container-fluid">
-       {%if messages %}
-                    {% for message in messages %}
-                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
     
 
     <!-- Page Heading & Actions -->
     <div class="d-flex justify-content-between align-items-center mb-4 mt-4 flex-wrap">
-        
         <h3 class="fw-bold print-heading">Expense History</h3>
         <div class="d-flex gap-2 flex-wrap">
             <!-- Back Button -->

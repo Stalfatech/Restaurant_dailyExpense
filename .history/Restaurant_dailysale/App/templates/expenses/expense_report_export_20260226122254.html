@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Expense Report</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        h4 {
+            margin-top: 20px;
+            margin-bottom: 5px;
+        }
+
+        .filters {
+            margin-bottom: 10px;
+            font-size: 11px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        table, th, td {
+            border: 1px solid #000;
+        }
+
+        th {
+            background: #f2f2f2;
+            padding: 5px;
+            text-align: left;
+        }
+
+        td {
+            padding: 5px;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .total {
+            text-align: right;
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h2>Expense Report</h2>
+
+<!-- Filters Info -->
+<div class="filters">
+    {% if start and end %}
+        Date: {{ start }} to {{ end }}<br>
+    {% endif %}
+
+    {% if month %}
+        Month: {{ month }}<br>
+    {% endif %}
+
+    {% if branch %}
+        Branch: {{ branch }}
+    {% endif %}
+</div>
+
+<h4>Expense Details</h4>
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Branch</th>
+            <th>Category</th>
+            <th>Description</th>
+            <th class="text-right">Amount</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for e in expenses %}
+        <tr>
+            <td>{{ e.date|date:"d-m-Y" }}</td>
+            <td>{{ e.branch.name }}</td>
+            <td>{{ e.category }}</td>
+            <td>{{ e.description }}</td>
+            <td class="text-right">{{ e.amount }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5" class="text-center">No records found</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="total">
+    Total Expense: {{ total }}
+</div>
+
+</body>
+</html>

@@ -103,10 +103,7 @@ path('settings/communication/delete/<int:pk>/', views.communication_settings_del
     path('reports/', views.reports_list, name='reports_list'),
 
     path('reports/export/<str:report_type>/', views.export_report_page, name='export_report_page'),
-        path('reports/send/expense/', views.send_expense_report, name='send_expense_report'),
-        path('reports/send/sales/', views.send_sales_report, name='send_sales_report'),
     path('reports/send/<str:report_type>/', views.send_report, name='send_report'),
-    
 
 
 

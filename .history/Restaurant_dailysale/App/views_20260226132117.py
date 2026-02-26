@@ -3451,17 +3451,16 @@ def export_report_page(request, report_type):
     query_params = request.GET.urlencode()
 
     if report_type == "expense":
-        action_url = reverse('send_expense_report')
-    elif report_type == "delivery":
-        action_url = reverse('send_report', args=['delivery'])
-    elif report_type == "sales":
-        action_url = reverse('send_sales_report')
+        action_url = reverse("send_expense_report")
+    else:
+        action_url = reverse("send_report", args=[report_type])
 
     return render(request, "reports/export_page.html", {
-        'report_type': report_type,
-        'query_params': query_params,
-        'action_url': action_url
+        "report_type": report_type,
+        "query_params": query_params,
+        "action_url": action_url
     })
+    
 from django.shortcuts import render, redirect
 from django.db.models import Sum, Count
 from datetime import datetime
@@ -3793,7 +3792,7 @@ def send_sales_report(request):
                 f"Download PDF: {pdf_link}"
             )
 
-          
+            messages.success(request, "Opening WhatsApp...")
             return send_whatsapp(number, message)
 
     # ===== Open Export Page =====

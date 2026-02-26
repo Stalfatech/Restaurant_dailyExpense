@@ -20,7 +20,8 @@
                     </div>
                 {% endfor %}
             {% endif %}
-<form method="post" action="{{ action_url }}?{{ query_params }}">
+
+            <form method="post" action="{% url 'send_report' report_type %}?{{ query_params }}">
                 {% csrf_token %}
 
                 <!-- Send Method -->
@@ -62,16 +63,10 @@
                         <i class="iconoir-send"></i> Send Report
                     </button>
 
-       <a href="{% if report_type == 'expense' %}
-            {% url 'history_expenses' %}
-         {% elif report_type == 'delivery' %}
-            {% url 'delivery_report' %}
-         {% elif report_type == 'sales' %}
-            {% url 'history_sales' %}
-         {% endif %}"
-   class="btn btn-secondary">
-   Cancel
-</a>          </div>
+                    <a href="{% url 'delivery_report' %}" class="btn btn-secondary">
+                        Cancel
+                    </a>
+                </div>
 
             </form>
 

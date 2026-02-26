@@ -3451,17 +3451,16 @@ def export_report_page(request, report_type):
     query_params = request.GET.urlencode()
 
     if report_type == "expense":
-        action_url = reverse('send_expense_report')
-    elif report_type == "delivery":
-        action_url = reverse('send_report', args=['delivery'])
-    elif report_type == "sales":
-        action_url = reverse('send_sales_report')
+        action_url = reverse("send_expense_report")
+    else:
+        action_url = reverse("send_report", args=[report_type])
 
     return render(request, "reports/export_page.html", {
-        'report_type': report_type,
-        'query_params': query_params,
-        'action_url': action_url
+        "report_type": report_type,
+        "query_params": query_params,
+        "action_url": action_url
     })
+    
 from django.shortcuts import render, redirect
 from django.db.models import Sum, Count
 from datetime import datetime
@@ -3665,140 +3664,24 @@ def send_expense_report(request):
 
         # ===== WhatsApp =====
         elif send_via == "whatsapp":
-            pdf_link = save_pdf_and_get_link(request, pdf)
+                     pdf_link = save_pdf_and_get_link(request, pdf)
 
-            message = (
-                f"Expense Report Total: {total}\n"
-                f"Download PDF: {pdf_link}"
-            )
-            
+    message = (
+        f"Expense Report Total: {total}\n"
+        f"Download PDF: {pdf_link}"
+    )
 
-            return send_whatsapp(number, message)
+    # Send WhatsApp
+    send_whatsapp(number, message)
+
+    # Success message
+    messages.success(request, "Expense report sent via WhatsApp.")
+
+    # Redirect back to history page
+    return redirect(f"{reverse('history_expenses')}?{query_params}")
 
     # ===== Open Export Page =====
     return render(request, "reports/export_page.html", {
         'report_type': report_type,
         'query_params': query_params
-    })
-    
-    
-    
-from django.db.models import Sum
-from django.contrib import messages
-from django.urls import reverse
-from datetime import datetime
-from .models import DailySale, DailySaleItem
-from .utils import generate_pdf, send_email_report, send_whatsapp, save_pdf_and_get_link
-
-
-@admin_or_manager_required
-def send_sales_report(request):
-    report_type = "sales"
-    user = request.user
-    query_params = request.GET.urlencode()
-
-    # ===== Filters =====
-    start = request.GET.get('start')
-    end = request.GET.get('end')
-    month = request.GET.get('month')
-    branch_name = request.GET.get('branch', '').strip()
-
-    # ===== Base queryset =====
-    if user.user_type == 0:
-        sales = DailySale.objects.all()
-    else:
-        sales = DailySale.objects.filter(branch=user.branch)
-
-    # Branch filter (admin)
-    if branch_name and user.user_type == 0:
-        sales = sales.filter(branch__name__icontains=branch_name)
-
-    # Month filter (priority)
-    if month:
-        try:
-            year, month_num = map(int, month.split('-'))
-            sales = sales.filter(date__year=year, date__month=month_num)
-        except ValueError:
-            pass
-
-    # Date range
-    elif start and end:
-        try:
-            start_date = datetime.strptime(start, "%Y-%m-%d").date()
-            end_date = datetime.strptime(end, "%Y-%m-%d").date()
-            sales = sales.filter(date__range=[start_date, end_date])
-        except ValueError:
-            pass
-
-    # ===== Totals =====
-    totals = sales.aggregate(
-        total_breakfast=Sum('breakfast_total'),
-        total_lunch=Sum('lunch_total'),
-        total_dinner=Sum('dinner_total'),
-        total_delivery=Sum('delivery_total'),
-        total_pos=Sum('pos_amount'),
-        total_sales=Sum('total_sales'),
-    )
-
-    for key in totals:
-        totals[key] = totals[key] or 0
-
-    grand_total = totals['total_sales']
-
-    context = {
-        'sales': sales,
-        'totals': totals,
-        'grand_total': grand_total,
-        'start': start,
-        'end': end,
-        'month': month,
-        'branch': branch_name,
-    }
-
-    # ===== Generate PDF =====
-    pdf = generate_pdf("sales/sales_report_export.html", context)
-
-    # ===== Send Action =====
-    if request.method == "POST":
-        send_via = request.POST.get("send_via")
-        email = request.POST.get("email")
-        number = request.POST.get("whatsapp")
-
-        # Validation
-        if send_via == "email" and not email:
-            messages.error(request, "Please enter Email.")
-            return redirect(f"{reverse('export_report_page', args=[report_type])}?{query_params}")
-
-        if send_via == "whatsapp" and not number:
-            messages.error(request, "Please enter WhatsApp number.")
-            return redirect(f"{reverse('export_report_page', args=[report_type])}?{query_params}")
-
-        # ===== Email =====
-        if send_via == "email":
-            send_email_report(
-                email,
-                "Sales Report",
-                f"Total Sales: {grand_total}",
-                pdf
-            )
-            messages.success(request, "Sales report sent via Email.")
-            return redirect(f"{reverse('history_sales')}?{query_params}")
-
-        # ===== WhatsApp =====
-        elif send_via == "whatsapp":
-            pdf_link = save_pdf_and_get_link(request, pdf)
-
-            message = (
-                f"Sales Report Total: {grand_total}\n"
-                f"Download PDF: {pdf_link}"
-            )
-
-          
-            return send_whatsapp(number, message)
-
-    # ===== Open Export Page =====
-    return render(request, "reports/export_page.html", {
-        'report_type': report_type,
-        'query_params': query_params,
-        'action_url': reverse('send_sales_report')
     })

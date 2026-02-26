@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Expense Report</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10px; /* smaller to fit all columns */
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .filters {
+            margin-bottom: 8px;
+            font-size: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed; /* important for many columns */
+        }
+
+        table, th, td {
+            border: 1px solid #000;
+        }
+
+        th {
+            background: #f2f2f2;
+            padding: 4px;
+            text-align: center;
+        }
+
+        td {
+            padding: 4px;
+            word-wrap: break-word;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .total {
+            text-align: right;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h2>Expense Report</h2>
+
+<div class="filters">
+    {% if start and end %}
+        Date: {{ start }} to {{ end }}<br>
+    {% endif %}
+
+    {% if month %}
+        Month: {{ month }}<br>
+    {% endif %}
+
+    {% if branch %}
+        Branch: {{ branch }}
+    {% endif %}
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Branch</th>
+            <th>Status</th>
+            <th>Category</th>
+            <th>Supplier</th>
+            <th>Product</th>
+            <th>Qty</th>
+            <th>Purchase Type</th>
+            <th>Amount</th>
+            <th>Invoice</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for e in expenses %}
+        <tr>
+            <td>{{ e.date|date:"d-m-Y" }}</td>
+            <td>{{ e.branch.name }}</td>
+            <td class="text-center">{{ e.status|default:"-" }}</td>
+            <td>{{ e.category }}</td>
+            <td>{{ e.supplier|default:"-" }}</td>
+            <td>{{ e.product|default:"-" }}</td>
+            <td class="text-center">{{ e.quantity|default:"-" }}</td>
+            <td>{{ e.purchase_type|default:"-" }}</td>
+            <td class="text-right">{{ e.amount }}</td>
+            <td class="text-center">
+                {% if e.invoice %}
+                    Yes
+                {% else %}
+                    No
+                {% endif %}
+            </td>
+            <td>{{ e.description|default:"-" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="11" class="text-center">No records found</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="total">
+    Total Expense: {{ total }}
+</div>
+
+</body>
+</html>

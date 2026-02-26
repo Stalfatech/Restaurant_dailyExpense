@@ -20,8 +20,13 @@
                     </div>
                 {% endfor %}
             {% endif %}
-<form method="post" action="{{ action_url }}?{{ query_params }}">
-                {% csrf_token %}
+<form method="post"
+action="{% if report_type == 'expense' %}
+            {% url 'send_expense_report' %}
+        {% else %}
+            {% url 'send_report' report_type %}
+        {% endif %}?{{ query_params }}">
+        
 
                 <!-- Send Method -->
                 <div class="mb-4">
@@ -62,16 +67,15 @@
                         <i class="iconoir-send"></i> Send Report
                     </button>
 
-       <a href="{% if report_type == 'expense' %}
-            {% url 'history_expenses' %}
-         {% elif report_type == 'delivery' %}
-            {% url 'delivery_report' %}
-         {% elif report_type == 'sales' %}
-            {% url 'history_sales' %}
-         {% endif %}"
+                <a href="{% if report_type == 'expense' %}
+             {% url 'history_expenses' %}
+          {% elif report_type == 'delivery' %}
+             {% url 'delivery_report' %}
+          {% endif %}"
    class="btn btn-secondary">
-   Cancel
-</a>          </div>
+    Cancel
+</a>
+                </div>
 
             </form>
 

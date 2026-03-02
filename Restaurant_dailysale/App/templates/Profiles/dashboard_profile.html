@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% load static %}
+{% block 'content' %}
+<div class="container mt-5">
+    <div class="card shadow-lg border-0 rounded-4 p-4">
+
+       <div class="card-header bg-dark text-white d-flex align-items-center rounded-top-4">
+            <h5 class="mb-0">Add Dashboard Profile</h5>
+        </div>
+
+        <!-- TITLE FORM -->
+        <div class="p-4 rounded-4 bg-light shadow-sm mb-4">
+            <h6 class="fw-semibold mb-3 text-primary">
+                Add Title
+            </h6>
+
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="title_form">
+
+                <div class="mb-3">
+                    {{ form.title.label_tag }}
+                    {{ form.title }}
+                </div>
+
+                <button type="submit" 
+                        class="btn btn-primary rounded-pill px-4 shadow-sm">
+                    Save Title
+                </button>
+            </form>
+        </div>
+
+        <!-- IMAGE FORM -->
+        <div class="p-4 rounded-4 bg-light shadow-sm mb-4">
+            <h6 class="fw-semibold mb-3 text-success">
+                Add Image (119 x 28 pixels PNG only)
+            </h6>
+
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="image_form">
+
+                {% if profile.image %}
+                    <div class="text-center mb-3">
+                        <img src="{{ profile.image.url }}" 
+                             class="rounded-4 shadow-sm"
+                             style="max-width:200px;">
+                    </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    {{ form.image.label_tag }}
+                    {{ form.image }}
+                </div>
+                
+
+                <button type="submit" 
+                        class="btn btn-success rounded-pill px-4 shadow-sm">
+                    Save Image
+                </button>
+            </form>
+        </div>
+        <div class="p-4 rounded-4 bg-light shadow-sm mb-4">
+            <h6 class="fw-semibold mb-3 text-warning">
+                Add Favicon (128 x 128 pixels PNG)
+            </h6>
+
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="favicon_form">
+
+                {% if profile.favicon %}
+                    <div class="text-center mb-3">
+                        <img src="{{ profile.favicon.url }}"
+                             class="rounded-4 shadow-sm"
+                             style="max-width:200px;">
+                    </div>
+                {% endif %}
+
+                <div class="mb-3">
+    <label class="form-label">Favicon</label>
+    <input type="file"
+           name="favicon"
+           class="form-control rounded-3 shadow-sm"
+           accept="image/png">
+</div>
+
+                <button type="submit"
+                        class="btn btn-warning rounded-pill px-4 shadow-sm">
+                    Save Favicon
+                </button>
+            </form>
+        </div>
+
+        <div class="text-center">
+            <a href="{% url 'view_dashboard_profile' %}" 
+               class="btn btn-outline-dark rounded-pill px-4">
+                Back
+            </a>
+        </div>
+
+    </div>
+</div>
+<style>
+.card {
+    background: #ffffff;
+}
+
+.bg-light {
+    background: #f8f9fa !important;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    transition: 0.3s ease;
+}
+input[type="file"] {
+    border: 1px dashed #ced4da;
+    padding: 8px;
+    background: #f8f9fa;
+}
+input[type="file"]:hover {
+    background: #fff3cd;
+    transition: 0.3s ease;
+}
+</style>
+
+{% endblock %}

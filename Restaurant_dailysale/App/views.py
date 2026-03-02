@@ -1,5 +1,5 @@
 
-from .models import  DeliveryPlatform, User,Register,Manager,Staff,ManagerSalary
+from .models import  DeliveryPlatform, User,Register,Manager,Staff,ManagerSalary,DashboardProfile
 from django.contrib.auth.hashers import make_password,check_password
 from django.shortcuts import render, redirect,get_object_or_404
 from django.contrib import messages
@@ -7,7 +7,7 @@ from datetime import date
 from django.views.decorators.cache import never_cache
 from django.core.mail import send_mail
 from django.conf import settings
-from .forms import DailySaleItemFormSet, DeliveryFormSet, LoginForm,ForgotPasswordForm,ResetPasswordForm
+from .forms import DailySaleItemFormSet, DeliveryFormSet, LoginForm,ForgotPasswordForm,ResetPasswordForm,DashboardProfileForm
 from django.conf import settings
 from django.db import transaction 
 from .models import  User,Register,Manager,Branch,Expense,CashBook
@@ -3707,6 +3707,365 @@ def send_report(request, report_type):
         'query_params': query_params
     })
 
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth import update_session_auth_hash
+from .models import Register, User
+
+
+# @login_required
+# def admin_profile(request):
+
+#     user = request.user
+
+#     profile = Register.objects.filter(loginid=user).first()
+
+#     # ============================
+#     # UPDATE PROFILE (details + photo)
+#     # ============================
+#     if request.method == "POST" and "first_name" in request.POST:
+
+#         name = request.POST.get("first_name")
+#         contact = request.POST.get("phone")
+#         email = request.POST.get("email")
+
+#         # ----- Register table -----
+#         if profile:
+#             profile.name = name
+#             profile.contact = contact
+#             profile.save()
+#         else:
+#             profile = Register.objects.create(
+#                 loginid=user,
+#                 name=name,
+#                 contact=contact
+#             )
+
+#         # ----- User table -----
+#         user.name = name
+#         user.email = email
+
+#         # ✅ save image in User table
+#         if request.FILES.get("photo"):
+#             user.photo = request.FILES.get("photo")
+
+#         user.save()
+
+#         messages.success(request, "Profile updated successfully")
+#         return redirect("admin_profile")
+
+#     # ============================
+#     # CHANGE PASSWORD
+#     # ============================
+#     if request.method == "POST" and "current_password" in request.POST:
+
+#         current = request.POST.get("current_password")
+#         new = request.POST.get("new_password")
+#         confirm = request.POST.get("confirm_password")
+
+#         if not user.check_password(current):
+#             messages.error(request, "Current password is incorrect")
+#             return redirect("admin_profile")
+
+#         if new != confirm:
+#             messages.error(request, "Passwords do not match")
+#             return redirect("admin_profile")
+
+#         user.set_password(new)
+#         user.save()
+#         update_session_auth_hash(request, user)
+
+#         messages.success(request, "Password updated successfully")
+#         return redirect("admin_profile")
+
+#     context = {
+#         "user_obj": user,
+#         "profile": profile
+#     }
+
+#     return render(request, "Profiles/admin_profile.html", context)
+
+@login_required
+def admin_profile(request):
+
+    user = request.user
+    profile = Register.objects.filter(loginid=user).first()
+
+    # ============================
+    # UPDATE PROFILE
+    # ============================
+    if request.method == "POST" and "first_name" in request.POST:
+
+        name    = request.POST.get("first_name")
+        contact = request.POST.get("phone")
+        email   = request.POST.get("email")
+
+        if profile:
+            profile.name = name
+            profile.contact = contact
+            profile.save()
+        else:
+            Register.objects.create(
+                loginid=user,
+                name=name,
+                contact=contact
+            )
+
+        user.name = name
+        user.email = email
+
+        if request.FILES.get("photo"):
+            user.photo = request.FILES.get("photo")
+
+        user.save()
+
+        messages.success(request, "Profile updated successfully")
+        return redirect("admin_profile")
+
+    # ============================
+    # CHANGE PASSWORD
+    # ============================
+    if request.method == "POST" and "current_password" in request.POST:
+
+        current = request.POST.get("current_password", "").strip()
+        new     = request.POST.get("new_password", "").strip()
+        confirm = request.POST.get("confirm_password", "").strip()
+
+        # current password check
+        if not user.check_password(current):
+            messages.error(request, "Current password is incorrect")
+            return redirect("admin_profile")
+
+        # new & confirm check
+        if new != confirm:
+            messages.error(request, "Passwords do not match")
+            return redirect("admin_profile")
+
+        # ✅ exactly 8 characters, letters or digits only
+        if len(new) != 8 or not new.isalnum():
+            messages.error(
+                request,
+                "Password must be exactly 8 characters and contain only letters or digits"
+            )
+            return redirect("admin_profile")
+
+        user.set_password(new)
+        user.save()
+        update_session_auth_hash(request, user)
+
+        messages.success(request, "Password updated successfully")
+        return redirect("admin_profile")
+
+    context = {
+        "user_obj": user,
+        "profile": profile
+    }
+
+    return render(request, "Profiles/admin_profile.html", context)
+
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.auth import update_session_auth_hash
+
+from .models import Manager, User
+
+
+@login_required
+def manager_profile(request):
+
+    user = request.user
+
+    # only manager
+    manager = get_object_or_404(Manager, user=user)
+
+    # ---------------------------
+    # UPDATE PROFILE
+    # ---------------------------
+    if request.method == "POST" and "name" in request.POST:
+
+        name     = request.POST.get("name")
+        phone    = request.POST.get("phone")
+        dob      = request.POST.get("dob")
+        gender   = request.POST.get("gender")
+        address  = request.POST.get("address")
+
+        # User table
+        user.name = name
+        user.save()
+
+        # Manager table
+        manager.phone   = phone
+        manager.dob     = dob
+        manager.gender  = gender
+        manager.address = address
+
+        if request.FILES.get("photo"):
+            manager.photo = request.FILES.get("photo")
+
+        manager.save()
+
+        messages.success(request, "Profile updated successfully")
+        return redirect("manager_profile")
+
+    # ---------------------------
+    # CHANGE PASSWORD
+    # ---------------------------
+    if request.method == "POST" and request.POST.get("change_password"):
+
+        current = request.POST.get("current_password")
+        new     = request.POST.get("new_password")
+        confirm = request.POST.get("confirm_password")
+
+        if not user.check_password(current):
+            messages.error(request, "Current password is incorrect")
+            return redirect("manager_profile")
+
+        if new != confirm:
+            messages.error(request, "Passwords do not match")
+            return redirect("manager_profile")
+
+        # (optional – server side safety for your 8 char rule)
+        if len(new) != 8:
+            messages.error(request, "Password must be exactly 8 characters")
+            return redirect("manager_profile")
+
+        user.set_password(new)
+        user.save()
+
+        update_session_auth_hash(request, user)
+
+        messages.success(request, "Password updated successfully")
+        return redirect("manager_profile")
+
+    context = {
+        "user_obj": user,
+        "manager": manager
+    }
+
+    return render(request, "Profiles/manager_profile.html", context)
+
+def dashboard_profile(request):
+    profile, created = DashboardProfile.objects.get_or_create(id=1)
+
+    if request.method == "POST":
+        form_type = request.POST.get("form_type")
+
+        # ================= TITLE SAVE =================
+        if form_type == "title_form":
+            form = DashboardProfileForm(request.POST, instance=profile)
+
+            if form.is_valid():
+                profile.title = form.cleaned_data["title"]
+                profile.save(update_fields=["title"])
+                messages.success(request, "Title updated successfully.")
+                return redirect("dashboard_profile")
+
+        # ================= IMAGE SAVE =================
+        
+        elif form_type == "image_form":
+            if "image" in request.FILES:
+                profile.image = request.FILES["image"]
+                profile.save()
+                messages.success(request, "Image updated successfully.")
+                return redirect("dashboard_profile")
+            else:
+                messages.error(request, "No image selected.")
+
+        elif form_type == "favicon_form":
+
+            if "favicon" in request.FILES:
+                profile.favicon = request.FILES["favicon"]
+                profile.save(update_fields=["favicon"])
+                messages.success(request, "Favicon updated successfully.")
+                return redirect("dashboard_profile")
+            else:
+                messages.error(request, "No favicon selected.")
+    form = DashboardProfileForm(instance=profile)
+    return render(request, "Profiles/dashboard_profile.html", {
+        "form": form,
+        "profile": profile
+    })
+
+    
+def view_dashboard_profile(request):
+    profile = DashboardProfile.objects.first()   # get saved record
+    return render(request, 'Profiles/view_dashboardprofile.html', {
+        'profile': profile
+    })
+
+def edit_title(request):
+    profile = DashboardProfile.objects.first()
+
+    if request.method == "POST":
+        profile.title = request.POST.get("title")
+        profile.save()
+        messages.success(request, "Title updated successfully.")
+        return redirect("view_dashboard_profile")
+
+    return render(request, "Profiles/edit_title.html", {
+        "profile": profile
+    })
+
+
+def delete_title(request):
+    profile = DashboardProfile.objects.first()
+    profile.title = ""
+    profile.save()
+    messages.success(request, "Title deleted.")
+    return redirect("view_dashboard_profile")
+
+
+def edit_image(request):
+    profile = DashboardProfile.objects.first()
+
+    if request.method == "POST":
+        if "image" in request.FILES:
+            profile.image = request.FILES["image"]
+            profile.save()
+            messages.success(request, "Image updated successfully.")
+            return redirect("view_dashboard_profile")
+
+    return render(request, "Profiles/edit_image.html", {
+        "profile": profile
+    })
+
+
+def delete_image(request):
+    profile = DashboardProfile.objects.first()
+
+    if profile.image:
+        profile.image.delete(save=True)
+
+    messages.success(request, "Image deleted.")
+    return redirect("view_dashboard_profile")
+
+def edit_favicon(request):
+    profile, created = DashboardProfile.objects.get_or_create(id=1)
+
+    if request.method == "POST":
+        if "favicon" in request.FILES:
+            profile.favicon = request.FILES["favicon"]
+            profile.save(update_fields=["favicon"])
+            messages.success(request, "Favicon updated successfully.")
+            return redirect("view_dashboard_profile")
+
+    return render(request, "Profiles/edit_favicon.html", {
+        "profile": profile
+    })
+
+def delete_favicon(request):
+    profile = DashboardProfile.objects.get(id=1)
+
+    if profile.favicon:
+        profile.favicon.delete(save=False)
+        profile.favicon = None
+        profile.save(update_fields=["favicon"])
+        messages.success(request, "Favicon deleted successfully.")
+
+    return redirect("view_dashboard_profile")
 
 
 from django.db.models import Sum

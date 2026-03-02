@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load static %}
+{% block 'content' %}
+<div class="container mt-5">
+
+    <div class="row justify-content-center">
+
+        <div class="col-md-6 col-lg-5">
+
+            <div class="card shadow border-0 rounded-4">
+
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Update Adboard Image</h5>
+                </div>
+
+                <div class="card-body">
+
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <div class="table-responsive">
+                            <table class="table table-borderless align-middle mb-3">
+
+                                <!-- Current image -->
+                                {% if profile.image %}
+                                <tr>
+                                    <th style="width:35%">Current Image</th>
+                                    <td>
+                                        <img src="{{ profile.image.url }}"
+                                             width="119"
+                                             height="28"
+                                             class="border rounded p-1 bg-light">
+                                    </td>
+                                </tr>
+                                {% endif %}
+
+                                <!-- Upload field -->
+                                <tr>
+                                    <th>New Image</th>
+                                    <td>
+                                        <input
+                                            type="file"
+                                            name="image"
+                                            class="form-control"
+                                            accept="image/png"
+                                            required
+                                        >
+                                        <small class="text-muted">
+                                            Only PNG · 119 × 28 pixels
+                                        </small>
+                                    </td>
+                                </tr>
+
+                            </table>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-3">
+                            <button type="submit" class="btn btn-success">
+                                Update Image
+                            </button>
+
+                            <a href="{% url 'view_dashboard_profile' %}" class="btn btn-secondary">
+                                Cancel
+                            </a>
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

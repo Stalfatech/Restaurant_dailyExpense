@@ -52,6 +52,12 @@ class User(AbstractUser):
         related_name='custom_user_permissions_set',
         blank=True
     )
+    photo = models.ImageField(
+        upload_to='user_photos/',
+        null=True,
+        blank=True
+    )
+    
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -800,3 +806,18 @@ class CommunicationSettings(models.Model):
     def __str__(self):
         return self.email_host_user
 
+class DashboardProfile(models.Model):
+    title = models.CharField(max_length=100)
+    image = models.ImageField(
+        upload_to='dashboard_profile/',
+        null=True,
+        blank=True
+    )
+    favicon = models.ImageField(
+        upload_to='dashboard_profile/favicon/',
+        null=True,
+        blank=True
+    )
+
+    def __str__(self):
+        return self.title

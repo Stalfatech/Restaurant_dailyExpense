@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body { font-family: Arial; font-size: 11px; }
+
+h2 { text-align:center; margin-bottom:10px; }
+
+.summary-box {
+    width:100%;
+    margin-bottom:10px;
+}
+
+.summary-box div{
+    display:inline-block;
+    width:24%;
+    font-weight:bold;
+}
+
+table {
+    width:100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+th, td {
+    border:1px solid #000;
+    padding:4px;
+    text-align:center;
+    word-wrap: break-word;
+}
+
+th {
+    background:#000;
+    color:#fff;
+}
+</style>
+</head>
+<body>
+
+<h2>Manager Monthly Salary Report</h2>
+
+<div class="summary-box">
+    <div>Total Paid: {{ total_paid }}</div>
+    <div>Total Advance: {{ total_advance }}</div>
+    <div>Next Advance: {{ total_next_advance }}</div>
+    <div>Total Balance: {{ total_balance }}</div>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Manager</th>
+<th>Branch</th>
+<th>Month</th>
+<th>Year</th>
+<th>Salary</th>
+<th>Advance Adj</th>
+<th>Paid</th>
+<th>Balance</th>
+<th>Mode</th>
+<th>Payment Date</th>
+<th>Next Adv</th>
+<th>Next Month</th>
+<th>Next Year</th>
+</tr>
+</thead>
+
+<tbody>
+{% for s in salaries %}
+<tr>
+<td>{{ forloop.counter }}</td>
+<td>{{ s.manager }}</td>
+<td>{{ s.branch.name }}</td>
+<td>{{ s.salary_month }}</td>
+<td>{{ s.salary_year }}</td>
+<td>{{ s.salary_amount }}</td>
+<td>{{ s.adjusted_advance }}</td>
+<td>{{ s.paid_amount }}</td>
+<td>{{ s.balance_salary }}</td>
+<td>{{ s.payment_mode }}</td>
+<td>{{ s.payment_date }}</td>
+<td>{{ s.next_month_advance_amount }}</td>
+<td>{{ s.next_month }}</td>
+<td>{{ s.next_month_year }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+</body>
+</html>

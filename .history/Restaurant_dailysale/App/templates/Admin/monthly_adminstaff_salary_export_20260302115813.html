@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Monthly Salary Report</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            margin: 20px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .summary {
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .summary span {
+            display: inline-block;
+            margin: 5px 15px;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            border: 1px solid #000;
+            padding: 5px;
+            text-align: center;
+            font-size: 11px;
+        }
+
+        th {
+            background-color: #000;
+            color: #fff;
+        }
+
+        .text-left {
+            text-align: left;
+        }
+
+        .footer-total {
+            font-weight: bold;
+            background: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Heading -->
+    <h2>Monthly Salary Report</h2>
+
+    {% if selected_month or selected_year or staff_name %}
+    <p style="text-align:center;">
+        {% if selected_month %} Month: {{ selected_month }} {% endif %}
+        {% if selected_year %} | Year: {{ selected_year }} {% endif %}
+        {% if staff_name %} | Staff: {{ staff_name }} {% endif %}
+    </p>
+    {% endif %}
+
+    <!-- Summary -->
+    <div class="summary">
+        <span>Total Paid: {{ total_paid }}</span>
+        <span>Total Advance: {{ total_advance }}</span>
+        <span>Next Month Advance: {{ total_next_advance }}</span>
+        <span>Total Balance: {{ total_balance }}</span>
+    </div>
+
+    <!-- Table -->
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Staff</th>
+                <th>Branch</th>
+                <th>Month</th>
+                <th>Year</th>
+                <th>Salary</th>
+                <th>Advance</th>
+                <th>Paid</th>
+                <th>Balance</th>
+                <th>Mode</th>
+                <th>Payment Date</th>
+                <th>Next Adv</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for salary in salaries %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td class="text-left">{{ salary.staff.name }}</td>
+                <td>{{ salary.branch.name }}</td>
+                <td>{{ salary.salary_month }}</td>
+                <td>{{ salary.salary_year }}</td>
+                <td>{{ salary.salary_amount }}</td>
+                <td>{{ salary.adjusted_advance }}</td>
+                <td>{{ salary.paid_amount }}</td>
+                <td>{{ salary.balance_salary }}</td>
+                <td>{{ salary.payment_mode }}</td>
+                <td>{{ salary.payment_date }}</td>
+                <td>{{ salary.next_month_advance_amount }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="12">No records found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+
+        <!-- Footer Totals -->
+        <tfoot>
+            <tr class="footer-total">
+                <td colspan="7" style="text-align:right;">Totals</td>
+                <td>{{ total_paid }}</td>
+                <td>{{ total_balance }}</td>
+                <td colspan="3"></td>
+            </tr>
+        </tfoot>
+    </table>
+
+</body>
+</html>

@@ -1,6 +1,8 @@
 from sys import platform
 from django import forms
 from urllib3 import request
+from .models import DashboardProfile
+from PIL import Image
 
 class LoginForm(forms.Form):
     email = forms.EmailField(
@@ -366,3 +368,53 @@ class CommunicationSettingsForm(forms.ModelForm):
         )
 
         return cleaned_data
+    
+class DashboardProfileForm(forms.ModelForm):
+
+    class Meta:
+        model = DashboardProfile
+        fields = ['title', 'image','favicon']
+        widgets = {
+            'title': forms.TextInput(attrs={
+                'class': 'form-control rounded-3 shadow-sm'
+            }),
+            'image': forms.FileInput(attrs={
+                'class': 'form-control rounded-3 shadow-sm',
+                'accept': 'image/png'
+            }),
+        }
+
+    def clean_image(self):
+        image = self.cleaned_data.get('image')
+
+        if image:
+            # Check extension
+            if not image.name.lower().endswith('.png'):
+                raise forms.ValidationError("Only PNG format allowed.")
+
+            img = Image.open(image)
+
+            # Check size
+            if img.width != 119 or img.height != 28:
+                raise forms.ValidationError(
+                    "Image must be exactly 119 x 28 pixels."
+                )
+            
+    # ================= FAVICON VALIDATION =================
+    def clean_favicon(self):
+        favicon = self.cleaned_data.get('favicon')
+
+        if favicon:
+            # Check extension
+            if not favicon.name.lower().endswith('.png'):
+                raise forms.ValidationError("Favicon must be PNG format.")
+
+            img = Image.open(favicon)
+
+            # Check size
+            if img.width != 128 or img.height != 128:
+                raise forms.ValidationError(
+                    "Favicon must be exactly 128 x 128 pixels."
+                )
+
+        return favicon

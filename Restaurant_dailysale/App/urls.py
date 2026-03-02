@@ -89,7 +89,7 @@ path(
     views.get_previous_manager_salary_data,
     name="get_previous_manager_salary_data"
 ),
-        'salary/monthly-report/',
+     path(  'salary/monthly-report/',
         views.adminmonthly_salary_report,
         name='admin_monthly_salary_report'
     ),
@@ -106,6 +106,16 @@ path('settings/communication/delete/<int:pk>/', views.communication_settings_del
     path('reports/send/<str:report_type>/', views.send_report, name='send_report'),
 
 
+    path("admin_profile/", views.admin_profile, name="admin_profile"),
+    path("manager_profile/", views.manager_profile, name="manager_profile"),
+    path('dashboard_profile/', views.dashboard_profile, name='dashboard_profile'),
+    path('dashboard-profile/view/', views.view_dashboard_profile, name='view_dashboard_profile'),
+    path('dashboard/edit-title/', views.edit_title, name='edit_title'),
+path('dashboard/delete-title/', views.delete_title, name='delete_title'),
+path('dashboard/edit-image/', views.edit_image, name='edit_image'),
+path('dashboard/delete-image/', views.delete_image, name='delete_image'),
+path("dashboard-profile/favicon/edit/", views.edit_favicon, name="edit_favicon"),
+path("dashboard-profile/favicon/delete/", views.delete_favicon, name="delete_favicon"),
 
 
 

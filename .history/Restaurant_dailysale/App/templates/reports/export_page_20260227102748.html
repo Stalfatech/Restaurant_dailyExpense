@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block 'content' %}
+
+<div class="container mt-4">
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white d-flex align-items-center">
+            <i class="iconoir-send mr-2"></i>
+            <h5 class="mb-0 ms-2">Send {{ report_type|title }} Report</h5>
+        </div>
+
+        <div class="card-body">
+
+            <!-- Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+<form method="post" action="{{ action_url }}?{{ query_params }}">
+                {% csrf_token %}
+
+                <!-- Send Method -->
+                <div class="mb-4">
+                    <label for="sendVia" class="form-label fw-bold">
+                        <i class="iconoir-settings"></i> Send Via
+                    </label>
+                    <select id="sendVia" name="send_via" class="form-select">
+                        <option value="email">Email</option>
+                        <option value="whatsapp">WhatsApp</option>
+                    </select>
+                </div>
+
+                <!-- Email Section -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">
+                        <i class="iconoir-mail"></i> Email Address
+                    </label>
+                    <input type="email" name="email" class="form-control" placeholder="Enter client email">
+                </div>
+
+                <div class="text-center text-muted mb-3">
+                    <strong>OR</strong>
+                </div>
+
+                <!-- WhatsApp Section -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">
+                    <i class="iconoir-phone"></i> WhatsApp Number
+                    </label>
+                    <input type="text" name="whatsapp" class="form-control"
+                           placeholder="e.g. 91XXXXXXXXXX">
+                    <small class="text-muted">Include country code without +</small>
+                </div>
+
+                <!-- Buttons -->
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary">
+                        <i class="iconoir-send"></i> Send Report
+                    </button>
+
+       <a href="{% if report_type == 'expense' %}
+            {% url 'history_expenses' %}
+         {% elif report_type == 'delivery' %}
+            {% url 'delivery_report' %}
+         {% elif report_type == 'sales' %}
+            {% url 'history_sales' %}
+         {% endif %}"
+   class="btn btn-secondary">
+   Cancel
+</a>          </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

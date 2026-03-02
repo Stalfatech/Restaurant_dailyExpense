@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block 'content' %}
+
+<div class="container mt-5">
+<div class="card shadow-lg border-0 rounded-3">
+
+<div class="card-header bg-dark text-white py-3">
+    <h4>Edit Staff</h4>
+</div>
+
+<div class="card-body p-4">
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<form method="POST">
+{% csrf_token %}
+<div class="row">
+
+<!-- Staff ID -->
+<div class="col-md-6 mb-3">
+    <label>Staff ID *</label>
+    <input type="text" name="staff_id"
+           value="{{ form_data.staff_id|default:staff.staff_id }}"
+           class="form-control" required>
+</div>
+
+<!-- Name -->
+<div class="col-md-6 mb-3">
+    <label>Name *</label>
+    <input type="text" name="name"
+           value="{{ form_data.name|default:staff.name }}"
+           class="form-control" required>
+</div>
+
+<!-- Gender -->
+<div class="col-md-6 mb-3">
+<select name="gender" class="form-select" required>
+<option value="">Select</option>
+<option value="Male"
+{% if form_data.gender == "Male" or staff.gender == "Male" and not form_data %}selected{% endif %}>Male</option>
+<option value="Female"
+{% if form_data.gender == "Female" or staff.gender == "Female" and not form_data %}selected{% endif %}>Female</option>
+<option value="Other"
+{% if form_data.gender == "Other" or staff.gender == "Other" and not form_data %}selected{% endif %}>Other</option>
+</select>
+</div>
+
+<!-- Contact -->
+<div class="col-md-6 mb-3">
+<input type="tel"
+name="contact"
+value="{{ form_data.contact|default:staff.contact }}"
+class="form-control {% if contact_error %}is-invalid{% endif %}"
+required>
+{% if contact_error %}
+<div class="invalid-feedback">{{ contact_error }}</div>
+{% endif %}
+</div>
+
+<!-- DOB -->
+<div class="col-md-6 mb-3">
+<input type="date" name="dob"
+value="{{ form_data.dob|default:staff.dob|date:'Y-m-d' }}"
+class="form-control">
+</div>
+
+<!-- Joining -->
+<div class="col-md-6 mb-3">
+<input type="date" name="joining_date"
+value="{{ form_data.joining_date|default:staff.joining_date|date:'Y-m-d' }}"
+class="form-control" required>
+</div>
+
+<!-- Salary -->
+<div class="col-md-6 mb-3">
+<select name="salary_type" class="form-select">
+<option value="Daily"
+{% if form_data.salary_type == "Daily" or staff.salary_type == "Daily" and not form_data %}selected{% endif %}>Daily</option>
+<option value="Monthly"
+{% if form_data.salary_type == "Monthly" or staff.salary_type == "Monthly" and not form_data %}selected{% endif %}>Monthly</option>
+</select>
+</div>
+
+<!-- Status -->
+<div class="col-md-6 mb-3">
+<select name="status" class="form-select">
+<option value="Active"
+{% if form_data.status == "Active" or staff.status == "Active" and not form_data %}selected{% endif %}>Active</option>
+<option value="Inactive"
+{% if form_data.status == "Inactive" or staff.status == "Inactive" and not form_data %}selected{% endif %}>Inactive</option>
+</select>
+</div>
+
+</div>
+
+<div class="text-end mt-4">
+<a href="{% url 'adminview_staff' %}" class="btn btn-secondary">Cancel</a>
+<button type="submit" class="btn btn-dark">Update</button>
+</div>
+
+</form>
+</div>
+</div>
+</div>
+
+{% endblock %}

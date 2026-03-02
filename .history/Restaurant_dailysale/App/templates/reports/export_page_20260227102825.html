@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block 'content' %}
+
+<div class="container mt-4">
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white d-flex align-items-center">
+            <h5 class="mb-0 ms-2">Send {{ report_type|title }} Report</h5>
+        </div>
+
+        <div class="card-body">
+
+            <!-- Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post" action="{{ action_url }}?{{ query_params }}">
+                {% csrf_token %}
+
+                <!-- Send Method -->
+                <div class="mb-4">
+                    <label for="sendVia" class="form-label fw-bold">
+                        Send Via
+                    </label>
+                    <select id="sendVia" name="send_via" class="form-select">
+                        <option value="email">Email</option>
+                        <option value="whatsapp">WhatsApp</option>
+                    </select>
+                </div>
+
+                <!-- Email Section -->
+                <div class="mb-4" id="emailSection">
+                    <label class="form-label fw-bold">Email Address</label>
+                    <input type="email" name="email" class="form-control"
+                           placeholder="Enter email address">
+                </div>
+
+                <div class="text-center text-muted mb-3">
+                    <strong>OR</strong>
+                </div>
+
+                <!-- WhatsApp Section -->
+                <div class="mb-4" id="whatsappSection">
+                    <label class="form-label fw-bold">WhatsApp Number</label>
+                    <input type="text"
+                           name="whatsapp"
+                           class="form-control"
+                           placeholder="+971501234567"
+                           pattern="^\+\d{8,15}$"
+                           title="Enter number with country code (e.g., +971501234567)">
+                    
+                    <small class="text-muted">
+                        Include country code with + (8–15 digits)
+                    </small>
+                </div>
+
+                <!-- Buttons -->
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary">
+                        Send Report
+                    </button>
+
+                    <a href="{% if report_type == 'expense' %}
+                                {% url 'history_expenses' %}
+                             {% elif report_type == 'delivery' %}
+                                {% url 'delivery_report' %}
+                             {% elif report_type == 'sales' %}
+                                {% url 'history_sales' %}
+                             {% endif %}"
+                       class="btn btn-secondary">
+                        Cancel
+                    </a>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- Optional: Auto toggle fields -->
+<script>
+document.getElementById('sendVia').addEventListener('change', function () {
+    let emailSection = document.getElementById('emailSection');
+    let whatsappSection = document.getElementById('whatsappSection');
+
+    if (this.value === 'email') {
+        emailSection.style.display = 'block';
+        whatsappSection.style.display = 'none';
+    } else {
+        emailSection.style.display = 'none';
+        whatsappSection.style.display = 'block';
+    }
+});
+
+// Initial state
+document.getElementById('sendVia').dispatchEvent(new Event('change'));
+</script>
+
+{% endblock %}

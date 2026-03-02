@@ -1,0 +1,206 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-bs-theme="light">
+<head>
+    <meta charset="utf-8">
+    <title>Register | Daily Sales</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="{% static 'assets/images/favicon.ico' %}">
+
+    <!-- Bootstrap CSS -->
+    <link href="{% static 'assets/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'assets/css/icons.min.css' %}" rel="stylesheet">
+    <link href="{% static 'assets/css/app.min.css' %}" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+    <!-- Custom Styles -->
+    <style>
+        body {
+            min-height: 100vh;
+            background: url("{% static 'assets/images/register-bg.jpg' %}") no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .register-overlay {
+            min-height: 100vh;
+            background: rgba(0, 0, 0, 0.65);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* REGISTER CARD */
+        .register-card {
+            background: rgba(18, 18, 18, 0.78);
+            backdrop-filter: blur(12px);
+            border-radius: 18px;
+            padding: 32px;
+            color: #fff;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .register-card h4,
+        .register-card label {
+            color: #fff;
+        }
+
+        .text-muted {
+            color: #c1c1c1 !important;
+        }
+
+        .form-control {
+            background: rgba(255,255,255,0.08);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            padding: 12px;
+        }
+
+        .form-control::placeholder {
+            color: #d1d1d1;
+        }
+
+        .form-control:focus {
+            background: rgba(255,255,255,0.12);
+            color: #fff;
+            box-shadow: none;
+            border: 1px solid #3b82f6;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            font-weight: 600;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .form-check-label {
+            color: #d1d1d1;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="register-overlay">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-4 col-md-6 col-sm-10">
+
+                <!-- REGISTER CARD -->
+                <div class="register-card">
+
+                    <div class="text-center mb-4">
+                        <h4>Create Account</h4>
+                        <p class="text-muted">Enter your details to register</p>
+                    </div>
+
+                    {% comment %} <form method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label class="form-label">Username</label>
+                            <input type="text" class="form-control" placeholder="Enter username">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" placeholder="Enter email">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" placeholder="Enter password">
+                        </div>
+
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                Register <i class="fas fa-user-plus ms-1"></i>
+                            </button>
+                        </div>
+                    </form> {% endcomment %}
+                    <form method="post">
+    {% csrf_token %}
+
+    <div class="mb-3">
+        <label class="form-label">Username</label>
+        <input type="text" name="name" class="form-control" placeholder="Enter username">
+    </div>
+
+    <div class="mb-3">
+    <label class="form-label">Email</label>
+    <input type="email" 
+           name="email" 
+           class="form-control" 
+           placeholder="Enter Gmail address"
+           pattern="^[a-zA-Z0-9._%+-]+@gmail\.com$"
+           title="Please enter a valid Gmail address (example@gmail.com)"
+           required>
+</div>
+
+
+    
+    <div class="mb-3">
+    <label class="form-label">Password</label>
+    <input
+        type="password"
+        name="password"
+        class="form-control"
+        placeholder="Enter 8 characters only"
+        minlength="8"
+        maxlength="8"
+        required
+    >
+    <small class="text-muted">Password must be exactly 8 characters</small>
+</div>
+
+<div class="mb-3">
+    <label class="form-label">Mobile Number</label>
+   <input 
+    type="text" 
+    name="contact" 
+    class="form-control" 
+    placeholder="+971501234567"
+    required
+>
+<
+</div>
+
+
+    <div class="d-grid">
+        <button type="submit" class="btn btn-primary">
+            Register <i class="fas fa-user-plus ms-1"></i>
+        </button>
+    </div>
+</form>
+
+
+                    <div class="text-center mt-4">
+                        <p class="text-muted">
+                            Already have an account?
+                            <a href="{% url 'login' %}" class="text-primary ms-1">Login</a>
+                        </p>
+                    </div>
+
+                </div>
+                <!-- END REGISTER CARD -->
+
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

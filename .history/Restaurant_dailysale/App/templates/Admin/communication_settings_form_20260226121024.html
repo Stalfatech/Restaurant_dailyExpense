@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+
+    <!-- Non-field Errors -->
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {% for error in form.non_field_errors %}
+            <div>{{ error }}</div>
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white d-flex align-items-center">
+            <i class="iconoir-settings"></i>
+            <h5 class="mb-0 ms-2">{{ title }}</h5>
+        </div>
+
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+
+                <!-- Email Section -->
+                <h5 class="mb-3">
+                    <i class="iconoir-mail"></i> Email Settings (Optional)
+                </h5>
+
+                <div class="mb-3">
+                    {{ form.email_host.label_tag }}
+                    {{ form.email_host }}
+                    {% if form.email_host.errors %}
+                        <div class="text-danger small">{{ form.email_host.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.email_port.label_tag }}
+                    {{ form.email_port }}
+                    {% if form.email_port.errors %}
+                        <div class="text-danger small">{{ form.email_port.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.email_host_user.label_tag }}
+                    {{ form.email_host_user }}
+                    {% if form.email_host_user.errors %}
+                        <div class="text-danger small">{{ form.email_host_user.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-4">
+                    {{ form.email_host_password.label_tag }}
+                    {{ form.email_host_password }}
+                    {% if form.email_host_password.errors %}
+                        <div class="text-danger small">{{ form.email_host_password.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <hr>
+
+                <!-- WhatsApp Section -->
+                <h5 class="mb-3">
+                    <i class="iconoir-whatsapp"></i> WhatsApp (Optional)
+                </h5>
+
+                <div class="mb-3">
+                    {{ form.whatsapp_number.label_tag }}
+                    {{ form.whatsapp_number }}
+                    {% if form.whatsapp_number.errors %}
+                        <div class="text-danger small">{{ form.whatsapp_number.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-4">
+                    {{ form.is_active.label_tag }}
+                    {{ form.is_active }}
+                </div>
+
+                <!-- Buttons -->
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary">
+                        <i class="iconoir-save"></i> Save
+                    </button>
+
+                    <a href="{% url 'communication_settings_list' %}" class="btn btn-secondary">
+                        Back
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

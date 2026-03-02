@@ -160,45 +160,50 @@ def dashboard(request):
 def topbar_view(request):
     return render(request, 'topbar.html')
 
-
 def register(request):
     if request.method == 'POST':
-        name = request.POST.get('name')
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-        contact = request.POST.get('contact')
+        name = (request.POST.get('name') or '').strip()
+        email = (request.POST.get('email') or '').strip()
+        password = (request.POST.get('password') or '').strip()
+        contact = (request.POST.get('contact') or '').strip()
 
-        # Validation
-        if not email or not password:
-            return render(request, 'register.html', {
-                'error': 'Email and password are required'
-            })
+        context = {
+            'name': name,
+            'email': email,
+            'contact': contact,
+        }
 
+        # Required fields
+        if not name or not email or not password or not contact:
+            context['error'] = 'All fields are required'
+            return render(request, 'register.html', context)
+
+        # Phone validation
+        try:
+            phone_validator(contact)
+        except ValidationError as e:
+            context['error'] = e.message
+            return render(request, 'register.html', context)
+
+        # Duplicate email
         if User.objects.filter(email=email).exists():
-            return render(request, 'register.html', {
-                'error': 'Email already exists'
-            })
+            context['error'] = 'Email already exists'
+            return render(request, 'register.html', context)
 
-        # Create User
-        user = User(
-            email=email,
-            name=name,
-            user_type=0
-        )
+        # Create user
+        user = User(email=email, name=name, user_type=0)
         user.set_password(password)
         user.save()
 
-        # Create Register profile
         Register.objects.create(
             name=name,
             contact=contact,
             loginid=user
         )
 
-        return redirect('/login')
+        return redirect('login')
 
     return render(request, 'register.html')
-
 @never_cache
 def Logindata(request):
     loginform_display = LoginForm()
@@ -301,6 +306,8 @@ def reset_password(request, user_id):
     else:
         form = ResetPasswordForm()
     return render(request, 'reset_password.html', {'form': form})
+from django.core.exceptions import ValidationError
+from .validators import phone_validator  # your validators.py
 
 @never_cache
 def add_manager(request):
@@ -308,10 +315,10 @@ def add_manager(request):
         return redirect('no_permission')
 
     branches = Branch.objects.all()
-    if request.method == "POST":
 
+    if request.method == "POST":
         name = request.POST.get('name')
-        phone = request.POST.get('phone')
+        phone = (request.POST.get('phone') or "").strip()
         dob = request.POST.get('dob')
         gender = request.POST.get('gender')
         address = request.POST.get('address')
@@ -321,39 +328,46 @@ def add_manager(request):
         photo = request.FILES.get('photo')
         branch_id = request.POST.get('branch')
 
-        # 🔍 VALIDATION
-        if not email or not password:
-            messages.error(request, "Email and password are required")
+        context = {
+            'branches': branches,
+            'form_data': request.POST
+        }
+
+        # Required fields
         if not all([name, phone, dob, address, joining_date, email, password, branch_id]):
             messages.error(request, "All mandatory fields are required")
-            return redirect('manager_add')
-          
+            return render(request, 'Admin/add_manager.html', context)
 
+        # 🔴 Phone Validation (FIELD LEVEL)
+        try:
+            phone_validator(phone)
+        except ValidationError as e:
+            context['phone_error'] = e.message
+            return render(request, 'Admin/add_manager.html', context)
+
+        # Email exists
         if User.objects.filter(email=email).exists():
             messages.error(request, "Email already exists")
-            return redirect('manager_add')
+            return render(request, 'Admin/add_manager.html', context)
 
         try:
             with transaction.atomic():
                 branch = Branch.objects.get(id=branch_id)
 
-                # ✅ 1. CREATE USER
                 user = User.objects.create_user(
                     email=email,
                     password=password,
                     name=name,
                     user_type=1,
-                     branch=branch# MANAGER
+                    branch=branch
                 )
 
-                # ✅ 2. CREATE REGISTER
                 Register.objects.create(
                     name=name,
                     contact=phone,
                     loginid=user
                 )
 
-                # ✅ 3. CREATE MANAGER PROFILE  🔥 (THIS WAS MISSING)
                 Manager.objects.create(
                     user=user,
                     phone=phone,
@@ -369,7 +383,7 @@ def add_manager(request):
 
         except Exception as e:
             messages.error(request, f"Error: {str(e)}")
-            return redirect('manager_add')
+            return render(request, 'Admin/add_manager.html', context)
 
     return render(request, 'Admin/add_manager.html', {
         'branches': branches
@@ -414,41 +428,72 @@ def manager_edit(request, id):
     branches = Branch.objects.all()
 
     if request.method == "POST":
+
+        name = (request.POST.get('name') or "").strip()
+        email = (request.POST.get('email') or "").strip()
+        password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
+        phone = (request.POST.get('phone') or "").strip()
+        dob = request.POST.get('dob') or None
+        gender = request.POST.get('gender')
+        joining_date = request.POST.get('joining_date') or None
+        address = (request.POST.get('address') or "").strip()
+        branch_id = request.POST.get('branch')
+
+        # Basic validation
+        if not all([name, email, phone, branch_id]):
+            messages.error(request, "All mandatory fields are required")
+            return render(request, 'Admin/manager_edit.html', {
+                'manager': manager,
+                'branches': branches,
+                'form_data': request.POST
+            })
+
+        # Phone validation
+        try:
+            phone_validator(phone)
+        except ValidationError as e:
+            return render(request, 'Admin/manager_edit.html', {
+                'manager': manager,
+                'branches': branches,
+                'form_data': request.POST,
+                'phone_error': e.message
+            })
+
+        # Password validation (optional)
+        if password or confirm_password:
+            if password != confirm_password:
+                messages.error(request, "Passwords do not match")
+                return render(request, 'Admin/manager_edit.html', {
+                    'manager': manager,
+                    'branches': branches,
+                    'form_data': request.POST
+                })
+
+            if len(password) < 8:
+                messages.error(request, "Password must be at least 8 characters")
+                return render(request, 'Admin/manager_edit.html', {
+                    'manager': manager,
+                    'branches': branches,
+                    'form_data': request.POST
+                })
+
         try:
             with transaction.atomic():
-
-                # Update User table
-                manager.user.name = request.POST.get('name')
-                manager.user.email = request.POST.get('email')
-                name = request.POST.get('name')
-                email = request.POST.get('email')
-                phone = request.POST.get('phone')
-                dob = request.POST.get('dob')
-                gender = request.POST.get('gender')
-                joining_date = request.POST.get('joining_date')
-                address = request.POST.get('address')
-                branch_id = request.POST.get('branch')
-
-                # 🔴 Validation
-                if not all([name, email, phone, branch_id]):
-                    messages.error(request, "All mandatory fields are required")
-                    return redirect('manager_edit', id=id)
-
                 branch = Branch.objects.get(id=branch_id)
 
-                # ✅ Update User
+                # Update User
                 manager.user.name = name
                 manager.user.email = email
                 manager.user.branch = branch
+
+                # Update password only if provided
+                if password:
+                    manager.user.set_password(password)
+
                 manager.user.save()
 
-                # Update Manager table
-                manager.phone = request.POST.get('phone')
-                manager.dob = request.POST.get('dob')
-                manager.gender = request.POST.get('gender')
-                manager.address = request.POST.get('address')
-                manager.joining_date = request.POST.get('joining_date')
-                 # ✅ Update Manager profile
+                # Update Manager
                 manager.phone = phone
                 manager.dob = dob
                 manager.gender = gender
@@ -465,15 +510,17 @@ def manager_edit(request, id):
 
         except Exception as e:
             messages.error(request, f"Error: {str(e)}")
-            return redirect('manager_view')
+            return render(request, 'Admin/manager_edit.html', {
+                'manager': manager,
+                'branches': branches,
+                'form_data': request.POST
+            })
 
+    # GET request
     return render(request, 'Admin/manager_edit.html', {
         'manager': manager,
-          'branches': branches
+        'branches': branches
     })
-    
-    
-    
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
@@ -1126,46 +1173,58 @@ def delete_branch(request, id):
 
 def add_staff(request):
     if request.method == "POST":
-        staff_id = request.POST.get('staff_id')
-        name = request.POST.get('name')
-        gender = request.POST.get('gender')  
+        staff_id = (request.POST.get('staff_id') or "").strip()
+        name = (request.POST.get('name') or "").strip()
+        gender = request.POST.get('gender')
         role = request.POST.get('role')
-        contact = request.POST.get('contact')
+        contact = (request.POST.get('contact') or "").strip()
         dob = request.POST.get('dob')
         joining_date = request.POST.get('joining_date')
         salary_type = request.POST.get('salary_type')
         status = request.POST.get('status')
 
-        # Duplicate Staff ID
+        context = {
+            'form_data': request.POST
+        }
+
+        # ===== Required Fields =====
+        if not all([staff_id, name, gender, role, contact, joining_date, salary_type, status]):
+            messages.error(request, "All mandatory fields are required.")
+            return render(request, 'Manager/staff_add.html', context)
+
+        # ===== Duplicate Staff ID =====
         if Staff.objects.filter(staff_id=staff_id).exists():
-            messages.error(request, "Staff ID already exists.")
-            return redirect('add_staff')
+            context['staff_id_error'] = "Staff ID already exists."
+            return render(request, 'Manager/staff_add.html', context)
 
-        # Contact Validation
-        if not contact or not contact.isdigit() or len(contact) != 10:
-            messages.error(request, "Contact number must be exactly 10 digits.")
-            return redirect('add_staff')
-        
+        # ===== Phone Validation (Same as Manager) =====
+        try:
+            phone_validator(contact)
+        except ValidationError as e:
+            context['contact_error'] = e.message
+            return render(request, 'Manager/staff_add.html', context)
+
+        # ===== Gender Check =====
         if not gender:
-            messages.error(request, "Please select a gender.")
-            return redirect('add_staff')
+            context['gender_error'] = "Please select a gender."
+            return render(request, 'Manager/staff_add.html', context)
 
-        # DOB Validation
+        # ===== DOB Validation =====
         if dob:
             dob_date = date.fromisoformat(dob)
             if dob_date > date.today():
-                messages.error(request, "Date of Birth cannot be in the future.")
-                return redirect('add_staff')
+                context['dob_error'] = "Date of Birth cannot be in the future."
+                return render(request, 'Manager/staff_add.html', context)
 
-        # Get Branch object
+        # ===== Get Manager Branch =====
         manager_branch = None
-        if request.user.branch_id:  # get FK id
+        if request.user.branch_id:
             try:
                 manager_branch = Branch.objects.get(id=request.user.branch_id)
             except Branch.DoesNotExist:
                 manager_branch = None
 
-        # Save Staff
+        # ===== Save Staff =====
         Staff.objects.create(
             staff_id=staff_id,
             name=name,
@@ -1176,7 +1235,7 @@ def add_staff(request):
             joining_date=joining_date,
             salary_type=salary_type,
             status=status,
-            branch=manager_branch,  # properly assigned now
+            branch=manager_branch,
             created_by=request.user
         )
 
@@ -1231,49 +1290,59 @@ def staff_list(request):
 
 
 def edit_staff(request, id):
-
     staff = get_object_or_404(Staff, id=id)
 
     if request.method == "POST":
 
-        staff_id = request.POST.get('staff_id')
-        name = request.POST.get('name')
-        gender = request.POST.get('gender')   
+        staff_id = (request.POST.get('staff_id') or "").strip()
+        name = (request.POST.get('name') or "").strip()
+        gender = request.POST.get('gender')
         role = request.POST.get('role')
-        contact = request.POST.get('contact')
-        dob = request.POST.get('dob')
-        joining_date = request.POST.get('joining_date')
+        contact = (request.POST.get('contact') or "").strip()
+        dob = request.POST.get('dob') or None
+        joining_date = request.POST.get('joining_date') or None
         salary_type = request.POST.get('salary_type')
         status = request.POST.get('status')
 
-        # Duplicate Staff ID check
+        context = {
+            'staff': staff,
+            'form_data': request.POST
+        }
+
+        # ===== Required fields =====
+        if not all([staff_id, name, contact, role, gender]):
+            messages.error(request, "All mandatory fields are required")
+            return render(request, 'Manager/staff_edit.html', context)
+
+        # ===== Duplicate Staff ID =====
         if Staff.objects.filter(staff_id=staff_id).exclude(id=id).exists():
             messages.error(request, "Staff ID already exists.")
-            return redirect('edit_staff', id=id)
+            return render(request, 'Manager/staff_edit.html', context)
 
-        # Contact validation
-        if not contact or not contact.isdigit() or len(contact) != 10:
-            messages.error(request, "Contact number must be exactly 10 digits.")
-            return redirect('edit_staff', id=id)
+        # ===== Phone Validation (+ country format) =====
+        try:
+            phone_validator(contact)
+        except ValidationError as e:
+            context['contact_error'] = e.message
+            return render(request, 'Manager/staff_edit.html', context)
 
-        # DOB validation
+        # ===== DOB validation =====
         if dob:
             dob_date = date.fromisoformat(dob)
             if dob_date > date.today():
                 messages.error(request, "Date of Birth cannot be in the future.")
-                return redirect('edit_staff', id=id)
+                return render(request, 'Manager/staff_edit.html', context)
 
-        # Update fields (NO branch update)
+        # ===== Save =====
         staff.staff_id = staff_id
         staff.name = name
         staff.gender = gender
         staff.role = role
         staff.contact = contact
-        staff.dob = dob if dob else None
+        staff.dob = dob
         staff.joining_date = joining_date
         staff.salary_type = salary_type
         staff.status = status
-
         staff.save()
 
         messages.success(request, "Staff updated successfully ✅")
@@ -1282,7 +1351,6 @@ def edit_staff(request, id):
     return render(request, 'Manager/staff_edit.html', {
         'staff': staff
     })
-
 def delete_staff(request, id):
     staff = get_object_or_404(Staff, id=id)
 
@@ -2547,37 +2615,58 @@ def adminmonthly_salary_report(request):
 
 @login_required
 def admin_add_staff(request):
-    # Get all managers
     managers = Manager.objects.select_related('user').all()
 
     if request.method == "POST":
-        staff_id = request.POST.get("staff_id").strip()
-        name = request.POST.get("name").strip()
+        staff_id = (request.POST.get("staff_id") or "").strip()
+        name = (request.POST.get("name") or "").strip()
         gender = request.POST.get("gender")
         role = request.POST.get("role")
-        contact = request.POST.get("contact").strip()
+        contact = (request.POST.get("contact") or "").strip()
         dob = request.POST.get("dob") or None
         joining_date = request.POST.get("joining_date")
         salary_type = request.POST.get("salary_type")
         status = request.POST.get("status")
         manager_id = request.POST.get("manager")
 
-        # Get selected manager
-        manager = Manager.objects.filter(id=manager_id).first() if manager_id else None
+        context = {
+            "managers": managers,
+            "form_data": request.POST
+        }
 
+        # Required fields
+        if not all([staff_id, name, contact, manager_id]):
+            messages.error(request, "All mandatory fields are required.")
+            return render(request, "Admin/adminstaff_add.html", context)
+
+        # Phone validation (+ country)
+        try:
+            phone_validator(contact)
+        except ValidationError as e:
+            context["contact_error"] = e.message
+            return render(request, "Admin/adminstaff_add.html", context)
+
+        # Duplicate staff_id
+        if Staff.objects.filter(staff_id=staff_id).exists():
+            messages.info(request, f"Staff ID {staff_id} already exists!")
+            return render(request, "Admin/adminstaff_add.html", context)
+
+        # Manager check
+        manager = Manager.objects.filter(id=manager_id).first()
         if not manager:
-            messages.error(request, "Please select a valid manager.")
-            return redirect("admin_add_staff")
+            messages.info(request, "Please select a valid manager.")
+            return render(request, "Admin/adminstaff_add.html", context)
 
-        # Staff branch = manager's branch
         branch = manager.user.branch
 
-        # Check duplicate staff_id
-        if Staff.objects.filter(staff_id=staff_id).exists():
-            messages.error(request, f"Staff ID {staff_id} already exists!")
-            return redirect("admin_add_staff")
+        # DOB validation
+        if dob:
+            dob_date = date.fromisoformat(dob)
+            if dob_date > date.today():
+                messages.info(request, "Date of Birth cannot be in the future.")
+                return render(request, "Admin/adminstaff_add.html", context)
 
-        # Save staff
+        # Save
         Staff.objects.create(
             staff_id=staff_id,
             name=name,
@@ -2593,9 +2682,7 @@ def admin_add_staff(request):
         )
 
         messages.success(request, f"Staff '{name}' added successfully ✅")
-        # return redirect("admin_add_staff")
         return redirect("adminview_staff")
-  # Make sure this URL exists
 
     return render(request, "Admin/adminstaff_add.html", {
         "managers": managers
@@ -2607,23 +2694,48 @@ def admin_edit_staff(request, id):
     managers = Manager.objects.select_related('user').all()
 
     if request.method == "POST":
-        staff_id_input = request.POST.get("staff_id", "").strip()
-        name = request.POST.get("name", "").strip()
+        staff_id_input = (request.POST.get("staff_id") or "").strip()
+        name = (request.POST.get("name") or "").strip()
         gender = request.POST.get("gender")
         role = request.POST.get("role")
-        contact = request.POST.get("contact", "").strip()
+        contact = (request.POST.get("contact") or "").strip()
         dob = request.POST.get("dob") or None
         joining_date = request.POST.get("joining_date")
         salary_type = request.POST.get("salary_type")
         status = request.POST.get("status")
         manager_id = request.POST.get("manager")
 
-        # ✅ Duplicate check
-        if Staff.objects.filter(staff_id=staff_id_input).exclude(id=staff.id).exists():
-            messages.error(request, f"Staff ID {staff_id_input} already exists!")
-            return redirect("edit_staff", id=staff.id)
+        context = {
+            "staff": staff,
+            "managers": managers,
+            "form_data": request.POST
+        }
 
-        # ✅ Update basic fields
+        # Required
+        if not all([staff_id_input, name, contact]):
+            messages.error(request, "All mandatory fields are required.")
+            return render(request, "Admin/admin_edit_staff.html", context)
+
+        # Phone validation
+        try:
+            phone_validator(contact)
+        except ValidationError as e:
+            context["contact_error"] = e.message
+            return render(request, "Admin/admin_edit_staff.html", context)
+
+        # Duplicate check
+        if Staff.objects.filter(staff_id=staff_id_input).exclude(id=staff.id).exists():
+            messages.info(request, f"Staff ID {staff_id_input} already exists!")
+            return render(request, "Admin/admin_edit_staff.html", context)
+
+        # DOB validation
+        if dob:
+            dob_date = date.fromisoformat(dob)
+            if dob_date > date.today():
+                messages.info(request, "Date of Birth cannot be in the future.")
+                return render(request, "Admin/admin_edit_staff.html", context)
+
+        # Update fields
         staff.staff_id = staff_id_input
         staff.name = name
         staff.gender = gender
@@ -2634,15 +2746,15 @@ def admin_edit_staff(request, id):
         staff.salary_type = salary_type
         staff.status = status
 
-        # ✅ IMPORTANT: Update manager (created_by)
+        # Manager update
         if manager_id:
             manager = Manager.objects.filter(id=manager_id).first()
             if manager:
                 staff.branch = manager.user.branch
-                staff.created_by = manager.user   # ⭐ THIS LINE FIXES YOUR ISSUE
+                staff.created_by = manager.user
             else:
                 messages.error(request, "Invalid manager selected.")
-                return redirect("edit_staff", id=staff.id)
+                return render(request, "Admin/admin_edit_staff.html", context)
 
         staff.save()
 
@@ -2653,8 +2765,6 @@ def admin_edit_staff(request, id):
         "staff": staff,
         "managers": managers
     })
-
-   
 
 
 
@@ -3447,15 +3557,21 @@ def reports_list(request):
         {"name": "Expense History", "url": "history_expenses"},
     ]
     return render(request, "reports/reports_list.html", {"reports": reports})
-
 def export_report_page(request, report_type):
     query_params = request.GET.urlencode()
+
+    if report_type == "expense":
+        action_url = reverse('send_expense_report')
+    elif report_type == "delivery":
+        action_url = reverse('send_report', args=['delivery'])
+    elif report_type == "sales":
+        action_url = reverse('send_sales_report')
+
     return render(request, "reports/export_page.html", {
-        "report_type": report_type,
-        "query_params": query_params
+        'report_type': report_type,
+        'query_params': query_params,
+        'action_url': action_url
     })
-    
-    
 from django.shortcuts import render, redirect
 from django.db.models import Sum, Count
 from datetime import datetime
@@ -3468,6 +3584,19 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from datetime import datetime
 from django.db.models import Sum, Count
+
+
+from datetime import datetime
+from django.shortcuts import render, redirect
+from django.urls import reverse
+from django.contrib import messages
+from django.db.models import Sum, Count
+from django.core.exceptions import ValidationError
+
+from .models import Staff, DeliverySale
+from .utils import generate_pdf, send_email_report, save_pdf_and_get_link, send_whatsapp
+from .validators import phone_validator
+
 
 def send_report(request, report_type):
     user = request.user
@@ -3531,20 +3660,15 @@ def send_report(request, report_type):
     # ===== Send Action =====
     if request.method == "POST":
         send_via = request.POST.get("send_via")
-        email = request.POST.get("email")
-        number = request.POST.get("whatsapp")
+        email = (request.POST.get("email") or "").strip()
+        number = (request.POST.get("whatsapp") or "").strip()
 
-        # ===== Validation =====
-        if send_via == "email" and not email:
-            messages.error(request, "Please enter Email to send the report.")
-            return redirect(f"{reverse('export_report_page', args=[report_type])}?{query_params}")
-
-        if send_via == "whatsapp" and not number:
-            messages.error(request, "Please enter WhatsApp number to send the report.")
-            return redirect(f"{reverse('export_report_page', args=[report_type])}?{query_params}")
-
-        # ===== Email =====
+        # ===== Email Validation =====
         if send_via == "email":
+            if not email:
+                messages.info(request, "Please enter Email to send the report.")
+                return redirect(f"{reverse('export_report_page', args=[report_type])}?{query_params}")
+
             send_email_report(
                 email,
                 "Delivery Report",
@@ -3554,8 +3678,20 @@ def send_report(request, report_type):
             messages.success(request, "Report sent successfully via Email.")
             return redirect(f"{reverse('delivery_report')}?{query_params}")
 
-        # ===== WhatsApp =====
+        # ===== WhatsApp Validation =====
         elif send_via == "whatsapp":
+            if not number:
+                messages.info(request, "Please enter WhatsApp number.")
+                return redirect(f"{reverse('export_report_page', args=[report_type])}?{query_params}")
+
+            # Format validation
+            try:
+                phone_validator(number)
+            except ValidationError as e:
+                messages.error(request, e.message)
+                return redirect(f"{reverse('export_report_page', args=[report_type])}?{query_params}")
+
+            # Generate PDF link
             pdf_link = save_pdf_and_get_link(request, pdf)
 
             message = (
@@ -3930,3 +4066,235 @@ def delete_favicon(request):
         messages.success(request, "Favicon deleted successfully.")
 
     return redirect("view_dashboard_profile")
+
+
+from django.db.models import Sum
+from django.contrib import messages
+from django.urls import reverse
+from datetime import datetime
+from .models import Expense, Branch
+from .utils import generate_pdf, send_email_report, send_whatsapp, save_pdf_and_get_link
+
+@admin_or_manager_required
+def send_expense_report(request):
+    report_type = "expense"
+    user = request.user
+    query_params = request.GET.urlencode()
+
+    # ===== Filters =====
+    start = request.GET.get('start')
+    end = request.GET.get('end')
+    month = request.GET.get('month')
+    branch_name = request.GET.get('branch', '').strip()
+
+    # ===== Base queryset =====
+    if user.user_type == 0:
+        expenses = Expense.objects.all()
+    else:
+        expenses = Expense.objects.filter(branch=user.branch)
+
+    # Branch filter (admin only)
+    if branch_name and user.user_type == 0:
+        expenses = expenses.filter(branch__name__icontains=branch_name)
+
+    # Date range
+    if start and end:
+        expenses = expenses.filter(date__range=[start, end])
+
+    # Month filter
+    if month:
+        try:
+            year, month_num = map(int, month.split('-'))
+            expenses = expenses.filter(date__year=year, date__month=month_num)
+        except ValueError:
+            pass
+
+    # ===== Summary =====
+    total = expenses.aggregate(total=Sum('amount'))['total'] or 0
+
+    context = {
+        'expenses': expenses,
+        'total': total,
+        'start': start,
+        'end': end,
+        'month': month,
+        'branch': branch_name,
+    }
+
+    # ===== Generate PDF =====
+    pdf = generate_pdf("expenses/expense_report_export.html", context)
+
+    # ===== Send Action =====
+    if request.method == "POST":
+        send_via = request.POST.get("send_via")
+        email = (request.POST.get("email") or "").strip()
+        number = (request.POST.get("whatsapp") or "").strip()
+
+        # ===== Email Validation =====
+        if send_via == "email":
+            if not email:
+                messages.info(request, "Please enter Email to send the report.")
+                return redirect(f"{reverse('export_report_page', args=[report_type])}?{query_params}")
+
+            send_email_report(
+                email,
+                "Expense Report",
+                f"Total Expense: {total}",
+                pdf
+            )
+            messages.success(request, "Expense report sent via Email.")
+            return redirect(f"{reverse('history_expenses')}?{query_params}")
+
+        # ===== WhatsApp Validation =====
+        elif send_via == "whatsapp":
+            if not number:
+                messages.info(request, "Please enter WhatsApp number.")
+                return redirect(f"{reverse('export_report_page', args=[report_type])}?{query_params}")
+
+            # Format validation
+            try:
+                phone_validator(number)
+            except ValidationError as e:
+                messages.error(request, e.message)
+                return redirect(f"{reverse('export_report_page', args=[report_type])}?{query_params}")
+
+            # Generate PDF link
+            pdf_link = save_pdf_and_get_link(request, pdf)
+
+            message = (
+                f"Expense Report Total: {total}\n"
+                f"Download PDF: {pdf_link}"
+            )
+
+            return send_whatsapp(number, message)
+
+    # ===== Open Export Page =====
+    return render(request, "reports/export_page.html", {
+        'report_type': report_type,
+        'query_params': query_params
+    })
+from django.db.models import Sum
+from django.contrib import messages
+from django.urls import reverse
+from datetime import datetime
+from .models import DailySale, DailySaleItem
+from .utils import generate_pdf, send_email_report, send_whatsapp, save_pdf_and_get_link
+
+
+@admin_or_manager_required
+def send_sales_report(request):
+    report_type = "sales"
+    user = request.user
+    query_params = request.GET.urlencode()
+
+    # ===== Filters =====
+    start = request.GET.get('start')   # <-- missing earlier
+    end = request.GET.get('end')
+    month = request.GET.get('month')
+    branch_name = request.GET.get('branch', '').strip()
+
+    # ===== Base queryset =====
+    if user.user_type == 0:
+        sales = DailySale.objects.all()
+    else:
+        sales = DailySale.objects.filter(branch=user.branch)
+
+    # Branch filter (admin)
+    if branch_name and user.user_type == 0:
+        sales = sales.filter(branch__name__icontains=branch_name)
+
+    # Month filter (priority)
+    if month:
+        try:
+            year, month_num = map(int, month.split('-'))
+            sales = sales.filter(date__year=year, date__month=month_num)
+        except ValueError:
+            pass
+
+    # Date range
+    elif start and end:
+        try:
+            start_date = datetime.strptime(start, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end, "%Y-%m-%d").date()
+            sales = sales.filter(date__range=[start_date, end_date])
+        except ValueError:
+            pass
+
+    # ===== Totals =====
+    totals = sales.aggregate(
+        total_breakfast=Sum('breakfast_total'),
+        total_lunch=Sum('lunch_total'),
+        total_dinner=Sum('dinner_total'),
+        total_delivery=Sum('delivery_total'),
+        total_pos=Sum('pos_amount'),
+        total_sales=Sum('total_sales'),
+    )
+
+    for key in totals:
+        totals[key] = totals[key] or 0
+
+    grand_total = totals['total_sales']
+
+    context = {
+        'sales': sales,
+        'totals': totals,
+        'grand_total': grand_total,
+        'start': start,
+        'end': end,
+        'month': month,
+        'branch': branch_name,
+    }
+
+    # ===== Generate PDF =====
+    pdf = generate_pdf("sales/sales_report_export.html", context)
+
+    # ===== Send Action =====
+    if request.method == "POST":
+        send_via = request.POST.get("send_via")
+        email = (request.POST.get("email") or "").strip()
+        number = (request.POST.get("whatsapp") or "").strip()
+
+        # ===== Email Validation =====
+        if send_via == "email":
+            if not email:
+                messages.error(request, "Please enter Email.")
+                return redirect(f"{reverse('export_report_page', args=[report_type])}?{query_params}")
+
+            send_email_report(
+                email,
+                "Sales Report",
+                f"Total Sales: {grand_total}",
+                pdf
+            )
+            messages.success(request, "Sales report sent via Email.")
+            return redirect(f"{reverse('history_sales')}?{query_params}")
+
+        # ===== WhatsApp Validation =====
+        elif send_via == "whatsapp":
+            if not number:
+                messages.error(request, "Please enter WhatsApp number.")
+                return redirect(f"{reverse('export_report_page', args=[report_type])}?{query_params}")
+
+            # Format validation
+            try:
+                phone_validator(number)
+            except ValidationError as e:
+                messages.error(request, e.message)
+                return redirect(f"{reverse('export_report_page', args=[report_type])}?{query_params}")
+
+            # Generate PDF link
+            pdf_link = save_pdf_and_get_link(request, pdf)
+
+            message = (
+                f"Sales Report Total: {grand_total}\n"
+                f"Download PDF: {pdf_link}"
+            )
+
+            return send_whatsapp(number, message)
+
+    # ===== Open Export Page =====
+    return render(request, "reports/export_page.html", {
+        'report_type': report_type,
+        'query_params': query_params,
+        'action_url': reverse('send_sales_report')
+    })

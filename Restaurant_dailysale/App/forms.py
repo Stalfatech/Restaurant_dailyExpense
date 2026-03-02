@@ -47,25 +47,34 @@ from django import forms
 from .models import Branch, DeliverySale, Expense, Staff, Supplier, Product
 from django.core.exceptions import ValidationError
 
+from .validators import phone_validator
 
 class SupplierForm(forms.ModelForm):
+    # Override phone field to add validator
+    phone = forms.CharField(
+        label="Phone",
+        required=True,
+        validators=[phone_validator],
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '+971501234567'
+        })
+    )
+
     class Meta:
         model = Supplier
         fields = ['name', 'phone']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
-
-   
-
     def clean_phone(self):
-        phone = self.cleaned_data['phone']
-        if not phone.isdigit():
-            raise ValidationError("Phone number must contain digits only.")
-        if len(phone) < 8:
-            raise ValidationError("Phone number too short.")
+        phone = (self.cleaned_data.get('phone') or '').strip()
+
+        # Ensure country code is included
+        if phone and not phone.startswith('+'):
+            raise ValidationError("Phone number must include country code (e.g., +971)")
+
         return phone
 
 
@@ -337,7 +346,32 @@ from django import forms
 from .models import CommunicationSettings
 
 
+from django import forms
+from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
+# Assuming your model is imported here
+# from .models import CommunicationSettings
+
+# 1. Define the Regex Validator
+# Allows optional +, followed by 1-3 digit country code, 
+# then 7-14 digits (Total 9-15 digits)
+phone_validator = RegexValidator(
+    regex=r'^\+?1?\d{9,15}$', 
+    message="WhatsApp number must be entered in international format: '+971501234567'. Up to 15 digits allowed."
+)
+
 class CommunicationSettingsForm(forms.ModelForm):
+    # Override field to add validator
+    whatsapp_number = forms.CharField(
+        label="WhatsApp Number",
+        required=False, # Set to True if it's mandatory
+        validators=[phone_validator],
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 
+            'placeholder': '+971501234567'
+        })
+    )
+
     class Meta:
         model = CommunicationSettings
         fields = '__all__'
@@ -346,26 +380,26 @@ class CommunicationSettingsForm(forms.ModelForm):
             'email_host_user': forms.EmailInput(attrs={'class': 'form-control'}),
             'email_host': forms.TextInput(attrs={'class': 'form-control'}),
             'email_port': forms.NumberInput(attrs={'class': 'form-control'}),
-            'whatsapp_number': forms.TextInput(attrs={'class': 'form-control'}),
-            
         }
 
     def clean(self):
         cleaned_data = super().clean()
-
-    # Get and strip values to avoid whitespace-only inputs
         email_user = (cleaned_data.get('email_host_user') or '').strip()
         email_password = (cleaned_data.get('email_host_password') or '').strip()
         whatsapp = (cleaned_data.get('whatsapp_number') or '').strip()
 
-    # Check if Email provided properly
+        # Check if Email provided properly
         email_provided = bool(email_user and email_password)
 
-    # Validation: At least Email OR WhatsApp required
+        # Validation: At least Email OR WhatsApp required
         if not email_provided and not whatsapp:
-         raise forms.ValidationError(
-            "Please provide Email credentials or WhatsApp number to save settings."
-        )
+            raise ValidationError(
+                "Please provide Email credentials or WhatsApp number to save settings."
+            )
+        
+        # WhatsApp specific check if entered
+        if whatsapp and not whatsapp.startswith('+'):
+            raise ValidationError("WhatsApp number must include country code (e.g., +971)")
 
         return cleaned_data
     

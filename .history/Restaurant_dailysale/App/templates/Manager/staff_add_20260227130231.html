@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% load static %}
+{% block 'content' %}
+
+<div class="container mt-5">
+    <div class="card shadow-lg border-0 rounded-3">
+
+        <!-- Header -->
+        <div class="card-header bg-dark text-white py-3">
+            <h4 class="mb-0">
+                <i class="bi bi-person-plus-fill me-2"></i> Staff Data Section
+            </h4>
+        </div>
+
+        <div class="card-body p-4">
+
+            <!-- Django Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <div class="row">
+
+                    <!-- Staff ID -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            Staff ID <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" name="staff_id"
+                               value="{{ form_data.staff_id }}"
+                               class="form-control" required>
+                    </div>
+
+                    <!-- Name -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" name="name"
+                               value="{{ form_data.name }}"
+                               class="form-control" required>
+                    </div>
+
+                    <!-- Gender -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            Gender <span class="text-danger">*</span>
+                        </label>
+                        <select name="gender" class="form-select" required>
+                            <option value="">Select Gender</option>
+                            <option value="Male" {% if form_data.gender == "Male" %}selected{% endif %}>Male</option>
+                            <option value="Female" {% if form_data.gender == "Female" %}selected{% endif %}>Female</option>
+                            <option value="Other" {% if form_data.gender == "Other" %}selected{% endif %}>Other</option>
+                        </select>
+                    </div>
+
+                    <!-- Role -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            Role <span class="text-danger">*</span>
+                        </label>
+                        <select name="role" class="form-select" required>
+                            <option value="">Select Role</option>
+                            <option value="Chef" {% if form_data.role == "Chef" %}selected{% endif %}>Chef</option>
+                            <option value="Helper" {% if form_data.role == "Helper" %}selected{% endif %}>Helper</option>
+                            <option value="Delivery" {% if form_data.role == "Delivery" %}selected{% endif %}>Delivery</option>
+                        </select>
+                    </div>
+
+                    <!-- Contact (Updated for International Format) -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            Contact Number <span class="text-danger">*</span>
+                        </label>
+
+                        <input type="tel"
+                               name="contact"
+                               value="{{ form_data.contact }}"
+                               class="form-control {% if phone_error %}is-invalid{% endif %}"
+                               placeholder="+971501234567"
+                               required>
+
+                        {% if phone_error %}
+                            <div class="invalid-feedback">
+                                {{ phone_error }}
+                            </div>
+                        {% endif %}
+
+                        <small class="text-muted">
+                            Enter number with country code (8–15 digits, e.g., +971501234567)
+                        </small>
+                    </div>
+
+                    <!-- DOB -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            Date of Birth
+                        </label>
+                        <input type="date"
+                               name="dob"
+                               value="{{ form_data.dob }}"
+                               class="form-control"
+                               max="{% now 'Y-m-d' %}">
+                    </div>
+
+                    <!-- Joining Date -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            Joining Date <span class="text-danger">*</span>
+                        </label>
+                        <input type="date"
+                               name="joining_date"
+                               value="{{ form_data.joining_date }}"
+                               class="form-control" required>
+                    </div>
+
+                    <!-- Salary Type -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            Salary Type <span class="text-danger">*</span>
+                        </label>
+                        <select name="salary_type" class="form-select" required>
+                            <option value="">Select Salary Type</option>
+                            <option value="Daily" {% if form_data.salary_type == "Daily" %}selected{% endif %}>Daily</option>
+                            <option value="Monthly" {% if form_data.salary_type == "Monthly" %}selected{% endif %}>Monthly</option>
+                        </select>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            Status <span class="text-danger">*</span>
+                        </label>
+                        <select name="status" class="form-select" required>
+                            <option value="">Select Status</option>
+                            <option value="Active" {% if form_data.status == "Active" %}selected{% endif %}>Active</option>
+                            <option value="Inactive" {% if form_data.status == "Inactive" %}selected{% endif %}>Inactive</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <!-- Buttons -->
+                <div class="text-end mt-4">
+                    <a href="{% url 'staff_list' %}" class="btn btn-secondary">
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-dark px-4">
+                        <i class="bi bi-save me-1"></i> Save Staff
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

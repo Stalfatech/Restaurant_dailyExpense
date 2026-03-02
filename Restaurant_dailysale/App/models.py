@@ -68,7 +68,7 @@ class User(AbstractUser):
 class Register(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     name = models.CharField(max_length=191, null=True)
-    contact = models.BigIntegerField(null=True)
+    contact = models.BigIntegerField(max_length=16,null=True)
     loginid = models.ForeignKey(User, on_delete=models.CASCADE, related_name="registrations")
 
 class Manager(models.Model):
@@ -80,7 +80,7 @@ class Manager(models.Model):
         related_name="manager_profile"
     )
 
-    phone = models.BigIntegerField()
+    phone = models.CharField(max_length=16)
     dob = models.DateField()
     gender = models.CharField(max_length=10)
     address = models.TextField()
@@ -143,7 +143,7 @@ EXPENSE_CATEGORIES = (
 class Supplier(models.Model):
     name = models.CharField(max_length=150)
    
-    phone = models.CharField(max_length=15)
+    phone = models.CharField(max_length=16)
 
     def __str__(self):
         return self.name
@@ -309,7 +309,7 @@ class Staff(models.Model):
     staff_id = models.CharField(max_length=20)
     name = models.CharField(max_length=100)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
-    contact = models.CharField(max_length=10)
+    contact = models.CharField(max_length=16)
     dob = models.DateField(null=True, blank=True)  # Not mandatory
     joining_date = models.DateField()
     gender = models.CharField(max_length=10,choices=GENDER_CHOICES,default='Male')   # ✅ Add default

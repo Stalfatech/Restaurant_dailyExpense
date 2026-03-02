@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% load static %}
+{% block 'content' %}
+
+<div class="container mt-5">
+    <div class="card shadow-lg border-0 rounded-3">
+
+        <!-- Header -->
+        <div class="card-header bg-dark text-white py-3 d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+                <i class="bi bi-person-plus-fill me-2"></i> Add Staff
+            </h4>
+            
+        </div>
+
+        <!-- Body -->
+        <div class="card-body p-4">
+
+            <!-- Django Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <div class="row">
+
+                    <!-- Staff ID -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            Staff ID <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" name="staff_id" class="form-control" required>
+                    </div>
+
+                    <!-- Name -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+
+                    <!-- Gender -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            Gender <span class="text-danger">*</span>
+                        </label>
+                        <select name="gender" class="form-select" required>
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <!-- Role -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            Role <span class="text-danger">*</span>
+                        </label>
+                        <select name="role" class="form-select" required>
+                            <option value="">Select Role</option>
+                            <option value="Chef">Chef</option>
+                            <option value="Helper">Helper</option>
+                            <option value="Delivery">Delivery</option>
+                        </select>
+                    </div>
+
+    <div class="col-md-6 mb-3">
+    <label class="form-label fw-semibold">
+        Manager <span class="text-danger">*</span>
+    </label>
+    <select name="manager" class="form-select" required>
+        <option value="">Select Manager</option>
+        {% for m in managers %}
+            <option value="{{ m.id }}">{{ m.user.name }} ({{ m.user.branch.name }})</option>
+        {% endfor %}
+    </select>
+</div>
+
+                    <!-- Contact -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            Contact Number <span class="text-danger">*</span>
+                        </label>
+                       VariableDoesNotExist at /staff/add/
+Failed lookup for key [staff] in [{'True': True, 'False': False, 'None': None}, {}, {}, {'managers': <QuerySet [<Manager: Megha S>, <Manager: Gopika>, <Manager: Sakshi Raj>]>}]
+Request Method:	GET
+Request URL:	http://127.0.0.1:8000/staff/add/
+Django Version:	6.0.2
+Exception Type:	VariableDoesNotExist
+Exception Value:	
+Failed lookup for key [staff] in [{'True': True, 'False': False, 'None': None}, {}, {}, {'managers': <QuerySet [<Manager: Megha S>, <Manager: Gopika>, <Manager: Sakshi Raj>]>}]
+Exception Location:	D:\Restaurnt_dailyexpense\Restaurant_dailysale\venv\Lib\site-packages\django\template\base.py, line 989, in _resolve_lookup
+Raised during:	App.views.admin_add_staff
+Python Executable:	D:\Restaurnt_dailyexpense\Restaurant_dailysale\venv\Scripts\python.exe
+Python Version:	3.12.8
+Python Path:	
+['D:\\Restaurnt_dailyexpense\\Restaurant_dailysale',
+ 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python312\\python312.zip',
+ 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python312\\DLLs',
+ 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python312\\Lib',
+ 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python312',
+ 'D:\\Restaurnt_dailyexpense\\Restaurant_dailysale\\venv',
+ 'D:\\Restaurnt_dailyexpense\\Restaurant_dailysale\\venv\\Lib\\site-packages']
+Server time:	Fri, 27 Feb 2026 08:07:42 +0000
+Error during template rendering
+In template D:\Restaurnt_dailyexpense\Restaurant_dailysale\App\templates\Admin\adminstaff_add.html, error at line 95
+
+Failed lookup for key [%s] in %r
+85	    </select>
+86	</div>
+87	
+88	                    <!-- Contact -->
+89	                    <div class="col-md-6 mb-3">
+90	                        <label class="form-label fw-semibold">
+91	                            Contact Number <span class="text-danger">*</span>
+92	                        </label>
+93	                       <input type="tel"
+94	       name="contact"
+95	       value="{{ form_data.contact|default:staff.contact }}"
+96	       class="form-control {% if contact_error %}is-invalid{% endif %}"
+97	       placeholder="+971501234567"
+98	       required>
+                    </div>
+
+                    <!-- DOB -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            Date of Birth
+                        </label>
+                        <input 
+                            type="date" 
+                            name="dob" 
+                            class="form-control"
+                            max="{% now 'Y-m-d' %}"
+                        >
+                    </div>
+
+                    <!-- Joining Date -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            Joining Date <span class="text-danger">*</span>
+                        </label>
+                        <input type="date" name="joining_date" class="form-control" required>
+                    </div>
+
+                    <!-- Salary Type -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            Salary Type <span class="text-danger">*</span>
+                        </label>
+                        <select name="salary_type" class="form-select" required>
+                            <option value="">Select Salary Type</option>
+                            <option value="Daily">Daily</option>
+                            <option value="Monthly">Monthly</option>
+                        </select>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">
+                            Status <span class="text-danger">*</span>
+                        </label>
+                        <select name="status" class="form-select" required>
+                            <option value="">Select Status</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
+
+                </div> <!-- END ROW -->
+
+                <!-- Buttons -->
+                <div class="text-end mt-4">
+                    <a href="{% url 'adminview_staff' %}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-1"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-dark px-4">
+                        <i class="bi bi-save me-1"></i> Save Staff
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

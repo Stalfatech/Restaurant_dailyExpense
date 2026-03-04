@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+{% load static %}
+{% block 'content' %}
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<div class="container py-4">
+
+<div class="card shadow-lg border-0 rounded-4">
+
+<!-- Header -->
+<div class="card-header bg-dark text-white py-3">
+<h4 class="mb-0">
+<i class="bi bi-cash-stack me-2"></i> Add Manager Salary
+</h4>
+</div>
+
+<div class="card-body p-4">
+
+<form method="POST">
+{% csrf_token %}
+
+
+
+<div class="row g-4">
+
+<!-- Manager -->
+<div class="col-md-6">
+    <label class="form-label fw-semibold">Manager Name *</label>
+    <select name="manager" id="manager_select" class="form-select" required>
+        <option value="">Select Manager</option>
+        {% for manager in managers %}
+        <option
+            value="{{ manager.id }}"
+            data-branch-id="{{ manager.user.branch.id }}"
+            data-branch-name="{{ manager.user.branch.name }}">
+            {{ manager }}
+        </option>
+        {% endfor %}
+    </select>
+</div>
+
+<!-- Branch -->
+<div class="col-md-6">
+    <label class="form-label fw-semibold">Branch *</label>
+    <input type="text" id="branch_display" class="form-control" readonly>
+    <input type="hidden" name="branch" id="branch_id">
+</div>
+
+<!-- Month -->
+<div class="col-md-6">
+    <label class="form-label fw-semibold">Salary Month *</label>
+    <select name="salary_month" id="salary_month" class="form-select" required>
+        <option value="">Select Month</option>
+        {% for m,v in month_choices %}
+            <option value="{{ m }}">{{ v }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<!-- Year -->
+<div class="col-md-6">
+    <label class="form-label fw-semibold">Salary Year *</label>
+    <select name="salary_year" id="salary_year" class="form-select" required>
+        <option value="">Select Year</option>
+        {% for year in years %}
+            <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>
+                {{ year }}
+            </option>
+        {% endfor %}
+    </select>
+</div>
+
+<!-- Salary Amount -->
+<div class="col-md-6">
+    <label class="form-label fw-semibold">Salary Amount *</label>
+    <input type="number" step="0.01" name="salary_amount" id="salary_amount" class="form-control" required>
+</div>
+
+<!-- Need Advance -->
+<div class="col-md-6">
+    <label class="form-label fw-semibold">Need Advance for this month?</label>
+    <select name="need_advance" id="needAdvance" class="form-select" onchange="toggleAdvanceField()">
+        <option value="no" selected>No</option>
+        <option value="yes">Yes</option>
+    </select>
+</div>
+
+<!-- Salary Advance -->
+<div class="col-md-6 d-none" id="advanceField">
+    <label class="form-label fw-semibold">Salary Advance</label>
+    <input type="number" step="0.01" name="salary_advance" id="salary_advance" value="0" class="form-control">
+</div>
+
+<!-- Paid Amount -->
+<div class="col-md-6">
+    <label class="form-label fw-semibold">Paid Amount</label>
+    <input type="number" step="0.01" name="paid_amount" id="paid_amount" value="0" class="form-control">
+</div>
+
+<!-- Payment Date -->
+<div class="col-md-6">
+    <label class="form-label fw-semibold">Payment Date *</label>
+    <input type="date" name="payment_date" class="form-control" required>
+</div>
+
+<!-- Payment Mode -->
+<div class="col-md-6">
+    <label class="form-label fw-semibold">Payment Mode *</label>
+    <select name="payment_mode" class="form-select" required>
+        <option value="">Select Mode</option>
+        <option value="Cash">Cash</option>
+        <option value="Bank">Bank</option>
+    </select>
+</div>
+
+<!-- Need Next Month Advance -->
+<div class="col-md-6">
+    <label class="form-label fw-semibold">Need Next Month Advance?</label>
+    <select id="needNextAdvance" class="form-select" onchange="toggleNextMonthAdvance()">
+        <option value="no" selected>No</option>
+        <option value="yes">Yes</option>
+    </select>
+</div>
+
+<!-- Next Month Advance -->
+<div class="col-md-6 d-none" id="nextMonthAdvanceField">
+    <label class="form-label fw-semibold">Next Month Advance Salary</label>
+    <input type="number" step="0.01" name="next_month_advance" id="next_month_advance" value="0" class="form-control">
+</div>
+
+<!-- Balance -->
+<div class="col-md-6">
+    <label class="form-label fw-semibold">Balance</label>
+    <input type="text"
+           id="balance_preview"
+           name="balance"
+           class="form-control"
+           readonly>
+</div>
+
+<!-- Previous Balance -->
+<div class="col-md-6">
+    <label class="form-label fw-semibold">Previous Month Balance</label>
+    <input type="text" id="previous_balance" class="form-control bg-light" readonly>
+</div>
+
+<!-- Previous Next Month Advance -->
+<div class="col-md-6">
+    <label class="form-label fw-semibold">Already Taken Next Month Advance</label>
+    <input type="text" id="previous_next_month_advance" class="form-control bg-light" readonly>
+</div>
+
+</div>
+
+<!-- Buttons -->
+<div class="text-end mt-4">
+<a href="{% url 'manager_salary_list' %}" class="btn btn-secondary me-2">
+<i class="bi bi-arrow-left"></i> Back
+</a>
+
+<button type="submit" class="btn btn-success px-4">
+<i class="bi bi-save"></i> Save Salary
+</button>
+</div>
+
+</form>
+
+</div>
+</div>
+</div>
+
+<script>
+
+// Manager → Branch auto fill
+document.getElementById("manager_select").addEventListener("change", function(){
+
+let selected = this.options[this.selectedIndex]
+
+let branchId = selected.getAttribute("data-branch-id")
+let branchName = selected.getAttribute("data-branch-name")
+
+document.getElementById("branch_display").value = branchName || ""
+document.getElementById("branch_id").value = branchId || ""
+
+fetchPreviousSalaryData()
+
+})
+
+
+// Toggle advance
+function toggleAdvanceField(){
+
+let dropdown = document.getElementById("needAdvance")
+let field = document.getElementById("advanceField")
+
+if(dropdown.value === "yes"){
+field.classList.remove("d-none")
+}else{
+field.classList.add("d-none")
+document.getElementById("salary_advance").value = 0
+}
+
+}
+
+
+// Toggle next advance
+function toggleNextMonthAdvance(){
+
+let dropdown = document.getElementById("needNextAdvance")
+let field = document.getElementById("nextMonthAdvanceField")
+
+if(dropdown.value === "yes"){
+field.classList.remove("d-none")
+}else{
+field.classList.add("d-none")
+document.getElementById("next_month_advance").value = 0
+}
+
+}
+
+
+// Balance calculation
+
+function calculateBalance(){
+
+    let salary = parseFloat(document.getElementById("salary_amount").value) || 0;
+    let paid   = parseFloat(document.getElementById("paid_amount").value) || 0;
+
+    let prevBalance = parseFloat(document.getElementById("previous_balance").value) || 0;
+    let prevAdvance = parseFloat(document.getElementById("previous_next_month_advance").value) || 0;
+
+    // ✅ YOUR REQUIRED FORMULA
+    let balance = (salary + prevBalance) - prevAdvance - paid;
+
+    if(balance < 0) balance = 0;
+
+    document.getElementById("balance_preview").value = balance.toFixed(2);
+}
+
+
+// Fetch previous salary
+function fetchPreviousSalaryData(){
+
+    let manager = document.getElementById("manager_select").value
+    let month   = document.getElementById("salary_month").value
+    let year    = document.getElementById("salary_year").value
+
+    if(!manager || !month || !year) return
+
+    fetch("{% url 'get_previous_manager_salary_data' %}?manager_id=" + manager +
+          "&salary_month=" + month +
+          "&salary_year=" + year)
+    .then(res => res.json())
+    .then(data => {
+
+        document.getElementById("previous_balance").value =
+            data.previous_balance || "0.00"
+
+        document.getElementById("previous_next_month_advance").value =
+            data.previous_next_month_advance || "0.00"
+
+        calculateBalance()
+    })
+}
+
+
+// Events
+document.getElementById("salary_amount").addEventListener("input",calculateBalance)
+document.getElementById("paid_amount").addEventListener("input",calculateBalance)
+
+document.getElementById("salary_month").addEventListener("change",fetchPreviousSalaryData)
+document.getElementById("salary_year").addEventListener("change",fetchPreviousSalaryData)
+
+</script>
+
+{% endblock %}
+
+

@@ -1,0 +1,119 @@
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const salaryInput    = document.getElementById("salary_amount");
+    const balancePreview = document.getElementById("balance_preview");
+
+    const staffSelect       = document.getElementById("staff_select");
+    const salaryTypeDisplay = document.getElementById("salary_type_display");
+    const monthSelect       = document.getElementById("salary_month");
+    const yearSelect        = document.getElementById("salary_year");
+
+    const prevMonthSalaryEl = document.getElementById("previous_balance");
+    const advanceTokenEl    = document.getElementById("previous_next_month_advance");
+
+    const advanceInput     = document.getElementById("salary_advance");
+    const nextMonthAdvance = document.getElementById("next_month_advance");
+    const paidInput        = document.getElementById("paid_amount");
+
+    /* -------------------
+       CALCULATE BALANCE
+    ------------------- */
+    function calculateBalance() {
+        const currentSalary  = parseFloat(salaryInput.value) || 0;
+        const previousSalary = parseFloat(prevMonthSalaryEl.value) || 0;
+        const advanceToken   = parseFloat(advanceTokenEl.value) || 0;
+        const paidAmount     = parseFloat(paidInput.value) || 0;
+
+        let finalBalance = (currentSalary + previousSalary) - paidAmount - advanceToken;
+        if (finalBalance < 0) finalBalance = 0;
+
+        balancePreview.value = finalBalance.toFixed(2);
+    }
+
+    /* -------------------
+       FETCH PREVIOUS SALARY
+    ------------------- */
+    function fetchPreviousSalaryData() {
+    const staff_id = staffSelect.value;
+    const month    = monthSelect.value;
+    const year     = yearSelect.value;
+    const salary   = salaryInput.value || 0;
+    const paid     = paidInput.value || 0;
+
+    if (!staff_id || !month || !year) return;
+
+    fetch(`/get_previous_salary_data/?staff_id=${staff_id}&salary_month=${month}&salary_year=${year}&salary_amount=${salary}&paid_amount=${paid}`)
+        .then(r => r.json())
+        .then(data => {
+            prevMonthSalaryEl.value = data.previous_month_salary ?? "0.00";
+            advanceTokenEl.value    = data.advance_token ?? "0.00";
+            document.getElementById("previous_balance").value = data.previous_balance ?? "0.00"; // new
+            balancePreview.value = data.balance_preview ?? "0.00";
+        })
+        .catch(err => console.error(err));
+}
+    /* -------------------
+       EVENTS
+    ------------------- */
+    salaryInput.addEventListener("input", calculateBalance);
+    paidInput.addEventListener("input", calculateBalance);
+    advanceInput.addEventListener("input", calculateBalance);
+    nextMonthAdvance.addEventListener("input", calculateBalance);
+
+    [staffSelect, monthSelect, yearSelect].forEach(el => {
+        if (el) el.addEventListener("change", fetchPreviousSalaryData);
+    });
+
+    staffSelect.addEventListener("change", function () {
+        const selected = this.options[this.selectedIndex];
+        salaryTypeDisplay.value = selected.getAttribute("data-salary-type") || "";
+        fetchPreviousSalaryData();
+    });
+
+    /* -------------------
+       TOGGLE ADVANCE FIELDS
+    ------------------- */
+    window.toggleAdvanceField = function() {
+        const dropdown = document.getElementById("needAdvance");
+        const field = document.getElementById("advanceField");
+        if (!dropdown || !field) return;
+
+        if (dropdown.value === "yes") {
+            field.classList.remove("d-none");
+            advanceInput.focus();
+        } else {
+            field.classList.add("d-none");
+            advanceInput.value = 0;
+            calculateBalance();
+        }
+    };
+
+    window.toggleNextMonthAdvance = function() {
+        const dropdown = document.getElementById("needNextAdvance");
+        const field = document.getElementById("nextMonthAdvanceField");
+        if (!dropdown || !field) return;
+
+        if (dropdown.value === "yes") {
+            field.classList.remove("d-none");
+            nextMonthAdvance.focus();
+        } else {
+            field.classList.add("d-none");
+            nextMonthAdvance.value = 0;
+            calculateBalance();
+        }
+    };
+
+    /* -------------------
+       INITIAL LOAD
+    ------------------- */
+    // Trigger fetch if staff/month/year are pre-selected
+    fetchPreviousSalaryData();
+    calculateBalance();
+
+});
+</script>
+{% endblock %}
+
+

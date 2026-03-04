@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% block 'content' %}
+
+<style>
+    .premium-card {
+        border-radius: 18px;
+        background: #ffffff;
+    }
+
+    .kpi-card {
+        border-radius: 16px;
+        background: linear-gradient(135deg, #dc3545, #b02a37);
+        color: white;
+    }
+
+    .filter-card {
+        border-radius: 18px;
+        background: linear-gradient(135deg, #f8f9fa, #ffffff);
+        border: 1px solid #e9ecef;
+    }
+
+    .filter-card .form-control {
+        border-radius: 12px;
+        height: 44px;
+    }
+
+    .premium-table thead {
+        background-color: #1f2937;
+        color: #ffffff;
+        font-weight: 600;
+    }
+
+    .premium-table th,
+    .premium-table td {
+        padding: 12px 10px;
+        font-size: 13.5px;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: middle;
+    }
+
+    .premium-table tbody tr:hover {
+        background-color: #f8fafc;
+        transition: 0.2s ease-in-out;
+    }
+
+    .action-btn {
+        border-radius: 8px;
+        padding: 5px 10px;
+        font-size: 13px;
+    }
+
+    .empty-state i {
+        font-size: 40px;
+        opacity: 0.5;
+    }
+</style>
+
+<div class="container-fluid py-4">
+
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Header -->
+    <div class="card premium-card shadow-sm mb-4">
+        <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+                <h3 class="fw-bold mb-0">
+                    <i class="bi bi-receipt text-danger me-2"></i>
+                    Expense & Purchase Dashboard
+                </h3>
+                <small class="text-muted">Manage daily expenses and purchases</small>
+            </div>
+
+            <div class="d-flex gap-2">
+                <a href="{% url 'add_expense' %}" class="btn btn-danger rounded-pill px-4">
+                    <i class="bi bi-plus-circle me-1"></i> Add Expense
+                </a>
+
+                <a href="{% url 'history_expenses' %}" class="btn btn-outline-dark rounded-pill px-4">
+                    <i class="bi bi-clock-history me-1"></i> Expense History
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-4">
+            <div class="card kpi-card shadow-sm border-0 text-center">
+                <div class="card-body py-4">
+                    <div class="fw-semibold text-uppercase small">
+                        Total Expense
+                    </div>
+                    <h2 class="fw-bold mt-2 mb-0">
+                        {{ daily_total }}
+                    </h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="card filter-card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3 align-items-end">
+
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small">Select Date</label>
+                    <input type="date"
+                           name="date"
+                           class="form-control"
+                           value="{{ selected_date }}">
+                </div>
+
+                {% if request.user.user_type == 0 %}
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small">Branch</label>
+                    <input type="text"
+                           name="branch"
+                           class="form-control"
+                           placeholder="Search Branch"
+                           value="{{ request.GET.branch|default:'' }}">
+                </div>
+                {% endif %}
+
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-dark w-100 rounded-pill">
+                        <i class="bi bi-funnel-fill me-1"></i> Filter
+                    </button>
+                </div>
+
+                <div class="col-md-2">
+                    <button type="button"
+                            class="btn btn-outline-secondary w-100 rounded-pill"
+                            id="clearFilterBtn">
+                        Reset
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 premium-table text-center">
+
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Branch</th>
+                        <th>Category</th>
+                        <th>Supplier</th>
+                        <th>Product</th>
+                        <th>Qty</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Invoice</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for e in expenses %}
+                    <tr>
+                        <td>{{ e.date }}</td>
+                        <td>{{ e.branch.name }}</td>
+                        <td>{{ e.category }}</td>
+                        <td>{{ e.supplier }}</td>
+                        <td>{{ e.product }}</td>
+                        <td>{{ e.quantity }}</td>
+
+                        <td>
+                            {% if e.purchase_type == "Cash" %}
+                                <span class="badge bg-success">Cash</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Credit</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="fw-bold text-danger">{{ e.amount }}</td>
+
+                        <td>
+                            {% if e.invoice %}
+                                <a href="{{ e.invoice.url }}"
+                                   target="_blank"
+                                   class="btn btn-sm btn-outline-secondary action-btn">
+                                    View
+                                </a>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if e.status == "Approved" %}
+                                <span class="badge bg-success">{{ e.status }}</span>
+                            {% elif e.status == "Pending" %}
+                                <span class="badge bg-warning text-dark">{{ e.status }}</span>
+                            {% elif e.status == "Rejected" %}
+                                <span class="badge bg-danger">{{ e.status }}</span>
+                            {% else %}
+                                {{ e.status }}
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <div class="d-flex justify-content-center gap-2">
+                                <a href="{% url 'edit_expense' e.id %}"
+                                   class="btn btn-sm btn-outline-primary action-btn">
+                                    Edit
+                                </a>
+
+                                <a href="{% url 'delete_expense' e.id %}"
+                                   class="btn btn-sm btn-outline-danger action-btn"
+                                   onclick="return confirm('Delete this expense?');">
+                                    Delete
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+
+                    {% empty %}
+                    <tr>
+                        <td colspan="11">
+                            <div class="text-center py-5 empty-state">
+                                <i class="bi bi-receipt text-muted"></i>
+                                <p class="fw-semibold mt-3 mb-1">
+                                    No expenses found
+                                </p>
+                                <small class="text-muted">
+                                    Try adjusting filters or add a new expense
+                                </small>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    document.getElementById('clearFilterBtn').addEventListener('click', function() {
+        window.location.href = "{% url 'dashboard_expenses' %}";
+    });
+</script>
+
+{% endblock %}

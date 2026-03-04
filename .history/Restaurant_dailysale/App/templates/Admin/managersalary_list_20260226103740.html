@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% load static %}
+{% block 'content' %}
+
+<div class="container mt-5">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold">
+            <i class="bi bi-list-check me-2"></i> Manager Salary List
+        </h3>
+
+        <a href="{% url 'manager_salary_add' %}" class="btn btn-dark">
+            <i class="bi bi-plus-circle me-1"></i> Add Salary
+        </a>
+    </div>
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-6 col-lg-5">
+            <div class="card text-center border-0 shadow"
+                 style="background:#dc3545;color:white;border-radius:12px;">
+                <div class="card-body py-4">
+                    <div class="fw-semibold">TOTAL PAID SALARY</div>
+                    <h2 class="fw-bold mt-2"> {{ total_paid }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+<!-- Filter Card -->
+<div class="card shadow-sm border-0 rounded-4 mb-4">
+    <div class="card-body">
+
+        <form method="GET">
+            <div class="row g-3">
+
+                <!-- Branch -->
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Branch</label>
+                    <select name="branch" class="form-select">
+                        <option value="">All Branches</option>
+                        {% for b in branches %}
+                            <option value="{{ b.id }}"
+                                {% if request.GET.branch == b.id|stringformat:"s" %}selected{% endif %}>
+                                {{ b.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Manager -->
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Manager</label>
+                    <select name="manager" class="form-select">
+                        <option value="">All Managers</option>
+                        {% for m in managers %}
+                            <option value="{{ m.id }}"
+                                {% if request.GET.manager == m.id|stringformat:"s" %}selected{% endif %}>
+                                {{ m }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Month -->
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Month</label>
+                    <select name="month" class="form-select">
+                        <option value="">All Months</option>
+                        {% for m,v in month_choices %}
+                            <option value="{{ m }}"
+                                {% if request.GET.month == m %}selected{% endif %}>
+                                {{ v }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Year -->
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Year</label>
+                    <select name="year" class="form-select">
+                        <option value="">All Years</option>
+                        {% for y in years %}
+                            <option value="{{ y }}"
+                                {% if request.GET.year == y|stringformat:"s" %}selected{% endif %}>
+                                {{ y }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Buttons Row -->
+                <div class="col-12 d-flex justify-content-end gap-2 mt-3">
+
+                    <button type="submit" class="btn btn-dark px-4">
+                        <i class="bi bi-search me-1"></i> Filter
+                    </button>
+
+                    <a href="{% url 'manager_salary_list' %}" 
+                       class="btn btn-secondary px-4">
+                        Clear
+                    </a>
+
+                    <!-- Monthly Report Button -->
+                    {% comment %} <a href="{% url 'manager_monthly_report' %}?branch={{ request.GET.branch }}&manager={{ request.GET.manager }}&month={{ request.GET.month }}&year={{ request.GET.year }}"
+                       class="btn btn-success px-4">
+                        <i class="bi bi-file-earmark-text me-1"></i> Monthly Report
+                    </a> {% endcomment %}
+                    <a href="{% url 'manager_monthly_report' %}" class="btn btn-success px-4">
+    <i class="bi bi-file-earmark-text me-1"></i> Monthly Report
+</a>
+
+
+                </div>
+
+            </div>
+        </form>
+
+    </div>
+</div>
+
+
+    <!-- Salary Table -->
+    <div class="card shadow-lg border-0 rounded-4">
+        <div class="card-body table-responsive">
+
+            <table class="table table-bordered table-hover align-middle text-center">
+
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Branch</th>
+                        <th>Manager</th>
+                        <th>Month</th>
+                        <th>Year</th>
+                        <th>Salary</th>
+                        <th>Advance</th>
+                        <th>Paid</th>
+                        <th>Balance</th>
+                        <th>Mode</th>
+                        <th>Date</th>
+                        <th>Next Adv Amt</th>
+                        <th>Next Month</th>
+                        <th>Next Year</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for salary in salaries %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ salary.branch.name }}</td>
+                        <td>{{ salary.manager }}</td>
+                        <td>{{ salary.get_salary_month_display }}</td>
+                        <td>{{ salary.salary_year }}</td>
+                        <td>{{ salary.salary_amount }}</td>
+                        <td>{{ salary.adjusted_advance|default:"0.00" }}</td>
+                        <td> {{ salary.paid_amount }}</td>
+                        <td class="fw-bold text-danger">
+                             {{ salary.balance_salary|default:"0.00" }}
+                        </td>
+                        <td>{{ salary.payment_mode }}</td>
+                        <td>{{ salary.payment_date }}</td>
+                        <td class="text-info fw-semibold">
+                             {{ salary.next_month_advance_amount }}
+                        </td>
+
+                       <td>
+    {% if salary.next_month %}
+        {{ salary.get_next_month_display }}
+    {% else %}
+        -
+    {% endif %}
+</td>
+
+
+                        <td>
+    {% if salary.next_month_year %}
+        {{ salary.next_month_year }}
+    {% else %}
+        -
+    {% endif %}
+</td>
+
+                        <td>
+                            <a href="{% url 'manager_salary_edit' salary.id %}" 
+                               class="btn btn-sm btn-warning">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+
+                            <a href="{% url 'managerdelete_salary' salary.id %}"
+                               class="btn btn-sm btn-danger"
+                               onclick="return confirm('Are you sure?')">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="12" class="text-muted py-4">
+                            No salary records found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

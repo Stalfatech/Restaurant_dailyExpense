@@ -5,18 +5,21 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
 <style>
-/* Card & Table Styles */
+/* Premium Card & Table Styles */
 .premium-card { border-radius: 18px; background: #ffffff; }
 .premium-table thead { background-color: #1f2937; color: #ffffff; font-weight: 600; }
 .premium-table th, .premium-table td { padding: 12px 10px; font-size: 13.5px; vertical-align: middle; border-bottom: 1px solid #e9ecef; }
 .premium-table tbody tr:hover { background-color: #f8fafc; transition: 0.2s ease-in-out; }
 .badge-balance { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-.kpi-card { border-radius: 16px; color: #ffffff; }
+.action-btn { border-radius: 8px; padding: 6px 10px; font-size: 13px; }
 .filter-card { border-radius: 18px; background: linear-gradient(135deg, #f8f9fa, #ffffff); border: 1px solid #e9ecef; }
 .filter-card .form-control, .filter-card .form-select { border-radius: 12px; padding-left: 38px; height: 44px; }
 .filter-card label { font-size: 12px; font-weight: 600; color: #495057; margin-bottom: 4px; }
 .input-icon { position: relative; }
 .input-icon i { position: absolute; top: 38px; left: 12px; color: #6c757d; font-size: 14px; }
+.filter-buttons .btn { border-radius: 30px; padding: 8px 22px; font-size: 14px; }
+.kpi-card { border-radius: 16px; background: linear-gradient(135deg, #dc3545, #b02a37); color: #ffffff; }
+.empty-state i { font-size: 40px; opacity: 0.5; }
 
 /* PRINT Styles */
 @media print {
@@ -46,6 +49,7 @@
                     <i class="bi bi-info-circle me-1"></i>Manage and track staff salary payments
                 </small>
             </div>
+
             <div class="d-flex gap-2 no-print flex-wrap mt-2">
                 <a href="{% url 'salary_list' %}" class="btn btn-secondary">
                     <i class="bi bi-x-circle me-1"></i>Cancel
@@ -101,7 +105,6 @@
         <div class="card-body p-4">
             <form method="GET">
                 <div class="row g-4 align-items-end">
-
                     <div class="col-md-3 input-icon">
                         <label>Staff Name</label>
                         <i class="bi bi-person"></i>
@@ -111,30 +114,21 @@
                     <div class="col-md-3 input-icon">
                         <label>Month</label>
                         <i class="bi bi-calendar3"></i>
-                        <select name="month" class="form-control">
+                        <select name="month" class="form-select">
                             <option value="">Select Month</option>
-                            <option value="January" {% if selected_month == "January" %}selected{% endif %}>January</option>
-                            <option value="February" {% if selected_month == "February" %}selected{% endif %}>February</option>
-                            <option value="March" {% if selected_month == "March" %}selected{% endif %}>March</option>
-                            <option value="April" {% if selected_month == "April" %}selected{% endif %}>April</option>
-                            <option value="May" {% if selected_month == "May" %}selected{% endif %}>May</option>
-                            <option value="June" {% if selected_month == "June" %}selected{% endif %}>June</option>
-                            <option value="July" {% if selected_month == "July" %}selected{% endif %}>July</option>
-                            <option value="August" {% if selected_month == "August" %}selected{% endif %}>August</option>
-                            <option value="September" {% if selected_month == "September" %}selected{% endif %}>September</option>
-                            <option value="October" {% if selected_month == "October" %}selected{% endif %}>October</option>
-                            <option value="November" {% if selected_month == "November" %}selected{% endif %}>November</option>
-                            <option value="December" {% if selected_month == "December" %}selected{% endif %}>December</option>
+                            {% for m in "January,February,March,April,May,June,July,August,September,October,November,December"|split:"," %}
+                                <option value="{{ m }}" {% if selected_month == m %}selected{% endif %}>{{ m }}</option>
+                            {% endfor %}
                         </select>
                     </div>
 
-                    <div class="col-md-3 input-icon">
+                    <div class="col-md-2 input-icon">
                         <label>Year</label>
-                            <i class="bi bi-calendar-date"></i>
+                        <i class="bi bi-calendar2-year"></i>
                         <input type="number" name="year" class="form-control" value="{{ selected_year }}" placeholder="2026">
                     </div>
 
-                    <div class="col-md-3 input-icon">
+                    <div class="col-md-2 input-icon">
                         <label>Branch</label>
                         <i class="bi bi-diagram-3"></i>
                         <select name="branch" class="form-select">
@@ -145,9 +139,9 @@
                         </select>
                     </div>
 
-                     <div class="col-12 d-flex justify-content-end gap-2 mt-3 filter-buttons">
-                        <button type="submit" class="btn btn-primary "><i class="bi bi-funnel-fill me-1"></i>Filter</button>
-                        <a href="{% url 'monthly_salary_report' %}" class="btn btn-secondary "><i class="bi bi-arrow-clockwise me-1"></i>Clear</a>
+                    <div class="col-md-2 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary w-50"><i class="bi bi-funnel-fill me-1"></i>Filter</button>
+                        <a href="{% url 'monthly_salary_report' %}" class="btn btn-secondary w-50"><i class="bi bi-arrow-clockwise me-1"></i>Clear</a>
                     </div>
                 </div>
             </form>
@@ -161,19 +155,19 @@
                 <thead class="table-dark text-white">
                     <tr>
                         <th>#</th>
-                        <th>Staff</th>
-                        <th>Branch</th>
-                        <th>Month</th>
-                        <th>Year</th>
-                        <th>Total Salary</th>
-                        <th>Advance Adjusted</th>
-                        <th>Paid</th>
-                        <th>Balance</th>
-                        <th>Payment Mode</th>
-                        <th>Payment Date</th>
-                        <th>Next Adv Amt</th>
-                        <th>Next Month</th>
-                        <th>Next Year</th>
+                        <th><i class="bi bi-person"></i> Staff</th>
+                        <th><i class="bi bi-diagram-3"></i> Branch</th>
+                        <th><i class="bi bi-calendar3"></i> Month</th>
+                        <th><i class="bi bi-calendar2-year"></i> Year</th>
+                        <th><i class="bi bi-currency-dollar"></i> Total Salary</th>
+                        <th><i class="bi bi-wallet2"></i> Advance Adjusted</th>
+                        <th><i class="bi bi-cash-stack"></i> Paid</th>
+                        <th><i class="bi bi-piggy-bank"></i> Balance</th>
+                        <th><i class="bi bi-credit-card-2-front"></i> Payment Mode</th>
+                        <th><i class="bi bi-calendar3"></i> Payment Date</th>
+                        <th><i class="bi bi-arrow-repeat"></i> Next Adv Amt</th>
+                        <th><i class="bi bi-calendar3"></i> Next Month</th>
+                        <th><i class="bi bi-calendar2-year"></i> Next Year</th>
                     </tr>
                 </thead>
                 <tbody>

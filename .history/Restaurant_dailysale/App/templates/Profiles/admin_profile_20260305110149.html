@@ -191,9 +191,7 @@ body {
                                    value="{{ user_obj.email }}">
                         </div>
                         <button type="submit" class="btn btn-dark"><i class="bi bi-check-circle me-1"></i> Save Changes</button>
-                 <a href="{% url 'admin_profile' %}" class="btn btn-outline-danger">
-    Cancel
-</a>
+                        <button type="reset" class="btn btn-outline-danger">Cancel</button>
                     </form>
                 </div>
             </div>
@@ -218,9 +216,7 @@ body {
                             <input type="password" id="confirmPassword" name="confirm_password" class="form-control" maxlength="8" required>
                         </div>
                         <button type="submit" class="btn btn-dark"><i class="bi bi-check-circle me-1"></i> Update Password</button>
-                  <a href="{% url 'admin_profile' %}" class="btn btn-outline-danger">
-    Cancel
-</a>
+                        <button type="reset" class="btn btn-outline-danger">Cancel</button>
                     </form>
                 </div>
             </div>

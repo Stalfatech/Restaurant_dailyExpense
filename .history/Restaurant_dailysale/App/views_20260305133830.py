@@ -648,7 +648,7 @@ def add_expense(request):
                 f.write(chunk)
             extracted_amount = extract_invoice_amount(file_path)
             if extracted_amount and not expense.amount:
-                expense.amount = Decimal(str(extracted_amount))
+                expense.amount = extracted_amount
 
         # Determine branch
         if user.user_type == 0:  # Admin
@@ -868,13 +868,7 @@ def edit_expense(request, pk):
         invoice_file = request.FILES.get("invoice")
         if invoice_file:
             file_path = os.path.join(settings.MEDIA_ROOT, invoice_file.name)
-            with open(file_path, "wb+") as f:
-              for chunk in invoice_file.chunks():
-                f.write(chunk)
-            extracted_amount = extract_invoice_amount(file_path)
-
-            if extracted_amount:
-              updated_expense.amount = Decimal(str(extracted_amount))
+            
 
         if user.user_type == 0:
             branch = form.cleaned_data.get('branch')

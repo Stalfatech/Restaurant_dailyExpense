@@ -630,7 +630,7 @@ from decimal import Decimal
 from datetime import date
 import os
 from django.conf import settings
-from .ocr_reader import extract_invoice_amount
+from occr_reader import extract_invoice_amount
 
 @admin_or_manager_required
 def add_expense(request):
@@ -640,15 +640,6 @@ def add_expense(request):
 
     if form.is_valid():
         expense = form.save(commit=False)
-        invoice_file = request.FILES.get("invoice")
-        if invoice_file:
-            file_path = os.path.join(settings.MEDIA_ROOT, invoice_file.name)
-            with open(file_path, "wb+") as f:
-              for chunk in invoice_file.chunks():
-                f.write(chunk)
-            extracted_amount = extract_invoice_amount(file_path)
-            if extracted_amount and not expense.amount:
-                expense.amount = Decimal(str(extracted_amount))
 
         # Determine branch
         if user.user_type == 0:  # Admin
@@ -698,25 +689,6 @@ def add_expense(request):
         'page_title': 'Add Expense'
     })
 
-from django.http import JsonResponse
-
-def extract_invoice_amount_view(request):
-
-    if request.method == "POST" and request.FILES.get("invoice"):
-
-        invoice = request.FILES["invoice"]
-
-        path = os.path.join(settings.MEDIA_ROOT, invoice.name)
-
-        with open(path, "wb+") as f:
-            for chunk in invoice.chunks():
-                f.write(chunk)
-
-        amount = extract_invoice_amount(path)
-
-        return JsonResponse({"amount": amount})
-
-    return JsonResponse({"amount": None})
 
 from datetime import timedelta
 
@@ -865,16 +837,6 @@ def edit_expense(request, pk):
     if form.is_valid():
 
         updated_expense = form.save(commit=False)
-        invoice_file = request.FILES.get("invoice")
-        if invoice_file:
-            file_path = os.path.join(settings.MEDIA_ROOT, invoice_file.name)
-            with open(file_path, "wb+") as f:
-              for chunk in invoice_file.chunks():
-                f.write(chunk)
-            extracted_amount = extract_invoice_amount(file_path)
-
-            if extracted_amount:
-              updated_expense.amount = Decimal(str(extracted_amount))
 
         if user.user_type == 0:
             branch = form.cleaned_data.get('branch')

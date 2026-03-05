@@ -235,28 +235,6 @@ document.getElementById("expenseForm").addEventListener("submit", function(event
 
     if (!valid) event.preventDefault();
 });
-document.getElementById("invoiceInput").addEventListener("change", function(){
-
-    let file = this.files[0];
-
-    let formData = new FormData();
-    formData.append("invoice", file);
-
-    fetch("{% url 'extract_invoice_amount' %}", {
-        method: "POST",
-        headers: {
-            "X-CSRFToken": "{{ csrf_token }}"
-        },
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        if(data.amount){
-            document.getElementById("amountField").value = data.amount;
-        }
-    });
-
-});
 </script>
 
 {% endblock %}

@@ -3,39 +3,15 @@
 {% block 'content' %}
 
 <style>
-    .premium-card {
-        border-radius: 16px;
-    }
-
-    .form-label {
-        font-size: 13px;
-        font-weight: 600;
-        color: #495057;
-        margin-bottom: 6px;
-    }
-
-    .form-control,
-    .form-select {
-        border-radius: 10px;
-        height: 44px;
-        font-size: 14px;
-    }
-
-    .btn-primary,
-    .btn-success {
-        border-radius: 50px;
-        padding: 8px 22px;
-        font-size: 14px;
-        font-weight: 500;
-    }
-
-    .is-invalid {
-        border-color: #dc3545 !important;
-    }
+    .premium-card { border-radius: 16px; }
+    .form-label { font-size: 13px; font-weight: 600; color: #495057; margin-bottom: 6px; }
+    .form-control, .form-select { border-radius: 10px; height: 44px; font-size: 14px; }
+    .btn-primary, .btn-success { border-radius: 50px; padding: 8px 22px; font-size: 14px; font-weight: 500; }
+    .is-invalid { border-color: #dc3545 !important; }
+    #invoice-mapping { border: 1px dashed #adb5bd; padding: 15px; border-radius: 12px; margin-top: 15px; background: #f8f9fa; }
 </style>
 
 <div class="container py-4">
-
 <div class="card premium-card shadow-sm border-0">
 
     <!-- Header -->
@@ -47,9 +23,7 @@
             </h5>
             <small class="text-muted">Create and manage expense records</small>
         </div>
-
-        <a href="{% url 'dashboard_expenses' %}" 
-           class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+        <a href="{% url 'dashboard_expenses' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
             ← Back to Expenses
         </a>
     </div>
@@ -71,7 +45,6 @@
 
         <form method="POST" enctype="multipart/form-data" id="expenseForm">
             {% csrf_token %}
-
             <div class="row g-4">
 
                 <!-- Date -->
@@ -189,6 +162,30 @@
                     <div class="text-danger small">{{ form.invoice.errors }}</div>
                 </div>
 
+                <!-- Invoice Mapping Panel -->
+                <div class="col-md-12" id="invoice-mapping" style="display:none;">
+                    <h6 class="mb-3">Confirm Invoice Details</h6>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label>Amount</label>
+                            <input type="text" id="mapped-amount" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label>Date</label>
+                            <input type="date" id="mapped-date" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label>Supplier</label>
+                            <input type="text" id="mapped-supplier" class="form-control">
+                        </div>
+                        <div class="col-md-12 mt-2">
+                            <button type="button" id="confirm-invoice" class="btn btn-primary">
+                                Apply to Expense Form
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Description -->
                 <div class="col-md-12">
                     <label class="form-label">
@@ -207,14 +204,13 @@
                     Save Expense
                 </button>
             </div>
-
         </form>
 
     </div>
 </div>
 </div>
 
-<!-- ================= JAVASCRIPT (UNCHANGED LOGIC) ================= -->
+<!-- ================= JAVASCRIPT ================= -->
 <script>
 document.getElementById("expenseForm").addEventListener("submit", function(event) {
     let requiredFields = event.target.querySelectorAll("input[required], select[required]");
@@ -235,27 +231,21 @@ document.getElementById("expenseForm").addEventListener("submit", function(event
 
     if (!valid) event.preventDefault();
 });
-document.getElementById("invoiceInput").addEventListener("change", function(){
 
-    let file = this.files[0];
+// Show invoice mapping panel when a file is selected
+document.getElementById("id_invoice").addEventListener("change", function() {
+    if(this.files.length > 0) {
+        document.getElementById("invoice-mapping").style.display = "block";
+    }
+});
 
-    let formData = new FormData();
-    formData.append("invoice", file);
+// Apply invoice values to form
+document.getElementById("confirm-invoice").addEventListener("click", function() {
+    document.getElementById("id_amount").value = document.getElementById("mapped-amount").value;
+    document.getElementById("id_date").value = document.getElementById("mapped-date").value;
+    document.getElementById("id_supplier").value = document.getElementById("mapped-supplier").value;
 
-    fetch("{% url 'extract_invoice_amount' %}", {
-        method: "POST",
-        headers: {
-            "X-CSRFToken": "{{ csrf_token }}"
-        },
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        if(data.amount){
-            document.getElementById("amountField").value = data.amount;
-        }
-    });
-
+    alert("Invoice details applied. You can still edit before saving.");
 });
 </script>
 

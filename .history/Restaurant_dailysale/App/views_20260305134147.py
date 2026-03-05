@@ -874,7 +874,7 @@ def edit_expense(request, pk):
             extracted_amount = extract_invoice_amount(file_path)
 
             if extracted_amount:
-              updated_expense.amount = Decimal(str(extracted_amount))
+              updated_expense.amount = Deextracted_amount
 
         if user.user_type == 0:
             branch = form.cleaned_data.get('branch')

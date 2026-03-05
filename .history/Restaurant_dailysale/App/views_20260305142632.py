@@ -4120,7 +4120,7 @@ def admin_profile(request):
         email   = request.POST.get("email")
         if not name or not contact or not email:
             messages.info(request, "Name, Phone and Email are required")
-            return redirect("admin_profile")
+        return redirect("admin_profile")
         try:
            phone_validator(contact)
         except ValidationError as e:

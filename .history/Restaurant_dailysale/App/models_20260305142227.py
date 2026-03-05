@@ -68,7 +68,7 @@ class User(AbstractUser):
 class Register(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     name = models.CharField(max_length=191, null=True)
-    contact = models.CharField(max_length=16,null=True)
+    contact = models.(max_length=16,null=True)
     loginid = models.ForeignKey(User, on_delete=models.CASCADE, related_name="registrations")
 
 class Manager(models.Model):

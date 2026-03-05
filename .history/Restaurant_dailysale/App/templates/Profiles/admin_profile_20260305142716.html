@@ -149,7 +149,11 @@ body {
                 <div class="card-body">
                     <div class="mb-3">
                         <label class="form-label text-muted">Name</label>
-                        <div class="fw-semibold">{{ profile.name|default:user_obj.name|default:"-" }}</div>
+                       <input type="text"
+       name="first_name"
+       class="form-control"
+       value="{{ profile.name|default:user_obj.name }}"
+       required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label text-muted">Phone</label>
@@ -169,16 +173,13 @@ body {
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
                         <div class="mb-3">
-                            <label class="form-label"><i class="bi bi-person me-1"></i>Name *</label>
-                         <input type="text"
-       name="first_name"
-       class="form-control"
-       value="{{ profile.name|default:user_obj.name }}"
-       required>
+                            <label class="form-label"><i class="bi bi-person me-1"></i>Name</label>
+                            <input type="text" name="first_name" class="form-control"
+                                   value="{{ profile.name|default:user_obj.name }}">
                         </div>
                        <div class="mb-3">
 <label class="form-label">
-<i class="bi bi-telephone me-1"></i>Phone *
+<i class="bi bi-telephone me-1"></i>Phone
 </label>
 
 <input type="text"
@@ -187,7 +188,7 @@ body {
        value="{{ profile.contact }}"
        placeholder="+971501234567"
        pattern="^\+\d{8,15}$"
-       title="Enter phone with country code (example +971501234567)" required>
+       title="Enter phone with country code (example +971501234567)">
 </div>
                         <div class="mb-3">
                             <label class="form-label"><i class="bi bi-camera me-1"></i>Profile Photo</label>
@@ -197,9 +198,9 @@ body {
                             <small class="text-muted">Only JPG, JPEG, PNG allowed</small>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label"><i class="bi bi-envelope me-1"></i>Email *</label>
+                            <label class="form-label"><i class="bi bi-envelope me-1"></i>Email</label>
                             <input type="email" name="email" class="form-control"
-                                   value="{{ user_obj.email }}" required>
+                                   value="{{ user_obj.email }}">
                         </div>
                         <button type="submit" class="btn btn-dark"><i class="bi bi-check-circle me-1"></i> Save Changes</button>
                  <a href="{% url 'admin_profile' %}" class="btn btn-outline-danger">

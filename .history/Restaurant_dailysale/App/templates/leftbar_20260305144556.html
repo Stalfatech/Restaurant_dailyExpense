@@ -192,7 +192,15 @@
                            
                             </a>
                         </li><!--end nav-item-->
-                        <li class="nav-item">
+                                                 <li class="nav-item">
+                    <a class="nav-link" href="{% url 'dashboard_expenses' %}">
+                      <i class="iconoir-wallet menu-icon"></i>
+
+                        <span>Expenses</span>
+                    </a>
+                </li>
+                        
+                      <li class="nav-item">
     <a class="nav-link" data-bs-toggle="collapse" href="#staffMenu">
         <i class="iconoir-group menu-icon"></i>
         <span>Staff</span>
@@ -218,15 +226,6 @@
         </ul>
     </div>
 </li>
-                                                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'dashboard_expenses' %}">
-                      <i class="iconoir-wallet menu-icon"></i>
-
-                        <span>Expenses</span>
-                    </a>
-                </li>
-                        
-                      
                         </li><!--end nav-item-->
                                              <li class="nav-item">
     <a class="nav-link" href="{% url 'daily_sales_dashboard' %}">

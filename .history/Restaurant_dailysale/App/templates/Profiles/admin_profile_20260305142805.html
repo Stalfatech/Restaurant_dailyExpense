@@ -169,7 +169,7 @@ body {
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
                         <div class="mb-3">
-                            <label class="form-label"><i class="bi bi-person me-1"></i>Name *</label>
+                            <label class="form-label"><i class="bi bi-person me-1"></i>Name</label>
                          <input type="text"
        name="first_name"
        class="form-control"
@@ -178,7 +178,7 @@ body {
                         </div>
                        <div class="mb-3">
 <label class="form-label">
-<i class="bi bi-telephone me-1"></i>Phone *
+<i class="bi bi-telephone me-1"></i>Phone
 </label>
 
 <input type="text"
@@ -197,9 +197,9 @@ body {
                             <small class="text-muted">Only JPG, JPEG, PNG allowed</small>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label"><i class="bi bi-envelope me-1"></i>Email *</label>
+                            <label class="form-label"><i class="bi bi-envelope me-1"></i>Email</label>
                             <input type="email" name="email" class="form-control"
-                                   value="{{ user_obj.email }}" required>
+                                   value="{{ user_obj.email }}">
                         </div>
                         <button type="submit" class="btn btn-dark"><i class="bi bi-check-circle me-1"></i> Save Changes</button>
                  <a href="{% url 'admin_profile' %}" class="btn btn-outline-danger">

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container my-4">
+
+    <div class="card shadow p-4">
+
+        <!-- Card Header -->
+        <div class="card-header bg-danger text-white mb-3">
+            <h4 class="mb-0">Delete Daily Sale</h4>
+        </div>
+
+        <!-- Confirmation Message -->
+        <div class="card-body">
+            <p>
+                Are you sure you want to delete the daily sale for 
+                <strong>{{ sale.date|date:"d-m-Y" }}</strong>
+                {% if request.user.user_type == 0 %}
+                    - <strong>{{ sale.branch }}</strong>
+                {% endif %}
+                ?
+            </p>
+
+            <hr>
+
+            <!-- Sale Details -->
+            <ul class="list-group mb-4">
+                <li class="list-group-item"><strong>Breakfast:</strong> ₹ {{ sale.breakfast_total|default:0 }}</li>
+                <li class="list-group-item"><strong>Lunch:</strong> ₹ {{ sale.lunch_total|default:0 }}</li>
+                <li class="list-group-item"><strong>Dinner:</strong> ₹ {{ sale.dinner_total|default:0 }}</li>
+                <li class="list-group-item"><strong>Delivery:</strong> ₹ {{ sale.delivery_total|default:0 }}</li>
+                <li class="list-group-item"><strong>POS:</strong> ₹ {{ sale.pos_amount|default:0 }}</li>
+                <li class="list-group-item bg-light"><strong>Total Sales:</strong> ₹ {{ sale.total_sales|default:0 }}</li>
+                <li class="list-group-item bg-light"><strong>Cash Sales:</strong> ₹ {{ sale.cash_sales|default:0 }}</li>
+            </ul>
+
+            <!-- Action Buttons -->
+            <form method="POST" class="d-flex gap-2">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                <a href="{% url 'daily_sales_dashboard' %}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

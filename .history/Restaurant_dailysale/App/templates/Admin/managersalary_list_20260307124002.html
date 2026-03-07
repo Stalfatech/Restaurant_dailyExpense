@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+{% load static %}
+{% block 'content' %}
+
+<style>
+    .premium-card {
+        border-radius: 18px;
+        background: #ffffff;
+    }
+
+    .premium-table thead {
+        background-color: #1f2937;
+        color: #ffffff;
+        font-weight: 600;
+    }
+
+    .premium-table th,
+    .premium-table td {
+        padding: 12px 10px;
+        font-size: 13.5px;
+        vertical-align: middle;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .premium-table tbody tr:hover {
+        background-color: #f8fafc;
+        transition: 0.2s ease-in-out;
+    }
+
+    .badge-balance {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .action-btn {
+        border-radius: 8px;
+        padding: 6px 10px;
+        font-size: 13px;
+    }
+
+    .filter-card {
+        border-radius: 18px;
+        background: linear-gradient(135deg, #f8f9fa, #ffffff);
+        border: 1px solid #e9ecef;
+    }
+
+    .filter-card .form-control,
+    .filter-card .form-select {
+        border-radius: 12px;
+        padding-left: 38px;
+        height: 44px;
+    }
+
+    .filter-card label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 4px;
+    }
+
+    .input-icon {
+        position: relative;
+    }
+
+    .input-icon i {
+        position: absolute;
+        top: 38px;
+        left: 12px;
+        color: #6c757d;
+        font-size: 14px;
+    }
+
+    .filter-buttons .btn {
+        border-radius: 30px;
+        padding: 8px 22px;
+        font-size: 14px;
+    }
+
+    .kpi-card {
+        border-radius: 16px;
+        background: linear-gradient(135deg, #dc3545, #b02a37);
+        color: #ffffff;
+    }
+
+    .empty-state i {
+        font-size: 40px;
+        opacity: 0.5;
+    }
+</style>
+
+<div class="container py-4">
+
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Header -->
+    <div class="card premium-card shadow-sm mb-4">
+        <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+                <h3 class="fw-bold mb-0">
+                    <i class="bi bi-person-badge text-dark me-2"></i>
+                    Manager Salary List
+                </h3>
+                <small class="text-muted">Manage and track manager salary payments</small>
+            </div>
+
+            <a href="{% url 'manager_salary_add' %}" 
+               class="btn btn-dark rounded-pill px-4">
+                <i class="bi bi-plus-circle me-1"></i> Add Salary
+            </a>
+        </div>
+    </div>
+
+    <!-- KPI -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-6 col-lg-5">
+            <div class="card kpi-card shadow-sm border-0 text-center">
+                <div class="card-body py-4">
+                    <div class="fw-semibold text-uppercase small">
+                        Total Paid Salary
+                    </div>
+                    <h2 class="fw-bold mt-2 mb-0">
+                        {{ total_paid }}
+                    </h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="card filter-card shadow-sm mb-4">
+        <div class="card-body p-4">
+            <form method="GET">
+                <div class="row g-4 align-items-end">
+
+                    <div class="col-md-3 input-icon">
+                        <label>Branch</label>
+                        <i class="bi bi-diagram-3"></i>
+                        <select name="branch" class="form-select">
+                            <option value="">All Branches</option>
+                            {% for b in branches %}
+                                <option value="{{ b.id }}"
+                                    {% if request.GET.branch == b.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ b.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 input-icon">
+                        <label>Manager</label>
+                        <i class="bi bi-person"></i>
+                        <select name="manager" class="form-select">
+                            <option value="">All Managers</option>
+                            {% for m in managers %}
+                                <option value="{{ m.id }}"
+                                    {% if request.GET.manager == m.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ m }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 input-icon">
+                        <label>Month</label>
+                        <i class="bi bi-calendar3"></i>
+                        <select name="month" class="form-select">
+                            <option value="">All Months</option>
+                            {% for m,v in month_choices %}
+                                <option value="{{ m }}"
+                                    {% if request.GET.month == m %}selected{% endif %}>
+                                    {{ v }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 input-icon">
+                        <label>Year</label>
+                        <i class="bi bi-calendar-date"></i>
+                        <select name="year" class="form-select">
+                            <option value="">All Years</option>
+                            {% for y in years %}
+                                <option value="{{ y }}"
+                                    {% if request.GET.year == y|stringformat:"s" %}selected{% endif %}>
+                                    {{ y }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="col-12 d-flex justify-content-end gap-2 filter-buttons">
+
+                        <button type="submit" class="btn btn-dark">
+                            <i class="bi bi-funnel-fill me-1"></i> Filter
+                        </button>
+
+                        <a href="{% url 'manager_salary_list' %}" 
+                           class="btn btn-outline-secondary">
+                            Reset
+                        </a>
+
+                        <a href="{% url 'manager_monthly_report' %}" 
+                           class="btn btn-success">
+                            <i class="bi bi-bar-chart-line me-1"></i> Monthly Report
+                        </a>
+
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 premium-table text-center">
+
+                <thead class="table-dark text-white">
+                    <tr>
+                        <th>#</th>
+                        <th>Branch</th>
+                        <th>Manager</th>
+                        <th>Month</th>
+                        <th>Year</th>
+                        <th>Total</th>
+                        <th>Advance</th>
+                        <th>Paid</th>
+                        <th>Balance</th>
+                        <th>Payment Mode</th>
+                        <th>Date</th>
+                        <th>Next Month Advance</th>
+                        <th>Next Month</th>
+                        <th>Next Year</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                {% for salary in salaries %}
+                    <tr>
+                        <td class="fw-bold">{{ forloop.counter }}</td>
+                        <td>{{ salary.branch.name }}</td>
+                        <td class="text-start fw-semibold">{{ salary.manager }}</td>
+                        <td>{{ salary.get_salary_month_display }}</td>
+                        <td>{{ salary.salary_year }}</td>
+
+                        <td class="fw-bold text-primary">{{ salary.salary_amount }}</td>
+                        <td class="text-warning fw-semibold">{{ salary.adjusted_advance|default:"0.00" }}</td>
+                        <td class="text-success fw-semibold">{{ salary.paid_amount }}</td>
+
+                        <td>
+                            {% if salary.balance_salary > 0 %}
+                                <span class="badge bg-danger badge-balance">
+                                    {{ salary.balance_salary }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-success badge-balance">
+                                    Cleared
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <span class="badge bg-secondary">
+                                {{ salary.payment_mode }}
+                            </span>
+                        </td>
+
+                        <td>{{ salary.payment_date }}</td>
+                        <td class="text-info fw-semibold">
+                            {{ salary.next_month_advance_amount }}
+                        </td>
+                        <td>
+                            {% if salary.next_month %}
+                                {{ salary.get_next_month_display }}
+                            {% else %}-{% endif %}
+                        </td>
+                        <td>
+                            {% if salary.next_month_year %}
+                                {{ salary.next_month_year }}
+                            {% else %}-{% endif %}
+                        </td>
+
+                        <td>
+                            <div class="d-flex justify-content-center gap-2">
+                                <a href="{% url 'manager_salary_edit' salary.id %}" 
+                                   class="btn btn-sm btn-outline-primary action-btn">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+
+                                <a href="{% url 'managerdelete_salary' salary.id %}"
+                                   class="btn btn-sm btn-outline-danger action-btn"
+                                   onclick="return confirm('Delete this salary record?');">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="15">
+                            <div class="text-center py-5 empty-state">
+                                <i class="bi bi-cash-coin text-muted"></i>
+                                <p class="fw-semibold mt-3 mb-1">
+                                    No salary records found
+                                </p>
+                                <small class="text-muted">
+                                    Try adjusting filters or add a new salary entry
+                                </small>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

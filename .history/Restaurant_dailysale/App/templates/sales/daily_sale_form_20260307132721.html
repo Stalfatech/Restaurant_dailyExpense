@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+{% load static %}
+{% block 'content' %}
+
+<style>
+    .premium-card {
+        border-radius: 16px;
+    }
+
+    .form-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 6px;
+    }
+
+    .form-control,
+    .form-select {
+        border-radius: 10px;
+        height: 44px;
+        font-size: 14px;
+    }
+
+    .btn-primary,
+    .btn-success {
+        border-radius: 50px;
+        padding: 8px 22px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    input[type="checkbox"][name$="DELETE"] {
+        display: none;
+    }
+</style>
+
+<div class="container py-4">
+
+<div class="card premium-card shadow-sm border-0">
+
+    <!-- Header -->
+    <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
+        <div>
+            <h5 class="mb-0 fw-bold">
+                <i class="bi bi-bar-chart-line text-primary me-2"></i>
+                {{ page_title }}
+            </h5>
+            <small class="text-muted">Create and manage daily sales entries</small>
+        </div>
+
+        <a href="{% url 'daily_sales_dashboard' %}" 
+           class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+            ← Back to Sales
+        </a>
+    </div>
+
+    <div class="card-body p-4">
+
+        <p class="text-muted small mb-4">
+            Fields marked with <span class="text-danger">*</span> are mandatory.
+        </p>
+
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm rounded-3">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST" id="salesForm">
+            {% csrf_token %}
+
+            <!-- ================= BASIC DETAILS ================= -->
+            <div class="row g-4">
+
+                <div class="col-md-3">
+                    <label class="form-label">
+                        <i class="bi bi-calendar-event text-primary me-1"></i>
+                        Date *
+                    </label>
+                    {{ form.date }}
+                    <div class="text-danger small">{{ form.date.errors }}</div>
+                </div>
+
+                {% if user_type == 0 %}
+                <div class="col-md-3">
+                    <label class="form-label">
+                        <i class="bi bi-building text-success me-1"></i>
+                        Branch *
+                    </label>
+                    {{ form.branch }}
+                    <div class="text-danger small">{{ form.branch.errors }}</div>
+                </div>
+                {% endif %}
+
+                <div class="col-md-3">
+                    <label class="form-label">
+                        <i class="bi bi-display text-info me-1"></i>
+                        POS Type
+                    </label>
+                    {{ form.pos_type }}
+                    <div class="text-danger small">{{ form.pos_type.errors }}</div>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">
+                        <i class="bi bi-cash-stack text-success me-1"></i>
+                        POS Amount
+                    </label>
+                    {{ form.pos_amount }}
+                    <div class="text-danger small">{{ form.pos_amount.errors }}</div>
+                </div>
+
+            </div>
+
+            <hr class="my-4">
+
+            <!-- ================= MEAL ITEMS ================= -->
+            <h6 class="fw-bold mb-3">
+                <i class="bi bi-egg-fried text-warning me-2"></i>
+                Meal Items
+            </h6>
+
+            {{ item_formset.management_form }}
+
+            <div class="table-responsive">
+            <table class="table align-middle" id="mealTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>Meal *</th>
+                        <th>Item *</th>
+                        <th>Amount *</th>
+                        <th width="80">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for form in item_formset %}
+                    <tr class="meal-form">
+                        {{ form.id }}
+
+                        <td>
+                            {{ form.meal_type }}
+                            <div class="text-danger small">
+                                {{ form.meal_type.errors|join:", " }}
+                            </div>
+                        </td>
+
+                        <td>
+                            {{ form.item_name }}
+                            <div class="text-danger small">
+                                {{ form.item_name.errors|join:", " }}
+                            </div>
+                        </td>
+
+                        <td>
+                            {{ form.amount }}
+                            <div class="text-danger small">
+                                {{ form.amount.errors|join:", " }}
+                            </div>
+                        </td>
+
+                        <td>
+                            {{ form.DELETE }}
+                            <button type="button" class="btn btn-sm btn-outline-danger rounded-circle remove-row">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+
+            <button type="button" class="btn btn-primary btn-sm mt-2" id="addMeal">
+                <i class="bi bi-plus-circle me-1"></i> Add Meal Item
+            </button>
+
+            <hr class="my-4">
+
+            <!-- ================= DELIVERY ================= -->
+            <h6 class="fw-bold mb-3">
+                <i class="bi bi-truck text-primary me-2"></i>
+                Delivery Platforms
+            </h6>
+
+            {{ delivery_formset.management_form }}
+
+            <div class="table-responsive">
+            <table class="table align-middle" id="deliveryTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>Order ID *</th>
+                        <th>Staff *</th>
+                        <th>Platform *</th>
+                        <th>Amount *</th>
+                        <th width="80">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for form in delivery_formset %}
+                    <tr class="delivery-form">
+                        {{ form.id }}
+
+                        <td>
+                            {{ form.order_id }}
+                            <div class="text-danger small">{{ form.order_id.errors }}</div>
+                        </td>
+
+                        <td>
+                            {{ form.staff }}
+                            <div class="text-danger small">{{ form.staff.errors }}</div>
+                        </td>
+
+                        <td>
+                            {{ form.platform }}
+                            <div class="text-danger small">{{ form.platform.errors }}</div>
+                        </td>
+
+                        <td>
+                            {{ form.amount }}
+                            <div class="text-danger small">{{ form.amount.errors }}</div>
+                        </td>
+
+                        <td>
+                            {{ form.DELETE }}
+                            <button type="button" class="btn btn-sm btn-outline-danger rounded-circle remove-row">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+
+            <button type="button" class="btn btn-primary btn-sm mt-2" id="addDelivery">
+                <i class="bi bi-plus-circle me-1"></i> Add Delivery
+            </button>
+
+            <div class="text-end mt-4">
+                <button type="submit" class="btn btn-success shadow-sm">
+                    <i class="bi bi-check-circle me-1"></i> Save Daily Sale
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+</div>
+
+<!-- ================= JAVASCRIPT ================= -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    // ====== Update required stars dynamically ======
+    function updateMandatoryStars(tableSelector) {
+        const table = document.querySelector(tableSelector);
+        if (!table) return;
+
+        table.querySelectorAll("tbody tr").forEach(row => {
+            const inputs = row.querySelectorAll("input, select");
+            const anyFilled = Array.from(inputs).some(i => i.value && i.value.trim() !== "");
+
+            table.querySelectorAll("thead th").forEach((th, idx) => {
+                if (idx < inputs.length) {
+                    if (anyFilled) th.innerHTML = th.innerHTML.replace(/\*?/g, '') + ' <span class="text-danger">*</span>';
+                    else th.innerHTML = th.innerHTML.replace(/\*|<span class="text-danger"><\/span>/g, '');
+                }
+            });
+
+            inputs.forEach(i => {
+                if (!anyFilled) i.removeAttribute('required');
+                else i.setAttribute('required', 'required');
+            });
+        });
+    }
+
+    updateMandatoryStars('#mealTable');
+    updateMandatoryStars('#deliveryTable');
+
+    document.addEventListener('input', function(e) {
+        if (e.target.closest('#mealTable')) updateMandatoryStars('#mealTable');
+        if (e.target.closest('#deliveryTable')) updateMandatoryStars('#deliveryTable');
+    });
+
+    // ====== Remove row ======
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.remove-row');
+if (!btn) return;
+
+        const row = e.target.closest('tr');
+        const deleteCheckbox = row.querySelector("input[type='checkbox']");
+        if (deleteCheckbox) {
+            deleteCheckbox.checked = true;
+            row.style.display = "none";
+            // Remove required from hidden row
+            row.querySelectorAll("input, select").forEach(i => i.removeAttribute('required'));
+        } else {
+            row.remove();
+        }
+
+        updateMandatoryStars('#mealTable');
+        updateMandatoryStars('#deliveryTable');
+    });
+
+    // ====== Add row (generic function) ======
+    function addFormRow(tableSelector, formsetPrefix) {
+        const tableBody = document.querySelector(tableSelector + " tbody");
+        const totalFormsInput = document.querySelector(`#id_${formsetPrefix}-TOTAL_FORMS`);
+        let formCount = parseInt(totalFormsInput.value);
+
+        // Clone the last row
+        const newRow = tableBody.querySelector("tr:last-child").cloneNode(true);
+
+        // Update input/select name and id
+        newRow.querySelectorAll('input, select').forEach(input => {
+            if (input.name) input.name = input.name.replace(/\-\d+\-/, `-${formCount}-`);
+            if (input.id) input.id = input.id.replace(/\-\d+\-/, `-${formCount}-`);
+
+            if (input.type === "checkbox") input.checked = false;
+            else if (input.tagName.toLowerCase() === 'select') input.selectedIndex = 0;
+            else if (input.type !== "hidden") input.value = '';
+
+            input.removeAttribute('required');
+        });
+
+        tableBody.appendChild(newRow);
+        totalFormsInput.value = formCount + 1;
+        updateMandatoryStars(tableSelector);
+    }
+
+    document.getElementById('addMeal').addEventListener('click', function() {
+        addFormRow('#mealTable', 'items');
+    });
+
+    document.getElementById('addDelivery').addEventListener('click', function() {
+        addFormRow('#deliveryTable', 'deliveries');
+    });
+
+    // ====== Clean empty rows on submit ======
+    document.getElementById("salesForm").addEventListener("submit", function(e) {
+        function cleanEmptyRows(tableSelector) {
+            document.querySelectorAll(tableSelector + " tbody tr").forEach(row => {
+                const inputs = row.querySelectorAll("input[type='text'], input[type='number'], select");
+                const deleteCheckbox = row.querySelector("input[type='checkbox']");
+                const isEmpty = Array.from(inputs).every(i => !i.value || i.value.trim() === "");
+
+                if (isEmpty && deleteCheckbox) {
+                    deleteCheckbox.checked = true;
+                    inputs.forEach(i => i.removeAttribute('required'));
+                }
+            });
+        }
+
+        cleanEmptyRows("#mealTable");
+        cleanEmptyRows("#deliveryTable");
+    });
+
+    // ====== ApexCharts safe render (optional) ======
+    const chartEl = document.querySelector("#chart");
+    if (chartEl) {
+        try {
+            var chart = new ApexCharts(chartEl, options);
+            chart.render();
+        } catch (err) {
+            console.warn("ApexCharts skipped:", err);
+        }
+    }
+
+});
+</script>
+
+{% endblock %}

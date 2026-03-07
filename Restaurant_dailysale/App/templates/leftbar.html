@@ -2,10 +2,18 @@
 
 <div class="brand">
     <a href="#" class="logo">
-        <span>
+         {% comment %} <span>
             <img src="{% static 'assets/images/logo-sm.png' %}" 
                  alt="logo-small" class="logo-sm">
-        </span>
+        </span>  {% endcomment %}
+        <span>
+    {% if dashboard_profile and dashboard_profile.favicon %}
+        <img src="{{ dashboard_profile.favicon.url }}" 
+             alt="logo-small" 
+             class="logo-sm">
+    {% endif %}
+</span>
+   
         <span>
    <span>
     {% if dashboard_profile and dashboard_profile.image %}

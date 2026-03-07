@@ -4,11 +4,12 @@
 <div class="container mt-5">
     <div class="card shadow-lg border-0 rounded-4 p-4">
 
-       <div class="card-header bg-dark text-white d-flex align-items-center rounded-top-4">
+        <!-- HEADER -->
+        <div class="card-header bg-dark text-white d-flex align-items-center rounded-top-4">
             <h5 class="mb-0">Add Dashboard Profile</h5>
         </div>
 
-        <!-- TITLE FORM -->
+        <!-- ================= TITLE FORM ================= -->
         <div class="p-4 rounded-4 bg-light shadow-sm mb-4">
             <h6 class="fw-semibold mb-3 text-primary">
                 Add Title
@@ -16,29 +17,35 @@
 
             <form method="POST">
                 {% csrf_token %}
-                <input type="hidden" name="form_type" value="title_form">
 
                 <div class="mb-3">
-                    {{ form.title.label_tag }}
-                    {{ form.title }}
+                    {{ title_form.title.label_tag }}
+                    {{ title_form.title }}
+
+                    {% if title_form.title.errors %}
+                        <div class="text-danger small mt-2">
+                            {{ title_form.title.errors }}
+                        </div>
+                    {% endif %}
                 </div>
 
-                <button type="submit" 
+                <button type="submit"
+                        name="save_title"
                         class="btn btn-primary rounded-pill px-4 shadow-sm">
                     Save Title
                 </button>
             </form>
         </div>
 
-        <!-- IMAGE FORM -->
+        <!-- ================= IMAGE FORM ================= -->
         <div class="p-4 rounded-4 bg-light shadow-sm mb-4">
-            <h6 class="fw-semibold mb-3 text-success">
+            {% comment %} <h6 class="fw-semibold mb-3 text-success">
                 Add Image (119 x 28 pixels PNG only)
-            </h6>
+            </h6> {% endcomment %}
 
             <form method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
-                <input type="hidden" name="form_type" value="image_form">
+                <input type="hidden" name="save_image" value="1">
 
                 {% if profile.image %}
                     <div class="text-center mb-3">
@@ -49,49 +56,66 @@
                 {% endif %}
 
                 <div class="mb-3">
-                    {{ form.image.label_tag }}
-                    {{ form.image }}
-                </div>
-                
+                    {{ image_form.image.label_tag }}
+                    {{ image_form.image }}
 
-                <button type="submit" 
+                    {% if image_form.image.errors %}
+                        <div class="text-danger small mt-2">
+                            {{ image_form.image.errors }}
+                        </div>
+                    {% endif %}
+                    <small class="text-muted">
+    Only <b>PNG</b> images are allowed.
+</small>
+                </div>
+
+                <button type="submit"
                         class="btn btn-success rounded-pill px-4 shadow-sm">
                     Save Image
                 </button>
             </form>
         </div>
+
+        <!-- ================= FAVICON FORM ================= -->
         <div class="p-4 rounded-4 bg-light shadow-sm mb-4">
-            <h6 class="fw-semibold mb-3 text-warning">
+            {% comment %} <h6 class="fw-semibold mb-3 text-warning">
                 Add Favicon (128 x 128 pixels PNG)
-            </h6>
+            </h6> {% endcomment %}
 
             <form method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
-                <input type="hidden" name="form_type" value="favicon_form">
 
                 {% if profile.favicon %}
                     <div class="text-center mb-3">
                         <img src="{{ profile.favicon.url }}"
                              class="rounded-4 shadow-sm"
-                             style="max-width:200px;">
+                             style="max-width:150px;">
                     </div>
                 {% endif %}
 
                 <div class="mb-3">
-    <label class="form-label">Favicon</label>
-    <input type="file"
-           name="favicon"
-           class="form-control rounded-3 shadow-sm"
-           accept="image/png">
-</div>
+                    {{ favicon_form.favicon.label_tag }}
+                    {{ favicon_form.favicon }}
+
+                    {% if favicon_form.favicon.errors %}
+                        <div class="text-danger small mt-2">
+                            {{ favicon_form.favicon.errors }}
+                        </div>
+                    {% endif %}
+<small class="text-muted">
+    Only <b>PNG</b> images are allowed.
+</small>
+                </div>
 
                 <button type="submit"
-                        class="btn btn-warning rounded-pill px-4 shadow-sm">
+                        name="save_favicon"
+                        class="btn btn-warning rounded-pill px-4 shadow-sm text-white">
                     Save Favicon
                 </button>
             </form>
         </div>
 
+        <!-- BACK BUTTON -->
         <div class="text-center">
             <a href="{% url 'view_dashboard_profile' %}" 
                class="btn btn-outline-dark rounded-pill px-4">
@@ -101,6 +125,7 @@
 
     </div>
 </div>
+
 <style>
 .card {
     background: #ffffff;
@@ -110,19 +135,23 @@
     background: #f8f9fa !important;
 }
 
-button:hover {
-    transform: translateY(-2px);
+button {
     transition: 0.3s ease;
 }
+
+button:hover {
+    transform: translateY(-2px);
+}
+
 input[type="file"] {
     border: 1px dashed #ced4da;
     padding: 8px;
     background: #f8f9fa;
+    border-radius: 6px;
 }
+
 input[type="file"]:hover {
     background: #fff3cd;
-    transition: 0.3s ease;
 }
 </style>
-
 {% endblock %}

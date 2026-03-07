@@ -240,6 +240,101 @@ body {
     </div>
 
 </div>
+</div>
+
+<!-- EDIT PROFILE -->
+<div class="card inner-card mb-4 d-none" id="profileSection">
+<div class="card-header bg-white">
+    <strong>Edit Profile</strong>
+</div>
+<div class="card-body">
+
+<form method="post" enctype="multipart/form-data">
+{% csrf_token %}
+
+<div class="mb-3">
+    <label class="form-label">Name</label>
+    <input type="text" name="first_name" class="form-control"
+           value="{{ profile.name|default:user_obj.name }}">
+</div>
+
+<div class="mb-3">
+    <label class="form-label">Phone</label>
+    <input type="text" name="phone" class="form-control"
+           value="{{ profile.contact }}">
+</div>
+
+<div class="mb-3">
+    <label class="form-label">Profile Photo</label>
+    <input type="file" name="photo" id="photoInput"
+           class="form-control"
+           accept=".png,.jpg,.jpeg,image/png,image/jpeg">
+    <small class="text-muted">Only JPG, JPEG, PNG allowed</small>
+</div>
+
+<div class="mb-3">
+    <label class="form-label">Email</label>
+    <input type="email" name="email" class="form-control"
+           value="{{ user_obj.email }}">
+</div>
+
+<button type="submit" class="btn btn-dark">Save Changes</button>
+<button type="reset" class="btn btn-danger">Cancel</button>
+
+</form>
+
+</div>
+</div>
+
+<!-- CHANGE PASSWORD -->
+<div class="card inner-card d-none" id="passwordSection">
+<div class="card-header bg-white">
+    <strong>Change Password</strong>
+</div>
+<div class="card-body">
+
+<form method="post">
+{% csrf_token %}
+
+<div class="mb-3">
+    <label class="form-label">Current Password</label>
+    <input type="password" name="current_password"
+           class="form-control" maxlength="8"
+           pattern="[A-Za-z0-9]{8}" required>
+</div>
+
+<div class="mb-3">
+    <label class="form-label">New Password</label>
+    <input type="password" id="newPassword"
+           name="new_password"
+           class="form-control"
+           maxlength="8"
+           pattern="[A-Za-z0-9]{8}" required>
+     <small class="text-muted">Password must be exactly 8 characters</small>
+</div>
+
+<div class="mb-3">
+    <label class="form-label">Confirm Password</label>
+    <input type="password" id="confirmPassword"
+           name="confirm_password"
+           class="form-control"
+           maxlength="8" required>
+</div>
+
+<button type="submit" class="btn btn-dark">Update Password</button>
+<button type="reset" class="btn btn-danger">Cancel</button>
+
+</form>
+
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+</div>
+</div>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {

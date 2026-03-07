@@ -403,52 +403,101 @@ class CommunicationSettingsForm(forms.ModelForm):
 
         return cleaned_data
     
-class DashboardProfileForm(forms.ModelForm):
 
+
+# ================= TITLE FORM =================
+class TitleForm(forms.ModelForm):
     class Meta:
         model = DashboardProfile
-        fields = ['title', 'image','favicon']
+        fields = ['title']
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': 'form-control rounded-3 shadow-sm'
             }),
+        }
+
+
+# ================= IMAGE FORM =================
+class ImageForm(forms.ModelForm):
+    class Meta:
+        model = DashboardProfile
+        fields = ['image']
+        widgets = {
             'image': forms.FileInput(attrs={
                 'class': 'form-control rounded-3 shadow-sm',
                 'accept': 'image/png'
             }),
         }
 
+    # def clean_image(self):
+    #     image = self.cleaned_data.get('image')
+
+    #     if not image:
+    #         raise forms.ValidationError("Please select an image.")
+
+    #     if not image.name.lower().endswith('.png'):
+    #         raise forms.ValidationError("Only PNG format allowed.")
+
+    #     img = Image.open(image)
+
+    #     if img.width != 119 or img.height != 28:
+    #         raise forms.ValidationError("Image must be exactly 119 x 28 pixels.")
+
+    #     return image
     def clean_image(self):
         image = self.cleaned_data.get('image')
 
-        if image:
-            # Check extension
-            if not image.name.lower().endswith('.png'):
-                raise forms.ValidationError("Only PNG format allowed.")
+        if not image:
+            raise forms.ValidationError("Please select an image.")
 
+        # Allow only PNG format
+        if not image.name.lower().endswith('.png'):
+            raise forms.ValidationError("Only PNG format allowed.")
+
+        # Open image just to ensure it's valid
+        try:
             img = Image.open(image)
+            img.verify()
+        except Exception:
+            raise forms.ValidationError("Invalid image file.")
 
-            # Check size
-            if img.width != 119 or img.height != 28:
-                raise forms.ValidationError(
-                    "Image must be exactly 119 x 28 pixels."
-                )
-            
-    # ================= FAVICON VALIDATION =================
+        return image
+
+
+# ================= FAVICON FORM =================
+class FaviconForm(forms.ModelForm):
+    class Meta:
+        model = DashboardProfile
+        fields = ['favicon']
+        widgets = {
+            'favicon': forms.FileInput(attrs={
+                'class': 'form-control rounded-3 shadow-sm',
+                'accept': 'image/png'
+            }),
+        }
+
+    # def clean_favicon(self):
+    #     favicon = self.cleaned_data.get('favicon')
+
+    #     if not favicon:
+    #         raise forms.ValidationError("Please select a favicon.")
+
+    #     if not favicon.name.lower().endswith('.png'):
+    #         raise forms.ValidationError("Only PNG format allowed.")
+
+    #     img = Image.open(favicon)
+
+    #     if img.width != 128 or img.height != 128:
+    #         raise forms.ValidationError("Favicon must be exactly 128 x 128 pixels.")
+
+    #     return favicon
     def clean_favicon(self):
         favicon = self.cleaned_data.get('favicon')
 
-        if favicon:
-            # Check extension
-            if not favicon.name.lower().endswith('.png'):
-                raise forms.ValidationError("Favicon must be PNG format.")
+        if not favicon:
+            raise forms.ValidationError("Please select a favicon.")
 
-            img = Image.open(favicon)
-
-            # Check size
-            if img.width != 128 or img.height != 128:
-                raise forms.ValidationError(
-                    "Favicon must be exactly 128 x 128 pixels."
-                )
+        if not favicon.name.lower().endswith('.png'):
+            raise forms.ValidationError("Only PNG format allowed.")
 
         return favicon

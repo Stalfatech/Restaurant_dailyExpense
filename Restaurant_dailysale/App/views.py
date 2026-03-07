@@ -7,7 +7,7 @@ from datetime import date
 from django.views.decorators.cache import never_cache
 from django.core.mail import send_mail
 from django.conf import settings
-from .forms import DailySaleItemFormSet, DeliveryFormSet, LoginForm,ForgotPasswordForm,ResetPasswordForm,DashboardProfileForm
+from .forms import DailySaleItemFormSet, DeliveryFormSet, LoginForm,ForgotPasswordForm,ResetPasswordForm,TitleForm, ImageForm, FaviconForm
 from django.conf import settings
 from django.db import transaction 
 from .models import  User,Register,Manager,Branch,Expense,CashBook
@@ -282,53 +282,81 @@ def Logouts(request):
     return redirect('login')
 
 
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.urls import reverse
 
 def forgot_password(request):
-    if request.method == "POST":
-        form = ForgotPasswordForm(request.POST)
-        if form.is_valid():
-            email = form.cleaned_data['email']
-            user = User.objects.filter(email=email).first()
 
-            if user:
-                reset_link = f"http://127.0.0.1:8000/reset_password/{user.id}/"
-                send_mail(
-                    'Reset your password',
-                    f'Click this link to reset your password: {reset_link}',
-                    settings.EMAIL_HOST_USER,
-                    [email],
-                    fail_silently=False,
-                )
-                messages.success(request, "Password reset link sent to your email!")
-            else:
-                messages.error(request, "Email not found.")
+    # ✅ ALWAYS CREATE FORM FIRST
+    form = ForgotPasswordForm(request.POST or None)
 
-            # ✅ CORRECT redirect
-            return redirect('forgot_password')
+    if request.method == "POST" and form.is_valid():
 
-    else:
-        form = ForgotPasswordForm()
+        email = form.cleaned_data['email']
+        user = User.objects.filter(email=email).first()
 
+        if user:
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
+
+            reset_link = request.build_absolute_uri(
+                reverse('reset_password', kwargs={
+                    'uidb64': uid,
+                    'token': token
+                })
+            )
+
+            send_mail(
+                'Reset your password',
+                f'Click this link to reset your password: {reset_link}',
+                settings.EMAIL_HOST_USER,
+                [email],
+            )
+
+            messages.success(request, "Password reset link sent!")
+        else:
+            messages.error(request, "Email not found.")
+
+        return redirect('forgot_password')
+
+    # ✅ ALWAYS RETURN FORM
     return render(request, 'forget_password.html', {'form': form})
 
 
-def reset_password(request, user_id):
-    user = User.objects.filter(id=user_id).first()
-    if request.method == "POST":
-        form = ResetPasswordForm(request.POST)
-        if form.is_valid():
-            new = form.cleaned_data['new_password']
-            confirm = form.cleaned_data['confirm_password']
-            if new == confirm:
-                user.password = make_password(new) 
-                user.save()
-                messages.success(request, "Password reset successfully!")
-                return redirect('/login')
-            else:
-                messages.error(request, "Passwords do not match.")
+
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_str
+from django import forms
+def reset_password(request, uidb64, token):
+
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except:
+        user = None
+
+    # ✅ Check token validity
+    if user is not None and default_token_generator.check_token(user, token):
+
+        form = ResetPasswordForm(request.POST or None)
+
+        if request.method == "POST" and form.is_valid():
+            user.set_password(form.cleaned_data['new_password'])
+            user.save()
+
+            messages.success(request, "Password reset successfully!")
+            return redirect('/login')
+
+        return render(request, 'reset-password.html', {'form': form})
+
     else:
-        form = ResetPasswordForm()
-    return render(request, 'reset_password.html', {'form': form})
+        messages.error(request, "Invalid or expired link.")
+        return redirect('forgot_password')
+
+
 from django.core.exceptions import ValidationError
 from .validators import phone_validator  # your validators.py
 from .utils import notify
@@ -4311,46 +4339,49 @@ def manager_profile(request):
 
     return render(request, "Profiles/manager_profile.html", context)
 
+
 def dashboard_profile(request):
     profile, created = DashboardProfile.objects.get_or_create(id=1)
 
+    # Initialize empty forms
+    title_form = TitleForm(instance=profile)
+    image_form = ImageForm(instance=profile)
+    favicon_form = FaviconForm(instance=profile)
+
     if request.method == "POST":
-        form_type = request.POST.get("form_type")
 
         # ================= TITLE SAVE =================
-        if form_type == "title_form":
-            form = DashboardProfileForm(request.POST, instance=profile)
+        if "save_title" in request.POST:
+            title_form = TitleForm(request.POST, instance=profile)
 
-            if form.is_valid():
-                profile.title = form.cleaned_data["title"]
-                profile.save(update_fields=["title"])
+            if title_form.is_valid():
+                title_form.save()
                 messages.success(request, "Title updated successfully.")
                 return redirect("dashboard_profile")
 
         # ================= IMAGE SAVE =================
-        
-        elif form_type == "image_form":
-            if "image" in request.FILES:
-                profile.image = request.FILES["image"]
-                profile.save()
+        elif "save_image" in request.POST:
+            image_form = ImageForm(request.POST, request.FILES, instance=profile)
+
+            if image_form.is_valid():
+                image_form.save()
                 messages.success(request, "Image updated successfully.")
                 return redirect("dashboard_profile")
-            else:
-                messages.error(request, "No image selected.")
 
-        elif form_type == "favicon_form":
+        # ================= FAVICON SAVE =================
+        elif "save_favicon" in request.POST:
+            favicon_form = FaviconForm(request.POST, request.FILES, instance=profile)
 
-            if "favicon" in request.FILES:
-                profile.favicon = request.FILES["favicon"]
-                profile.save(update_fields=["favicon"])
+            if favicon_form.is_valid():
+                favicon_form.save()
                 messages.success(request, "Favicon updated successfully.")
                 return redirect("dashboard_profile")
-            else:
-                messages.error(request, "No favicon selected.")
-    form = DashboardProfileForm(instance=profile)
+
     return render(request, "Profiles/dashboard_profile.html", {
-        "form": form,
-        "profile": profile
+        "profile": profile,
+        "title_form": title_form,
+        "image_form": image_form,
+        "favicon_form": favicon_form
     })
 
     

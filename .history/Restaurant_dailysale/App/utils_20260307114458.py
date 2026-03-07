@@ -39,7 +39,7 @@ def send_email_report(client_email, subject, body, pdf_file=None):
     required_fields = ['email_host', 'email_port', 'email_host_user', 'email_host_password']
     missing = [f for f in required_fields if not getattr(config, f)]
     if missing:
-        return f"Email settings incomplete: missing {', '.join(missing)}"
+        raise Exception(f"Email settings incomplete: missing {', '.join(missing)}")
 
     # Setup SMTP connection
     connection = get_connection(

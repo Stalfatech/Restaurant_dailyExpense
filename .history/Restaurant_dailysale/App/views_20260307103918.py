@@ -360,7 +360,7 @@ def add_manager(request):
 
         # Required fields
         if not all([name, phone, dob, address, joining_date, email, password, branch_id]):
-            messages.info(request, "All mandatory fields are required")
+            messages(request, "All mandatory fields are required")
             return render(request, 'Admin/add_manager.html', context)
 
         # 🔴 Phone Validation (FIELD LEVEL)

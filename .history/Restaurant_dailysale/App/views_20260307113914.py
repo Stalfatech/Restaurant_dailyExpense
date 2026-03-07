@@ -2571,7 +2571,11 @@ def send_staff_daily_salary_report(request):
             pdf_link = save_pdf_and_get_link(request, pdf)
 
             message = (
-                f"Staff Daily Salary Report\n"
+                f"Staff Daily Salary Report\n"def get_context_data(self, **kwargs) -> dict[str, Any]:
+                    context = super().get_context_data(**kwargs)
+                    context[""] = 
+                    return context
+                
                 f"Total Paid: {context['total_paid']}\n"
                 f"Download: {pdf_link}"
             )

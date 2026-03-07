@@ -360,7 +360,7 @@ def add_manager(request):
 
         # Required fields
         if not all([name, phone, dob, address, joining_date, email, password, branch_id]):
-            messages.info(request, "All mandatory fields are required")
+            messages(request, "All mandatory fields are required")
             return render(request, 'Admin/add_manager.html', context)
 
         # 🔴 Phone Validation (FIELD LEVEL)
@@ -476,7 +476,7 @@ def manager_edit(request, id):
 
         # Basic validation
         if not all([name, email, phone, branch_id]):
-            messages.info(request, "All mandatory fields are required")
+            messages.error(request, "All mandatory fields are required")
             return render(request, 'Admin/manager_edit.html', {
                 'manager': manager,
                 'branches': branches,
@@ -497,7 +497,7 @@ def manager_edit(request, id):
         # Password validation (optional)
         if password or confirm_password:
             if password != confirm_password:
-                messages.info(request, "Passwords do not match")
+                messages.error(request, "Passwords do not match")
                 return render(request, 'Admin/manager_edit.html', {
                     'manager': manager,
                     'branches': branches,
@@ -505,7 +505,7 @@ def manager_edit(request, id):
                 })
 
             if len(password) < 8:
-                messages.info(request, "Password must be at least 8 characters")
+                messages.error(request, "Password must be at least 8 characters")
                 return render(request, 'Admin/manager_edit.html', {
                     'manager': manager,
                     'branches': branches,
@@ -1181,7 +1181,7 @@ def add_branch(request):
             return redirect('branch_add')
 
         if Branch.objects.filter(name=name).exists():
-            messages.info(request, "Branch name already exists")
+            messages.error(request, "Branch name already exists")
             return redirect('branch_add')
 
         Branch.objects.create(
@@ -4218,7 +4218,7 @@ def admin_profile(request):
         user.save()
         update_session_auth_hash(request, user)
 
-        notify(request, "Password updated successfully")
+        messages.success(request, "Password updated successfully")
         return redirect("admin_profile")
 
     context = {

@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% load static %}
+{% block 'content' %}
+
+<div class="container py-5">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">
+                <i class="bi bi-person-badge-fill text-primary me-2"></i>
+                Add Manager
+            </h3>
+            <small class="text-muted">Create a new branch manager</small>
+        </div>
+
+        <a href="{% url 'manager_view' %}" 
+           class="btn btn-light border rounded-pill shadow-sm px-3">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+    </div>
+
+    <!-- Card -->
+    <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+
+        <!-- Gradient Header -->
+        <div class="card-header text-white py-3"
+             style="background: linear-gradient(135deg, #1e3c72, #2a5298);">
+            <h5 class="mb-0 fw-semibold">
+                <i class="bi bi-person-lines-fill me-2"></i>
+                Manager Information
+            </h5>
+        </div>
+
+        <div class="card-body p-5">
+
+            <p class="text-muted small mb-4">
+                Fields marked with <span class="text-danger">*</span> are mandatory.
+            </p>
+
+            <!-- Django Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm rounded-3">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post" enctype="multipart/form-data" id="managerForm">
+                {% csrf_token %}
+
+                <div class="row g-4">
+
+                    <!-- Full Name -->
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" name="name"
+                                   class="form-control rounded-3"
+                                   id="fullName"
+                                   value="{{ form_data.name|default:'' }}"
+                                   placeholder="Full Name"
+                                   required>
+                            <label for="fullName">
+                                <i class="bi bi-person me-1 text-primary"></i>
+                                Full Name <span class="text-danger">*</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Phone -->
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="tel" name="phone"
+                                   class="form-control rounded-3 {% if phone_error %}is-invalid{% endif %}"
+                                   id="phoneField"
+                                   value="{{ form_data.phone|default:'' }}"
+                                   placeholder="+971501234567"
+                                   required>
+                            <label for="phoneField">
+                                <i class="bi bi-telephone me-1 text-success"></i>
+                                Phone <span class="text-danger">*</span>
+                            </label>
+                            {% if phone_error %}
+                                <div class="invalid-feedback">
+                                    {{ phone_error }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% if not phone_error %}
+                        <small class="text-muted">
+                            Enter phone with country code (e.g., +971501234567)
+                        </small>
+                        {% endif %}
+                    </div>
+
+                    <!-- DOB -->
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="date" name="dob"
+                                   id="dob"
+                                   class="form-control rounded-3"
+                                   value="{{ form_data.dob|default:'' }}"
+                                   required>
+                            <label for="dob">
+                                <i class="bi bi-calendar-date me-1 text-warning"></i>
+                                Date of Birth <span class="text-danger">*</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Gender -->
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <select name="gender" class="form-select rounded-3" id="genderSelect">
+                                <option value="">Select</option>
+                                <option value="Male" {% if form_data.gender == "Male" %}selected{% endif %}>Male</option>
+                                <option value="Female" {% if form_data.gender == "Female" %}selected{% endif %}>Female</option>
+                                <option value="Other" {% if form_data.gender == "Other" %}selected{% endif %}>Other</option>
+                            </select>
+                            <label for="genderSelect">
+                                <i class="bi bi-gender-ambiguous me-1 text-info"></i>
+                                Gender
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Address -->
+                    <div class="col-12">
+                        <div class="form-floating">
+                            <textarea name="address"
+                                      class="form-control rounded-3"
+                                      placeholder="Address"
+                                      style="height: 100px"
+                                      required>{{ form_data.address|default:'' }}</textarea>
+                            <label>
+                                <i class="bi bi-geo-alt me-1 text-danger"></i>
+                                Address <span class="text-danger">*</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Joining Date -->
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="date" name="joining_date"
+                                   class="form-control rounded-3"
+                                   value="{{ form_data.joining_date|default:'' }}"
+                                   required>
+                            <label>
+                                <i class="bi bi-calendar-check me-1 text-primary"></i>
+                                Joining Date <span class="text-danger">*</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Gmail -->
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="email"
+                                   name="gmail"
+                                   class="form-control rounded-3"
+                                   value="{{ form_data.gmail|default:'' }}"
+                                   placeholder="Email"
+                                   required>
+                            <label>
+                                <i class="bi bi-envelope me-1 text-danger"></i>
+                                Gmail <span class="text-danger">*</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Branch -->
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <select name="branch" class="form-select rounded-3" required>
+                                <option value="">Select Branch</option>
+                                {% for branch in branches %}
+                                    <option value="{{ branch.id }}"
+                                    {% if form_data.branch == branch.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ branch.name }} - {{ branch.location }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <label>
+                                <i class="bi bi-diagram-3 me-1 text-success"></i>
+                                Assign Branch <span class="text-danger">*</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="password"
+                                   name="password"
+                                   class="form-control rounded-3"
+                                   value="{{ form_data.password|default:'' }}"
+                                   minlength="8"
+                                   maxlength="8"
+                                   placeholder="Password"
+                                   required>
+                            <label>
+                                <i class="bi bi-lock me-1 text-dark"></i>
+                                Password <span class="text-danger">*</span>
+                            </label>
+                        </div>
+                        <small class="text-muted">
+                            Password must be exactly 8 characters
+                        </small>
+                    </div>
+
+                    <!-- Photo -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-medium">
+                            <i class="bi bi-image me-1 text-primary"></i>
+                            Photo <span class="text-danger">*</span>
+                        </label>
+                        <input type="file"
+                               name="photo"
+                               class="form-control rounded-3"
+                               accept="image/png, image/jpeg, image/jpg"
+                               required>
+                        <small class="text-muted">
+                            Only JPG, JPEG, PNG allowed
+                        </small>
+                    </div>
+
+                </div>
+
+                <div class="text-end">
+                    <button type="submit" 
+                            class="btn btn-primary rounded-pill px-5 mt-4 shadow-sm">
+                        <i class="bi bi-check-circle me-1"></i> Add Manager
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- JavaScript Validation (UNCHANGED) -->
+<script>
+    document.getElementById("dob").max = new Date().toISOString().split("T")[0];
+
+    document.getElementById("managerForm").addEventListener("submit", function(event) {
+        let dob = document.getElementById("dob").value;
+        let today = new Date().toISOString().split("T")[0];
+
+        if (dob > today) {
+            alert("Date of Birth cannot be a future date!");
+            event.preventDefault();
+        }
+    });
+</script>
+
+{% endblock %}

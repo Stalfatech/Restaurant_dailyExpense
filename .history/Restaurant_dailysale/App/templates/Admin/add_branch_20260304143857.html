@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block 'content' %}
+
+<div class="container py-5">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">
+                {% if edit_mode %}
+                    <i class="bi bi-pencil-square text-warning me-2"></i> Edit Branch
+                {% else %}
+                    <i class="bi bi-building-add text-primary me-2"></i> Add Branch
+                {% endif %}
+            </h3>
+            <small class="text-muted">
+                Manage branch details below
+            </small>
+        </div>
+
+        <a href="{% url 'branch_list' %}" 
+           class="btn btn-light border rounded-pill shadow-sm px-3">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+    </div>
+
+    <!-- Card -->
+    <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+
+        <!-- Gradient Header -->
+        <div class="card-header text-white py-3"
+             style="background: linear-gradient(135deg, #050506, #2a5298);">
+            <h5 class="mb-0 fw-semibold">
+                {% if edit_mode %}
+                    <i class="bi bi-database-check me-2"></i> Update Branch Information
+                {% else %}
+                    <i class="bi bi-database-add me-2"></i> Create New Branch
+                {% endif %}
+            </h5>
+        </div>
+
+        <div class="card-body p-5">
+
+            <p class="text-muted small mb-4">
+                Fields marked with <span class="text-danger">*</span> are mandatory.
+            </p>
+
+            <form method="post" class="row g-4">
+                {% csrf_token %}
+
+                <!-- Branch Name -->
+                <div class="col-12">
+                    <div class="form-floating">
+                        <input type="text"
+                               name="name"
+                               class="form-control rounded-3"
+                               id="branchName"
+                               value="{{ branch.name|default:'' }}"
+                               placeholder="Enter branch name"
+                               required>
+                        <label for="branchName">
+                            <i class="bi bi-building me-1 text-primary"></i>
+                            Branch Name <span class="text-danger">*</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Location -->
+                <div class="col-12">
+                    <div class="form-floating">
+                        <textarea name="location"
+                                  class="form-control rounded-3"
+                                  id="branchLocation"
+                                  style="height: 120px;"
+                                  placeholder="Enter branch location"
+                                  required>{{ branch.location|default:'' }}</textarea>
+                        <label for="branchLocation">
+                            <i class="bi bi-geo-alt me-1 text-danger"></i>
+                            Location <span class="text-danger">*</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="col-12 d-flex justify-content-end">
+                    <button type="submit" 
+                            class="btn btn-primary rounded-pill px-5 shadow-sm">
+                        {% if edit_mode %}
+                            <i class="bi bi-check-circle me-1"></i> Update Branch
+                        {% else %}
+                            <i class="bi bi-plus-circle me-1"></i> Add Branch
+                        {% endif %}
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

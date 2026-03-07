@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% load static %}
+{% block 'content' %}
+
+<div class="container py-4">
+
+    <div class="card border-0 shadow-sm rounded-4">
+
+        <!-- Header -->
+        <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
+            <div>
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-person-plus me-2 text-primary"></i>
+                    Add Staff
+                </h5>
+                <small class="text-muted">Create a new staff member</small>
+            </div>
+
+            <a href="{% url 'adminview_staff' %}" 
+               class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                ← Back
+            </a>
+        </div>
+
+        <div class="card-body p-4">
+
+            <!-- Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <div class="row g-3">
+
+                    <!-- Staff ID -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Staff ID *</label>
+                        <input type="text" 
+                               name="staff_id"
+                               value="{{ form_data.staff_id|default:'' }}"
+                               class="form-control"
+                               required>
+                    </div>
+
+                    <!-- Name -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Name *</label>
+                        <input type="text"
+                               name="name"
+                               value="{{ form_data.name|default:'' }}"
+                               class="form-control"
+                               required>
+                    </div>
+
+                    <!-- Gender -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Gender *</label>
+                        <select name="gender" class="form-select" required>
+                            <option value="">Select</option>
+                            <option value="Male" {% if form_data.gender == "Male" %}selected{% endif %}>Male</option>
+                            <option value="Female" {% if form_data.gender == "Female" %}selected{% endif %}>Female</option>
+                            <option value="Other" {% if form_data.gender == "Other" %}selected{% endif %}>Other</option>
+                        </select>
+                    </div>
+
+                    <!-- Role -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Role *</label>
+                        <select name="role" class="form-select" required>
+                            <option value="">Select</option>
+                            <option value="Chef" {% if form_data.role == "Chef" %}selected{% endif %}>Chef</option>
+                            <option value="Helper" {% if form_data.role == "Helper" %}selected{% endif %}>Helper</option>
+                            <option value="Delivery" {% if form_data.role == "Delivery" %}selected{% endif %}>Delivery</option>
+                        </select>
+                    </div>
+
+                    <!-- Manager -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Manager *</label>
+                        <select name="manager" class="form-select" required>
+                            <option value="">Select Manager</option>
+                            {% for m in managers %}
+                                <option value="{{ m.id }}"
+                                    {% if form_data.manager == m.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ m.user.name }} ({{ m.user.branch.name }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Contact -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Contact *</label>
+                        <input type="tel"
+                               name="contact"
+                               value="{{ form_data.contact|default:'' }}"
+                               class="form-control {% if contact_error %}is-invalid{% endif %}"
+                               placeholder="+971501234567"
+                               required>
+
+                        {% if contact_error %}
+                            <div class="invalid-feedback">
+                                {{ contact_error }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- DOB -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">DOB</label>
+                        <input type="date"
+                               name="dob"
+                               value="{{ form_data.dob|default:'' }}"
+                               class="form-control"
+                               max="{% now 'Y-m-d' %}">
+                    </div>
+
+                    <!-- Joining Date -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Joining Date *</label>
+                        <input type="date"
+                               name="joining_date"
+                               value="{{ form_data.joining_date|default:'' }}"
+                               class="form-control"
+                               required>
+                    </div>
+
+                    <!-- Salary Type -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Salary Type *</label>
+                        <select name="salary_type" class="form-select" required>
+                            <option value="">Select</option>
+                            <option value="Daily" {% if form_data.salary_type == "Daily" %}selected{% endif %}>Daily</option>
+                            <option value="Monthly" {% if form_data.salary_type == "Monthly" %}selected{% endif %}>Monthly</option>
+                        </select>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Status *</label>
+                        <select name="status" class="form-select" required>
+                            <option value="">Select</option>
+                            <option value="Active" {% if form_data.status == "Active" %}selected{% endif %}>Active</option>
+                            <option value="Inactive" {% if form_data.status == "Inactive" %}selected{% endif %}>Inactive</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <!-- Buttons -->
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    {% comment %} <a href="{% url 'adminview_staff' %}" 
+                       class="btn btn-outline-secondary rounded-pill px-4">
+                        Cancel
+                    </a> {% endcomment %}
+
+                    <button type="submit" 
+                            class="btn btn-primary rounded-pill px-4">
+                        <i class="bi bi-save me-1"></i> Save Staff
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

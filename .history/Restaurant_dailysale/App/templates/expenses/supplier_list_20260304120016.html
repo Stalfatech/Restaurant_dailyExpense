@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block 'content' %}
+
+<style>
+    .premium-card {
+        border-radius: 16px;
+        background: #ffffff;
+    }
+
+    .premium-table thead {
+        background-color: #212529;
+        color: #ffffff;
+        font-weight: 600;
+    }
+
+    .premium-table th,
+    .premium-table td {
+        padding: 12px 10px;
+        font-size: 14px;
+        vertical-align: middle;
+        border: 1px solid #dee2e6;
+    }
+
+    .premium-table tbody tr:hover {
+        background-color: #f8f9fa;
+        transition: 0.2s ease-in-out;
+    }
+
+    .action-btn {
+        border-radius: 8px;
+        padding: 5px 12px;
+        font-size: 13px;
+    }
+
+    .search-card {
+        border-radius: 18px;
+        background: linear-gradient(135deg, #f8f9fa, #ffffff);
+        border: 1px solid #e9ecef;
+    }
+
+    .search-input {
+        border-radius: 30px;
+        padding-left: 40px;
+        height: 44px;
+    }
+
+    .input-icon {
+        position: relative;
+    }
+
+    .input-icon i {
+        position: absolute;
+        top: 50%;
+        left: 15px;
+        transform: translateY(-50%);
+        color: #6c757d;
+        font-size: 14px;
+    }
+</style>
+
+<div class="container py-4">
+
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Header -->
+    <div class="card premium-card shadow-sm mb-4">
+        <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+                <h3 class="fw-bold mb-0">
+                    <i class="bi bi-truck text-primary me-2"></i>
+                    Suppliers
+                </h3>
+                <small class="text-muted">Manage your supplier records</small>
+            </div>
+
+            <a href="{% url 'add_supplier' %}" 
+               class="btn btn-primary rounded-pill px-4">
+                <i class="bi bi-plus-circle me-1"></i> Add Supplier
+            </a>
+        </div>
+    </div>
+
+    <!-- Search Section -->
+    <div class="card search-card shadow-sm mb-4">
+        <div class="card-body p-4">
+            <form method="GET">
+                <div class="row align-items-center">
+
+                    <div class="col-md-8 input-icon">
+                        <i class="bi bi-search"></i>
+                        <input type="text" 
+                               name="q"
+                               class="form-control search-input"
+                               placeholder="Search by supplier name..."
+                               value="{{ request.GET.q }}">
+                    </div>
+
+                    <div class="col-md-4 d-flex gap-2 mt-3 mt-md-0 justify-content-md-end">
+                        <button class="btn btn-dark rounded-pill px-4">
+                            <i class="bi bi-funnel-fill me-1"></i> Search
+                        </button>
+
+                        <a href="{% url 'supplier_list' %}" 
+                           class="btn btn-outline-secondary rounded-pill px-4">
+                            Reset
+                        </a>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover mb-0 premium-table">
+
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Phone</th>
+                        <th width="180" class="text-center">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for supplier in suppliers %}
+                    <tr>
+                        <td class="fw-semibold">{{ supplier.name }}</td>
+                        <td>
+                            <i class="bi bi-telephone text-muted me-1"></i>
+                            {{ supplier.phone }}
+                        </td>
+
+                        <td class="text-center">
+                            <div class="d-flex justify-content-center gap-2">
+
+                                <a href="{% url 'edit_supplier' supplier.id %}"
+                                   class="btn btn-sm btn-outline-primary action-btn"
+                                   title="Edit">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+
+                                <a href="{% url 'delete_supplier' supplier.id %}"
+                                   class="btn btn-sm btn-outline-danger action-btn"
+                                   title="Delete"
+                                   onclick="return confirm('Delete this supplier?');">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+
+                            </div>
+                        </td>
+                    </tr>
+
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox me-1"></i>
+                            No suppliers found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

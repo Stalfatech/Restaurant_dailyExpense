@@ -132,5 +132,8 @@ path(
     name="send_manager_monthly_report"
 ),
 path("send-daily-salary-report/", views.send_staff_daily_salary_report, name="send_staff_daily_salary_report"),
-
+path("send-monthly-salary-report/", views.send_monthly_salary_report, name="send_monthly_salary_report"),
+path("extract-invoice-amount/", views.extract_invoice_amount_view, name="extract_invoice_amount"),
+  path("notifications/", views.notifications_list, name="notifications_list"),
+  path("notifications/delete-all/", views.delete_all_notifications, name="delete_all_notifications"),
 ]

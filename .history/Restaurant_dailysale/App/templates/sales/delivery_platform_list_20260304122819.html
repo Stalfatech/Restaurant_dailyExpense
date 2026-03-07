@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block 'content' %}
+
+<style>
+    .premium-card {
+        border-radius: 18px;
+        background: #ffffff;
+    }
+
+    .search-card {
+        border-radius: 16px;
+        background: linear-gradient(135deg, #f8f9fa, #ffffff);
+        border: 1px solid #e9ecef;
+    }
+
+    .search-card .form-control {
+        border-radius: 12px;
+        height: 42px;
+    }
+
+    .premium-table thead {
+        background-color: #1f2937;
+        color: #ffffff;
+    }
+
+    .premium-table th,
+    .premium-table td {
+        padding: 12px 14px;
+        font-size: 14px;
+        vertical-align: middle;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .premium-table tbody tr:hover {
+        background-color: #f8fafc;
+        transition: 0.2s ease-in-out;
+    }
+
+    .action-btn {
+        border-radius: 8px;
+        padding: 5px 12px;
+        font-size: 13px;
+    }
+
+    .empty-state i {
+        font-size: 40px;
+        opacity: 0.5;
+    }
+</style>
+
+<div class="container-fluid py-4">
+
+    <!-- Header -->
+    <div class="card premium-card shadow-sm mb-4">
+        <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+                <h3 class="fw-bold mb-0">
+                    <i class="bi bi-truck text-success me-2"></i>
+                    {{ page_title }}
+                </h3>
+                <small class="text-muted">Manage all delivery platforms</small>
+            </div>
+
+            <a href="{% url 'add_delivery_platform' %}"
+               class="btn btn-success rounded-pill px-4">
+                <i class="bi bi-plus-circle me-1"></i> Add Platform
+            </a>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Search Section -->
+    <div class="card search-card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3 align-items-center">
+
+                <div class="col-md-4">
+                    <input type="text"
+                           name="q"
+                           placeholder="Search platform..."
+                           value="{{ request.GET.q|default:'' }}"
+                           class="form-control">
+                </div>
+
+                <div class="col-md-2">
+                    <button type="submit"
+                            class="btn btn-dark w-100 rounded-pill">
+                        <i class="bi bi-search me-1"></i> Search
+                    </button>
+                </div>
+
+                <div class="col-md-2">
+                    <a href="{% url 'delivery_platform_list' %}"
+                       class="btn btn-outline-secondary w-100 rounded-pill">
+                        Reset
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 premium-table text-center">
+
+                <thead>
+                    <tr>
+                        <th width="60">#</th>
+                        <th>Platform Name</th>
+                        <th width="200">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for platform in platforms %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td class="fw-semibold">
+                            {{ platform.name }}
+                        </td>
+                        <td>
+                            <div class="d-flex justify-content-center gap-2">
+                                <a href="{% url 'edit_delivery_platform' platform.id %}"
+                                   class="btn btn-sm btn-outline-primary action-btn">
+                                    <i class="bi bi-pencil"></i> 
+                                </a>
+
+                                <a href="{% url 'delete_delivery_platform' platform.id %}"
+                                   class="btn btn-sm btn-outline-danger action-btn"
+                                   onclick="return confirm('Delete this platform?');">
+                                <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+
+                    {% empty %}
+                    <tr>
+                        <td colspan="3">
+                            <div class="text-center py-5 empty-state">
+                                <i class="bi bi-inbox text-muted"></i>
+                                <p class="fw-semibold mt-3 mb-1">
+                                    No Delivery Platforms Added
+                                </p>
+                                <small class="text-muted">
+                                    Click "Add Platform" to create one
+                                </small>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

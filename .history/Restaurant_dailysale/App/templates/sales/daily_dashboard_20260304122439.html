@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+{% block 'content' %}
+
+<style>
+    .premium-card {
+        border-radius: 18px;
+        background: #ffffff;
+    }
+
+    .kpi-card {
+        border-radius: 16px;
+        color: #ffffff;
+        padding: 15px;
+        text-align: center;
+    }
+
+    .kpi-card h6 {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        opacity: 0.9;
+    }
+
+    .kpi-card strong {
+        font-size: 20px;
+    }
+
+    .gradient-1 { background: linear-gradient(135deg, #0d6efd, #0a58ca); }
+    .gradient-2 { background: linear-gradient(135deg, #6f42c1, #59359c); }
+    .gradient-3 { background: linear-gradient(135deg, #fd7e14, #d65a00); }
+    .gradient-4 { background: linear-gradient(135deg, #20c997, #198754); }
+    .gradient-5 { background: linear-gradient(135deg, #6610f2, #520dc2); }
+    .gradient-total { background: linear-gradient(135deg, #198754, #146c43); }
+
+    .filter-card {
+        border-radius: 18px;
+        background: linear-gradient(135deg, #f8f9fa, #ffffff);
+        border: 1px solid #e9ecef;
+    }
+
+    .filter-card .form-control {
+        border-radius: 12px;
+        height: 44px;
+    }
+
+    .premium-table thead {
+        background-color: #1f2937;
+        color: #ffffff;
+    }
+
+    .premium-table th,
+    .premium-table td {
+        padding: 12px 10px;
+        font-size: 13.5px;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: middle;
+    }
+
+    .premium-table tbody tr:hover {
+        background-color: #f8fafc;
+        transition: 0.2s ease-in-out;
+    }
+
+    .action-btn {
+        border-radius: 8px;
+        padding: 5px 10px;
+        font-size: 13px;
+    }
+
+    .summary-card {
+        border-radius: 16px;
+        background: #ffffff;
+    }
+
+    .empty-state i {
+        font-size: 40px;
+        opacity: 0.5;
+    }
+</style>
+
+<div class="container-fluid py-4">
+
+    <!-- Header -->
+    <div class="card premium-card shadow-sm mb-4">
+        <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+                <h3 class="fw-bold mb-0">
+                    <i class="bi bi-graph-up text-success me-2"></i>
+                    Daily Sales Dashboard
+                </h3>
+                <small class="text-muted">Track daily branch sales performance</small>
+            </div>
+
+            <div class="d-flex gap-2">
+                <a href="{% url 'add_daily_sale' %}" class="btn btn-success rounded-pill px-4">
+                    <i class="bi bi-plus-circle me-1"></i> Add Daily Sale
+                </a>
+                <a href="{% url 'history_sales' %}" class="btn btn-outline-dark rounded-pill px-4">
+                    <i class="bi bi-clock-history me-1"></i> Sales History
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- KPI Cards -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-2">
+            <div class="kpi-card gradient-1 shadow-sm">
+                <h6>Breakfast</h6>
+                <strong>{{ totals.total_breakfast }}</strong>
+            </div>
+        </div>
+
+        <div class="col-md-2">
+            <div class="kpi-card gradient-2 shadow-sm">
+                <h6>Lunch</h6>
+                <strong>{{ totals.total_lunch }}</strong>
+            </div>
+        </div>
+
+        <div class="col-md-2">
+            <div class="kpi-card gradient-3 shadow-sm">
+                <h6>Dinner</h6>
+                <strong>{{ totals.total_dinner }}</strong>
+            </div>
+        </div>
+
+        <div class="col-md-2">
+            <div class="kpi-card gradient-4 shadow-sm">
+                <h6>Delivery</h6>
+                <strong>{{ totals.total_delivery }}</strong>
+            </div>
+        </div>
+
+        <div class="col-md-2">
+            <div class="kpi-card gradient-5 shadow-sm">
+                <h6>POS</h6>
+                <strong>{{ totals.total_pos }}</strong>
+            </div>
+        </div>
+
+        <div class="col-md-2">
+            <div class="kpi-card gradient-total shadow-sm">
+                <h6>Total Sales</h6>
+                <strong>{{ totals.total_sales }}</strong>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Filter -->
+    <div class="card filter-card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3 align-items-end">
+
+                <div class="col-md-3">
+                    <label class="fw-semibold small">Select Date</label>
+                    <input type="date"
+                           name="date"
+                           value="{{ selected_date|date:'Y-m-d' }}"
+                           class="form-control">
+                </div>
+
+                {% if request.user.user_type == 0 %}
+                <div class="col-md-3">
+                    <label class="fw-semibold small">Branch Name</label>
+                    <input type="text"
+                           name="branch"
+                           value="{{ request.GET.branch|default:'' }}"
+                           placeholder="Search Branch"
+                           class="form-control">
+                </div>
+                {% endif %}
+
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-dark w-100 rounded-pill">
+                        <i class="bi bi-funnel-fill me-1"></i> Filter
+                    </button>
+                </div>
+
+                <div class="col-md-2">
+                    <a href="{% url 'daily_sales_dashboard' %}"
+                       class="btn btn-outline-secondary w-100 rounded-pill">
+                        Reset
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- Sales Table -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 premium-table text-center">
+
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Branch</th>
+                        <th>Breakfast</th>
+                        <th>Lunch</th>
+                        <th>Dinner</th>
+                        <th>Delivery</th>
+                        <th>POS</th>
+                        <th>Total</th>
+                        <th>Cash</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for sale in sales %}
+                    <tr>
+                        <td>{{ sale.date|date:"d-m-Y" }}</td>
+                        <td>{{ sale.branch }}</td>
+
+                        <td>{{ sale.breakfast_total|default:0 }}</td>
+                        <td>{{ sale.lunch_total|default:0 }}</td>
+                        <td>{{ sale.dinner_total|default:0 }}</td>
+
+                        <td>{{ sale.delivery_total|default:0 }}</td>
+                        <td>{{ sale.pos_amount|default:0 }}</td>
+
+                        <td class="fw-bold text-success">
+                            {{ sale.total_sales|default:0 }}
+                        </td>
+
+                        <td class="fw-bold text-primary">
+                            {{ sale.cash_sales|default:0 }}
+                        </td>
+
+                        <td>
+                            <div class="d-flex justify-content-center gap-2">
+                                <a href="{% url 'edit_daily_sale' sale.id %}"
+                                   class="btn btn-sm btn-outline-primary action-btn">
+                                  <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'delete_daily_sale' sale.id %}"
+                                   class="btn btn-sm btn-outline-danger action-btn"
+                                   onclick="return confirm('Delete this sale record?');">
+                               <
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+
+                    {% empty %}
+                    <tr>
+                        <td colspan="10">
+                            <div class="text-center py-5 empty-state">
+                                <i class="bi bi-graph-down text-muted"></i>
+                                <p class="fw-semibold mt-3 mb-1">
+                                    No sales found
+                                </p>
+                                <small class="text-muted">
+                                    Try adjusting filters or add a new sale entry
+                                </small>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+    <!-- Summary -->
+    {% comment %} <div class="card summary-card shadow-sm p-4">
+        <h5 class="fw-bold mb-3">Daily Summary</h5>
+        <div class="row">
+            <div class="col-md-4">
+                <strong>Total Sales:</strong> ₹ {{ totals.total_sales|default:0 }}
+            </div>
+            <div class="col-md-4">
+                <strong>Total Cash:</strong> ₹ {{ totals.total_cash|default:0 }}
+            </div>
+            <div class="col-md-4">
+                <strong>Date:</strong> {{ selected_date }}
+            </div>
+        </div>
+    </div> {% endcomment %}
+
+</div>
+
+{% endblock %}

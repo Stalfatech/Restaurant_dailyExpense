@@ -3,7 +3,11 @@
 <html lang="en" dir="ltr" data-bs-theme="light">
 <head>
     <meta charset="utf-8">
-    <title>Register | Daily Sales</title>
+    {% comment %} <title>Register | Daily Sales</title> {% endcomment %}
+    <title>Register | {{ dashboard_profile.title }}</title>
+       {% if dashboard_profile.favicon %}
+    <link rel="icon" type="image/png" href="{{ dashboard_profile.favicon.url }}">
+    {% endif %}
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- Bootstrap CSS -->

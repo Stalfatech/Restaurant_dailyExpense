@@ -19,7 +19,9 @@
 
             <!-- App favicon -->
             {% comment %} <link rel="shortcut icon" href="{% static 'assets/images/favicon.ico' %}"> {% endcomment %}
-
+            {% if dashboard_profile.favicon %}
+    <link rel="icon" type="image/png" href="{{ dashboard_profile.favicon.url }}">
+    {% endif %}
        
 
      <!-- App css -->

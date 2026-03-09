@@ -142,7 +142,29 @@ def dashboard(request):
             'total_salary': total_paid,
             'balance_to_pay': balance_to_pay
         })
+    # ---------------- Manager Salaries Summary -----------------
+    manager_salaries = []
+    managers = [] 
 
+    if user.user_type == 0:  # Admin
+
+        managers = (
+        Manager.objects
+        .select_related('user', 'branch')
+        .annotate(
+            total_paid=Sum('manager_salaries__paid_amount'),
+            total_balance=Sum('manager_salaries__balance_salary')
+        )
+        .order_by('branch__name', 'user__name')
+    )
+
+    for manager in managers:
+        manager_salaries.append({
+            'manager': manager,
+            'branch': manager.user.branch,
+            'total_paid': manager.total_paid or 0,
+            'balance_salary': manager.total_balance or 0,
+        })
     # ---------------- Prepare template context -----------------
     context = {
         'daily_total': daily_total,
@@ -154,6 +176,7 @@ def dashboard(request):
         'monthly_sales': monthly_sales,
         'branch_cashbooks': branch_cashbooks,
         'staff_salaries': staff_salaries,
+        'manager_salaries': manager_salaries
     }
 
     return render(request, 'content_dash.html', context)
@@ -336,6 +359,8 @@ def reset_password(request, uidb64, token):
 
 from django.core.exceptions import ValidationError
 from .validators import phone_validator  # your validators.py
+from .utils import notify
+
 
 @never_cache
 def add_manager(request):
@@ -363,7 +388,7 @@ def add_manager(request):
 
         # Required fields
         if not all([name, phone, dob, address, joining_date, email, password, branch_id]):
-            messages.error(request, "All mandatory fields are required")
+            messages.info(request, "All mandatory fields are required")
             return render(request, 'Admin/add_manager.html', context)
 
         # 🔴 Phone Validation (FIELD LEVEL)
@@ -375,7 +400,7 @@ def add_manager(request):
 
         # Email exists
         if User.objects.filter(email=email).exists():
-            messages.error(request, "Email already exists")
+            messages.info(request, "Email already exists")
             return render(request, 'Admin/add_manager.html', context)
 
         try:
@@ -406,7 +431,7 @@ def add_manager(request):
                     photo=photo
                 )
 
-            messages.success(request, "Manager added successfully")
+            notify(request, "Manager added successfully")
             return redirect('manager_view')
 
         except Exception as e:
@@ -417,10 +442,15 @@ def add_manager(request):
         'branches': branches
     })
 
+from django.db.models import Q
+from .models import Manager, Notification
+from django.views.decorators.cache import never_cache
+
 @never_cache
 def manager_view(request):
     search_query = request.GET.get('search', '')
 
+    # Fetch managers with related user and branch
     managers = Manager.objects.select_related('user', 'user__branch').all().order_by('-id')
 
     if search_query:
@@ -428,9 +458,13 @@ def manager_view(request):
             Q(user__name__icontains=search_query)
         )
 
+    # ✅ Fetch all notifications for the current user
+
+
     return render(request, 'Admin/manager_list.html', {
         'managers': managers,
-        'search_query': search_query
+        'search_query': search_query,
+  
     })
 @never_cache
 def manager_delete(request, id):
@@ -439,7 +473,7 @@ def manager_delete(request, id):
     if request.method == "POST":
         try:
             manager.user.delete()   # This deletes Manager via CASCADE
-            messages.success(request, "Manager deleted successfully")
+            notify(request, "Manager deleted successfully")
         except:
             messages.error(request, "Unable to delete manager")
         return redirect('manager_view')
@@ -470,7 +504,7 @@ def manager_edit(request, id):
 
         # Basic validation
         if not all([name, email, phone, branch_id]):
-            messages.error(request, "All mandatory fields are required")
+            messages.info(request, "All mandatory fields are required")
             return render(request, 'Admin/manager_edit.html', {
                 'manager': manager,
                 'branches': branches,
@@ -491,7 +525,7 @@ def manager_edit(request, id):
         # Password validation (optional)
         if password or confirm_password:
             if password != confirm_password:
-                messages.error(request, "Passwords do not match")
+                messages.info(request, "Passwords do not match")
                 return render(request, 'Admin/manager_edit.html', {
                     'manager': manager,
                     'branches': branches,
@@ -499,7 +533,7 @@ def manager_edit(request, id):
                 })
 
             if len(password) < 8:
-                messages.error(request, "Password must be at least 8 characters")
+                messages.info(request, "Password must be at least 8 characters")
                 return render(request, 'Admin/manager_edit.html', {
                     'manager': manager,
                     'branches': branches,
@@ -533,7 +567,7 @@ def manager_edit(request, id):
 
                 manager.save()
 
-            messages.success(request, "Manager updated successfully")
+            notify(request, "Manager updated successfully")
             return redirect('manager_view')
 
         except Exception as e:
@@ -603,10 +637,13 @@ def dashboard_expenses(request):
     # Daily total
     daily_total = expenses.aggregate(total=Sum('amount'))['total'] or 0
 
+    
+
     return render(request, 'expenses/dashboard.html', {
         'expenses': expenses,
         'daily_total': daily_total,
-        'selected_date': selected_date
+        'selected_date': selected_date,
+   
     })
 
 
@@ -633,6 +670,9 @@ from datetime import date
 from decimal import Decimal
 
 from datetime import date
+import os
+from django.conf import settings
+from .ocr_reader import extract_invoice_amount
 
 @admin_or_manager_required
 def add_expense(request):
@@ -642,6 +682,15 @@ def add_expense(request):
 
     if form.is_valid():
         expense = form.save(commit=False)
+        invoice_file = request.FILES.get("invoice")
+        if invoice_file:
+            file_path = os.path.join(settings.MEDIA_ROOT, invoice_file.name)
+            with open(file_path, "wb+") as f:
+              for chunk in invoice_file.chunks():
+                f.write(chunk)
+            extracted_amount = extract_invoice_amount(file_path)
+            if extracted_amount and not expense.amount:
+                expense.amount = Decimal(str(extracted_amount))
 
         # Determine branch
         if user.user_type == 0:  # Admin
@@ -682,7 +731,7 @@ def add_expense(request):
         if expense.status == "Approved":
             update_cashbook(expense.branch, expense.date)
 
-        messages.success(request, "Expense added successfully ✅")
+        notify(request, "Expense added successfully ✅")
         return redirect('dashboard_expenses')
 
     return render(request, 'expenses/expense_form.html', {
@@ -691,6 +740,25 @@ def add_expense(request):
         'page_title': 'Add Expense'
     })
 
+from django.http import JsonResponse
+
+def extract_invoice_amount_view(request):
+
+    if request.method == "POST" and request.FILES.get("invoice"):
+
+        invoice = request.FILES["invoice"]
+
+        path = os.path.join(settings.MEDIA_ROOT, invoice.name)
+
+        with open(path, "wb+") as f:
+            for chunk in invoice.chunks():
+                f.write(chunk)
+
+        amount = extract_invoice_amount(path)
+
+        return JsonResponse({"amount": amount})
+
+    return JsonResponse({"amount": None})
 
 from datetime import timedelta
 
@@ -839,6 +907,16 @@ def edit_expense(request, pk):
     if form.is_valid():
 
         updated_expense = form.save(commit=False)
+        invoice_file = request.FILES.get("invoice")
+        if invoice_file:
+            file_path = os.path.join(settings.MEDIA_ROOT, invoice_file.name)
+            with open(file_path, "wb+") as f:
+              for chunk in invoice_file.chunks():
+                f.write(chunk)
+            extracted_amount = extract_invoice_amount(file_path)
+
+            if extracted_amount:
+              updated_expense.amount = Decimal(str(extracted_amount))
 
         if user.user_type == 0:
             branch = form.cleaned_data.get('branch')
@@ -863,7 +941,7 @@ def edit_expense(request, pk):
         if updated_expense.status == "Approved":
             update_cashbook(updated_expense.branch, updated_expense.date)
 
-        messages.success(request, "Expense updated successfully.")
+        notify(request, "Expense updated successfully.")
         return redirect('dashboard_expenses')
 
     return render(request, 'expenses/expense_form.html', {
@@ -891,7 +969,7 @@ def delete_expense(request, pk):
         if was_approved:
             update_cashbook(branch, expense_date)
 
-        messages.success(request, "Expense deleted successfully.")
+        notify(request, "Expense deleted successfully.")
         return redirect('dashboard_expenses')
 
     return render(request, 'expenses/delete_confirm.html', {'expense': expense})
@@ -975,7 +1053,7 @@ def add_supplier(request):
     form = SupplierForm(request.POST or None)
     if form.is_valid():
         form.save()
-        messages.success(request, "Supplier added successfully.")
+        notify(request, "Supplier added successfully.")
         return redirect('supplier_list')
     return render(request, 'expenses/supplier_form.html', {'form': form})
 
@@ -998,10 +1076,13 @@ def supplier_list(request):
         suppliers = suppliers.filter(
             Q(name__icontains=query)
         )
+        
+ 
 
     return render(request, 'expenses/supplier_list.html', {
         'suppliers': suppliers,
-        'query': query
+        'query': query,
+ 
     })
 # ✅ EDIT
 @admin_or_manager_required
@@ -1011,7 +1092,7 @@ def edit_supplier(request, pk):
 
     if form.is_valid():
         form.save()
-        messages.success(request, "Supplier updated successfully.")
+        notify(request, "Supplier updated successfully.")
         return redirect('supplier_list')
 
     return render(request, 'expenses/supplier_form.html', {
@@ -1027,7 +1108,7 @@ def delete_supplier(request, pk):
 
     if request.method == "POST":
         supplier.delete()
-        messages.success(request, "Supplier deleted successfully.")
+        notify(request, "Supplier deleted successfully.")
         return redirect('supplier_list')
 
     return render(request, 'expenses/supplier_delete.html', {
@@ -1043,13 +1124,14 @@ def add_product(request):
     
     if form.is_valid():
         form.save()
-        messages.success(request, "Product added successfully.")  # <-- Success message
+        notify(request, "Product added successfully.")  # <-- Success message
         return redirect('product_list')  # <-- Redirect to list or dashboard
 
     return render(request, 'expenses/product_form.html', {'form': form})
 @admin_or_manager_required
 def product_list(request):
     query = request.GET.get('q')
+
 
     if request.user.user_type == 0:
         products = Product.objects.all()
@@ -1064,7 +1146,8 @@ def product_list(request):
 
     return render(request, 'expenses/product_list.html', {
         'products': products,
-        'query': query
+        'query': query,
+   
     })
 # ✅ EDIT
 @admin_or_manager_required
@@ -1074,7 +1157,7 @@ def edit_product(request, pk):
 
     if form.is_valid():
         form.save()
-        messages.success(request, "Product updated successfully.")
+        notify(request, "Product updated successfully.")
         return redirect('product_list')
 
     return render(request, 'expenses/product_form.html', {
@@ -1090,7 +1173,7 @@ def delete_product(request, pk):
 
     if request.method == "POST":
         product.delete()
-        messages.success(request, "Product deleted successfully.")
+        notify(request, "Product deleted successfully.")
         return redirect('product_list')
 
     return render(request, 'expenses/product_delete.html', {
@@ -1126,7 +1209,7 @@ def add_branch(request):
             return redirect('branch_add')
 
         if Branch.objects.filter(name=name).exists():
-            messages.error(request, "Branch name already exists")
+            messages.info(request, "Branch name already exists")
             return redirect('branch_add')
 
         Branch.objects.create(
@@ -1134,7 +1217,7 @@ def add_branch(request):
             location=location
         )
 
-        messages.success(request, "Branch added successfully")
+        notify(request, "Branch added successfully")
         return redirect('branch_list')
 
     return render(request, 'Admin/add_branch.html')
@@ -1152,8 +1235,11 @@ def branch_list(request):
     if branch_name:
         branches = branches.filter(name__icontains=branch_name)
 
+
     return render(request, 'Admin/branch_list.html', {
-        'branches': branches
+        'branches': branches,
+    
+        
     })
 
 
@@ -1171,7 +1257,7 @@ def edit_branch(request, id):
         branch.location = request.POST.get('location')
         branch.save()
 
-        messages.success(request, "Branch updated successfully")
+        notify(request, "Branch updated successfully")
         return redirect('branch_list')
 
     return render(request, 'Admin/add_branch.html', {
@@ -1191,7 +1277,7 @@ def delete_branch(request, id):
 
     if request.method == "POST":
         branch.delete()
-        messages.success(request, "Branch deleted successfully")
+        notify(request, "Branch deleted successfully")
         return redirect('branch_list')
 
     return render(request, 'Admin/branch_delete.html', {
@@ -1267,26 +1353,28 @@ def add_staff(request):
             created_by=request.user
         )
 
-        messages.success(request, "Staff added successfully ✅")
+        notify(request, "Staff added successfully ✅")
         return redirect('staff_list')
 
     return render(request, 'Manager/staff_add.html')
 
-def staff_list(request):
+# def staff_list(request):
 
-    user = request.user
+#     user = request.user
 
-    # If Admin → show all staff
-    if user.user_type == 0:
-        staffs = Staff.objects.all().order_by('id')
+#     # If Admin → show all staff
+#     if user.user_type == 0:
+#         staffs = Staff.objects.all().order_by('id')
 
-    # If Manager → show only their branch staff
-    else:
-        staffs = Staff.objects.filter(branch=user.branch).order_by('id')
+#     # If Manager → show only their branch staff
+#     else:
+#         staffs = Staff.objects.filter(branch=user.branch).order_by('id')
+ 
 
-    return render(request, 'Manager/staff_list.html', {
-        'staffs': staffs
-    })
+#     return render(request, 'Manager/staff_list.html', {
+#         'staffs': staffs,
+     
+#     })
 
 def staff_list(request):
 
@@ -1310,10 +1398,12 @@ def staff_list(request):
     # 🔹 Order at the end
     staffs = staffs.order_by('id')
 
+
     return render(request, 'Manager/staff_list.html', {
         'staffs': staffs,
         'roles': roles,
-        'selected_role': selected_role
+        'selected_role': selected_role,
+    
     })
 
 
@@ -1373,7 +1463,7 @@ def edit_staff(request, id):
         staff.status = status
         staff.save()
 
-        messages.success(request, "Staff updated successfully ✅")
+        notify(request, "Staff updated successfully ✅")
         return redirect('staff_list')
 
     return render(request, 'Manager/staff_edit.html', {
@@ -1384,8 +1474,8 @@ def delete_staff(request, id):
 
     staff.delete()
 
-    messages.success(request, "Staff deleted successfully 🗑️")
-    return redirect('staff_list')
+    notify(request, "Staff deleted successfully 🗑️")
+    return redirect('adminview_staff')
 
 
 User = get_user_model()
@@ -1430,6 +1520,8 @@ def adminview_staff(request):
             branch=user.branch
         ).values_list('role', flat=True).distinct()
         branches = Branch.objects.filter(id=user.branch.id)
+        
+  
 
     return render(request, 'Admin/stafflist_view.html', {
         'staffs': staffs,
@@ -1438,6 +1530,7 @@ def adminview_staff(request):
         'selected_role': selected_role,
         'selected_name': selected_name,
         'selected_branch': selected_branch,
+     
     })
 
 
@@ -1523,7 +1616,7 @@ def add_daily_sale(request):
 
             update_cashbook(sale.branch, sale.date)
 
-            messages.success(request, "Daily Sale Added Successfully ✅")
+            notify(request, "Daily Sale Added Successfully ✅")
             return redirect('daily_sales_dashboard')
 
         else:
@@ -1619,11 +1712,13 @@ def daily_sales_dashboard(request):
             sale.items.filter(meal_type="Dinner")
             .values_list("item_name", flat=True)
         )
+ 
 
     return render(request, 'sales/daily_dashboard.html', {
         'sales': sales,
         'totals': totals,
-        'selected_date': selected_date,
+        'selected_date': selected_date
+ 
     })
 
 @admin_or_manager_required
@@ -1688,7 +1783,7 @@ def edit_daily_sale(request, pk):
             update_cashbook(old_branch, old_date)
             update_cashbook(sale.branch, sale.date)
 
-            messages.success(request, "Sale Updated Successfully ✅")
+            notify(request, "Sale Updated Successfully ✅")
             return redirect('daily_sales_dashboard')
 
         else:
@@ -1745,7 +1840,7 @@ def delete_daily_sale(request, pk):
             # 🔄 Recalculate cashbook
             update_cashbook(sale_branch, sale_date)
 
-        messages.success(request, "Daily sale deleted successfully ✅")
+        notify(request, "Daily sale deleted successfully ✅")
         return redirect('daily_sales_dashboard')
 
     return render(request, 'sales/delete_daily_sale.html', {
@@ -1852,11 +1947,15 @@ def delivery_platform_list(request):
         platforms = DeliveryPlatform.objects.filter(name__icontains=query).order_by('name')
     else:
         platforms = DeliveryPlatform.objects.all().order_by('name')
+        
+        
+    # ✅ all notifications
 
     return render(request, 'sales/delivery_platform_list.html', {
         'platforms': platforms,
         'page_title': 'Manage Delivery Platforms',
-        'search_query': query,  # pass current query to template
+        'search_query': query,
+    
     })
 
 
@@ -1867,7 +1966,7 @@ def add_delivery_platform(request):
     if request.method == "POST":
         if form.is_valid():
             form.save()
-            messages.success(request, "Delivery Platform Added Successfully ✅")
+            notify(request, "Delivery Platform Added Successfully ✅")
             return redirect('delivery_platform_list')
 
     return render(request, 'sales/add_delivery_platform.html', {
@@ -1884,7 +1983,7 @@ def edit_delivery_platform(request, pk):
     if request.method == "POST":
         if form.is_valid():
             form.save()
-            messages.success(request, "Delivery Platform Updated Successfully ✏️")
+            notify(request, "Delivery Platform Updated Successfully ✏️")
             return redirect('delivery_platform_list')
 
     return render(request, 'sales/add_delivery_platform.html', {
@@ -1899,7 +1998,7 @@ def delete_delivery_platform(request, pk):
 
     if request.method == "POST":
         platform.delete()
-        messages.success(request, "Delivery Platform Deleted Successfully 🗑️")
+        notify(request, "Delivery Platform Deleted Successfully 🗑️")
         return redirect('delivery_platform_list')
 
     return render(request, 'sales/delivery_platform_delete.html', {
@@ -1952,7 +2051,7 @@ def toggle_day(request, branch_id, date):
     cash.save()
 
     status = "closed" if cash.is_closed else "reopened"
-    messages.info(request, f"Day {status} successfully ✅")
+    notify(request, f"Day {status} successfully ✅")
 
     # Redirect back to your dashboard
     return redirect('cashbook_dashboard')  # replace with your actual page
@@ -2168,7 +2267,7 @@ def add_salary(request):
             created_by=request.user
         )
 
-        messages.success(request, f"Salary Added Successfully. Final Balance: {balance_salary}")
+        notify(request, f"Staff Salary Added Successfully. Final Balance: {balance_salary}")
         return redirect('salary_list')
 
     return render(request, "Manager/salary_add.html", {
@@ -2348,7 +2447,7 @@ def edit_salary(request, pk):
 
         salary.save()
 
-        messages.success(request, "Salary updated successfully")
+        notify(request, "Staff Salary updated successfully")
         return redirect('salary_list')
 
     return render(request, 'Manager/salary_edit.html', {
@@ -2371,7 +2470,7 @@ def delete_salary(request, pk):
 
     salary.delete()
 
-    messages.success(request, "Salary deleted successfully.")
+    notify(request, "Staff Salary deleted successfully.")
     return redirect('salary_list')
 
 @login_required
@@ -2404,11 +2503,15 @@ def daily_salary_report(request):
     total_advance = salaries.aggregate(
         total=Sum("adjusted_advance")
     )["total"] or 0
+    total_balance = salaries.aggregate(
+        total=Sum("balance_salary")
+    )["total"] or 0
 
     context = {
         "salaries": salaries,
         "total_paid": total_paid,
         "total_advance": total_advance,
+        "total_balance": total_balance,
         "selected_date": selected_date,
         "staff_name": staff_name,
         "today_date": date.today().strftime("%Y-%m-%d"),
@@ -2454,6 +2557,8 @@ def send_staff_daily_salary_report(request):
         "total_advance": totals["total_advance"] or Decimal("0.00"),
         "total_balance": totals["total_balance"] or Decimal("0.00"),
         "selected_date": selected_date,
+        "manager": request.user.name,
+        "branch_name": request.user.branch.name,
     }
 
     # Generate PDF
@@ -2482,7 +2587,7 @@ def send_staff_daily_salary_report(request):
                 pdf
             )
 
-            messages.info(request, "Daily salary report sent via Email.")
+            notify(request, "Daily Staff salary report sent via Email.")
             return redirect(f"{reverse('daily_salary_report')}?{query_params}")
 
         # WhatsApp
@@ -2546,6 +2651,7 @@ def monthly_salary_report(request):
 
     # Next Month Advance
     total_next_advance = salaries.aggregate(total=Sum('next_month_advance_amount'))['total'] or 0
+    total_balance = salaries.aggregate(total=Sum('balance_salary'))['total'] or 0
 
 
     context = {
@@ -2553,12 +2659,108 @@ def monthly_salary_report(request):
         'total_paid': total_paid,
         'total_advance': total_advance,
         'total_next_advance': total_next_advance,
+        'total_balance': total_balance,
         'selected_month': month,
         'selected_year': year,
         'staff_name': staff_name,
     }
 
     return render(request, "Manager/monthly_salaryreport.html", context)
+@login_required
+def send_monthly_salary_report(request):
+
+    report_type = "monthly_salary"
+    query_params = request.GET.urlencode()
+
+    month = request.GET.get('month', '')
+    year = request.GET.get('year', '')
+    staff_name = request.GET.get('staff', '')
+
+    salaries = Salary.objects.filter(
+        branch=request.user.branch,
+        staff__salary_type="Monthly"
+    )
+
+    # Filters
+    if month:
+        salaries = salaries.filter(salary_month__iexact=month)
+
+    if year:
+        salaries = salaries.filter(salary_year=year)
+
+    if staff_name:
+        salaries = salaries.filter(staff__name__icontains=staff_name)
+
+    # Totals
+    totals = salaries.aggregate(
+        total_paid=Sum('paid_amount'),
+        total_advance=Sum('adjusted_advance'),
+        total_next_advance=Sum('next_month_advance_amount'),
+        total_balance=Sum('balance_salary')
+    )
+
+    context = {
+        'salaries': salaries.order_by('-id'),
+        'total_paid': totals['total_paid'] or Decimal("0.00"),
+        'total_advance': totals['total_advance'] or Decimal("0.00"),
+        'total_next_advance': totals['total_next_advance'] or Decimal("0.00"),
+        'total_balance': totals['total_balance'] or Decimal("0.00"),
+        'selected_month': month,
+        'selected_year': year,
+        'manager': request.user.name,
+        'branch': request.user.branch,
+    }
+
+    # Generate PDF
+    pdf = generate_pdf(
+        "Manager/monthly_salary_export.html",
+        context
+    )
+
+    # Send Actions
+    if request.method == "POST":
+
+        send_via = request.POST.get("send_via")
+        email = (request.POST.get("email") or "").strip()
+        number = (request.POST.get("whatsapp") or "").strip()
+
+        # Email
+        if send_via == "email":
+            if not email:
+                messages.info(request, "Enter email")
+                return redirect(f"{reverse('export_report_page', args=[report_type])}?{query_params}")
+
+            send_email_report(
+                email,
+                "Staff Monthly Salary Report",
+                f"Total Paid: {context['total_paid']}",
+                pdf
+            )
+
+            notify(request, "Monthly  Staff salary report sent via Email.")
+            return redirect(f"{reverse('monthly_salary_report')}?{query_params}")
+
+        # WhatsApp
+        elif send_via == "whatsapp":
+            if not number:
+                messages.info(request, "Enter WhatsApp number")
+                return redirect(f"{reverse('export_report_page', args=[report_type])}?{query_params}")
+
+            pdf_link = save_pdf_and_get_link(request, pdf)
+
+            message = (
+                f"Staff Monthly Salary Report\n"
+                f"Total Paid: {context['total_paid']}\n"
+                f"Download: {pdf_link}"
+            )
+
+            return send_whatsapp(number, message)
+
+    return render(request, "reports/export_page.html", {
+        "report_type": report_type,
+        "query_params": query_params,
+        "action_url": reverse("send_monthly_salary_report")
+    })
 
 
 @login_required
@@ -2803,7 +3005,7 @@ def admin_add_staff(request):
             created_by=request.user
         )
 
-        messages.success(request, f"Staff '{name}' added successfully ✅")
+        notify(request, f"Staff '{name}' added successfully ✅")
         return redirect("adminview_staff")
 
     return render(request, "Admin/adminstaff_add.html", {
@@ -2880,7 +3082,7 @@ def admin_edit_staff(request, id):
 
         staff.save()
 
-        messages.success(request, f"Staff '{name}' updated successfully ✅")
+        notify(request, f"Staff '{name}' updated successfully ✅")
         return redirect("adminview_staff")
 
     return render(request, "Admin/admin_edit_staff.html", {
@@ -2895,7 +3097,7 @@ def admindelete_staff(request, id):
 
     staff.delete()
 
-    messages.success(request, "Staff deleted successfully 🗑️")
+    notify(request, "Staff deleted successfully 🗑️")
     return redirect('adminview_staff')
 
 
@@ -2971,7 +3173,7 @@ def adminadd_salary(request):
             created_by=request.user
         )
 
-        messages.success(request, f"Salary Added Successfully. Final Balance: {balance_salary}")
+        notify(request, f"Staff Salary Added Successfully. Final Balance: {balance_salary}")
         return redirect('admin_salary_list')
 
     return render(request, 'Admin/admin_add_salary.html', {
@@ -3082,7 +3284,7 @@ def adminedit_salary(request, pk):
 
         salary.save()
 
-        messages.success(request, "Salary updated successfully")
+        notify(request, "Staff Salary updated successfully")
         return redirect('admin_salary_list')
 
     return render(request, 'Admin/adminsalary_edit.html', {
@@ -3111,7 +3313,7 @@ def admindelete_salary(request, pk):
 
     salary.delete()
 
-    messages.success(request, "Salary deleted successfully.")
+    notify(request, "Staff Salary deleted successfully.")
 
     return redirect('admin_salary_list')
 
@@ -3251,7 +3453,7 @@ def manager_salary(request):
             salary_month=salary_month,
             salary_year=salary_year
         ).exists():
-            messages.error(request, "Salary already added for this month.")
+            messages.info(request, "Salary already added for this month.")
             return redirect("manager_salary_list")
 
         # -------------------------
@@ -3312,7 +3514,7 @@ def manager_salary(request):
             created_by=request.user,
         )
 
-        messages.success(request, "Manager salary added successfully.")
+        notify(request, "Manager salary added successfully.")
         return redirect("manager_salary_list")
 
     context = {
@@ -3454,7 +3656,7 @@ def manager_salary_edit(request, pk):
         salary.next_month_year = int(next_year) if next_year else None
 
         salary.save()
-        messages.success(request, "Manager salary updated successfully")
+        notify(request, "Manager salary updated successfully")
         return redirect("manager_salary_list")
 
     context = {
@@ -3478,7 +3680,7 @@ def managerdelete_salary(request, pk):
 
     salary.delete()
 
-    messages.success(request, "Manager salary deleted successfully")
+    notify(request, "Manager salary deleted successfully")
 
     return redirect("manager_salary_list")
 
@@ -3625,12 +3827,25 @@ from .forms import CommunicationSettingsForm
 
 
 # ================= LIST PAGE =================
-def communication_settings_list(request):
-    settings = CommunicationSettings.objects.all()
-    return render(request, 'Admin/communication_settings_list.html', {
-        'settings': settings
-    })
+from django.db.models import Q
 
+def communication_settings_list(request):
+    search_query = request.GET.get('search', '').strip()
+    
+    settings = CommunicationSettings.objects.all()
+    
+    if search_query:
+        # Filter by email host, email user, or WhatsApp number
+        settings = settings.filter(
+            Q(email_host__icontains=search_query) |
+            Q(email_host_user__icontains=search_query) |
+            Q(whatsapp_number__icontains=search_query)
+        )
+
+    return render(request, 'Admin/communication_settings_list.html', {
+        'settings': settings,
+        'search_query': search_query,
+    })
 
 # ================= ADD =================
 def communication_settings_add(request):
@@ -3641,7 +3856,7 @@ def communication_settings_add(request):
 
             if config.is_active:
                    CommunicationSettings.objects.exclude(id=config.id).update(is_active=False)
-            messages.success(request, "Settings added successfully")
+            notify(request, "Settings added successfully")
             return redirect('communication_settings_list')
     else:
         form = CommunicationSettingsForm()
@@ -3664,7 +3879,7 @@ def communication_settings_edit(request, pk):
             if config.is_active:
                 
                 CommunicationSettings.objects.exclude(id=config.id).update(is_active=False)
-            messages.success(request, "Settings updated successfully")
+            notify(request, "Settings updated successfully")
             return redirect('communication_settings_list')
     else:
         form = CommunicationSettingsForm(instance=config)
@@ -3679,7 +3894,7 @@ def communication_settings_edit(request, pk):
 def communication_settings_delete(request, pk):
     config = get_object_or_404(CommunicationSettings, pk=pk)
     config.delete()
-    messages.success(request, "Settings deleted successfully")
+    notify(request, "Settings deleted successfully")
     return redirect('communication_settings_list')
 
 def reports_list(request):
@@ -3689,28 +3904,49 @@ def reports_list(request):
         {"name": "Expense History", "url": "history_expenses"},
      
     ]
-    if request.user.user_type == 0:  # Admin and Manager
+    if request.user.user_type == 0:  # Admin 
         reports += [
             {"name": "Staff Daily Salary Report", "url": "admin_daily_salary_list"},
             {"name": "Staff Monthly Salary Report", "url": "admin_monthly_salary_report"},
             {"name": "Manager Monthly Salary Report", "url": "manager_monthly_report"},
         ]
+    if request.user.user_type == 1:  # Manager
+        reports += [
+            {"name": "Staff Daily Salary Report", "url": "daily_salary_report"},
+            {"name": "Staff Monthly Salary Report", "url": "monthly_salary_report"},
+         
+        ]
     return render(request, "reports/reports_list.html", {"reports": reports})
+from django.shortcuts import redirect
+from django.contrib import messages
+from django.urls import reverse
+
 def export_report_page(request, report_type):
+
     query_params = request.GET.urlencode()
 
-    if report_type == "expense":
-        action_url = reverse('send_expense_report')
-    elif report_type == "delivery":
-        action_url = reverse('send_report', args=['delivery'])
-    elif report_type == "sales":
-        action_url = reverse('send_sales_report')
-    elif report_type == "staff_daily_salary":
-        action_url = reverse('send_adminstaff_daily_salary_report')
-    elif report_type == "staff_monthly_salary":
-        action_url = reverse('send_adminstaff_monthly_salary_report')
-    elif report_type == "manager_monthly_salary":
-        action_url = reverse('send_manager_monthly_report')
+    REPORT_ACTIONS = {
+        "expense": "send_expense_report",
+        "delivery": ("send_report", ["delivery"]),
+        "sales": "send_sales_report",
+        "staff_daily_salary": "send_adminstaff_daily_salary_report",
+        "staff_monthly_salary": "send_adminstaff_monthly_salary_report",
+        "manager_monthly_salary": "send_manager_monthly_report",
+        "daily_salary": "send_staff_daily_salary_report",
+        "monthly_salary": "send_monthly_salary_report",
+    }
+
+    if report_type not in REPORT_ACTIONS:
+        messages.error(request, "Invalid report type.")
+        return redirect("reports_list")
+
+    action = REPORT_ACTIONS[report_type]
+
+    # Handle URL with args (like delivery)
+    if isinstance(action, tuple):
+        action_url = reverse(action[0], args=action[1])
+    else:
+        action_url = reverse(action)
 
     return render(request, "reports/export_page.html", {
         'report_type': report_type,
@@ -3820,7 +4056,7 @@ def send_report(request, report_type):
                 f"Delivery Total: {grand_total}",
                 pdf
             )
-            messages.success(request, "Report sent successfully via Email.")
+            notify(request, "Delivery Report sent successfully via Email.")
             return redirect(f"{reverse('delivery_report')}?{query_params}")
 
         # ===== WhatsApp Validation =====
@@ -3945,6 +4181,17 @@ def admin_profile(request):
         name    = request.POST.get("first_name")
         contact = request.POST.get("phone")
         email   = request.POST.get("email")
+        if not name or not contact or not email:
+            messages.info(request, "Name, Phone and Email are required")
+            return redirect("admin_profile")
+        try:
+           phone_validator(contact)
+        except ValidationError as e:
+           messages.error(request, e.message)
+           return render(request, "Profiles/admin_profile.html", {
+                "user_obj": user,
+                "profile": profile
+            })
 
         if profile:
             profile.name = name
@@ -3965,7 +4212,7 @@ def admin_profile(request):
 
         user.save()
 
-        messages.success(request, "Profile updated successfully")
+        notify(request, "Admin Profile updated successfully")
         return redirect("admin_profile")
 
     # ============================
@@ -3979,12 +4226,12 @@ def admin_profile(request):
 
         # current password check
         if not user.check_password(current):
-            messages.error(request, "Current password is incorrect")
+            messages.info(request, "Current password is incorrect")
             return redirect("admin_profile")
 
         # new & confirm check
         if new != confirm:
-            messages.error(request, "Passwords do not match")
+            messages.info(request, "Passwords do not match")
             return redirect("admin_profile")
 
         # ✅ exactly 8 characters, letters or digits only
@@ -3999,7 +4246,7 @@ def admin_profile(request):
         user.save()
         update_session_auth_hash(request, user)
 
-        messages.success(request, "Password updated successfully")
+        notify(request, "Password updated successfully")
         return redirect("admin_profile")
 
     context = {
@@ -4052,7 +4299,7 @@ def manager_profile(request):
 
         manager.save()
 
-        messages.success(request, "Profile updated successfully")
+        notify(request, "Manager Profile updated successfully")
         return redirect("manager_profile")
 
     # ---------------------------
@@ -4290,7 +4537,7 @@ def send_expense_report(request):
                 f"Total Expense: {total}",
                 pdf
             )
-            messages.success(request, "Expense report sent via Email.")
+            notify(request, "Expense report sent via Email.")
             return redirect(f"{reverse('history_expenses')}?{query_params}")
 
         # ===== WhatsApp Validation =====
@@ -4414,7 +4661,7 @@ def send_sales_report(request):
                 f"Total Sales: {grand_total}",
                 pdf
             )
-            messages.success(request, "Sales report sent via Email.")
+            notify(request, "Sales report sent via Email.")
             return redirect(f"{reverse('history_sales')}?{query_params}")
 
         # ===== WhatsApp Validation =====
@@ -4497,7 +4744,8 @@ def send_adminstaff_daily_salary_report(request):
         "selected_date": selected_date,
         "staff_name": staff_name,
         "selected_branch": selected_branch,
-        "total_balance": total_balance
+        "total_balance": total_balance,
+        
     }
 
     # ===== Generate PDF =====
@@ -4521,8 +4769,8 @@ def send_adminstaff_daily_salary_report(request):
                 f"Total Paid: {total_paid}",
                 pdf
             )
-            messages.success(request, "Staff daily salary report sent via Email.")
-            return redirect(f"{reverse('admin_daily_salary_list')}?{query_params}")
+            notify(request, "Staff daily salary report sent via Email.")
+            return redirect(f"{reverse('admin_salary_list')}?{query_params}")
 
         # WhatsApp
         elif send_via == "whatsapp":
@@ -4630,8 +4878,8 @@ def send_adminstaff_monthly_salary_report(request):
                 f"Total Paid: {total_paid}",
                 pdf
             )
-            messages.info(request, "Monthly staff salary report sent via Email.")
-            return redirect(f"{reverse('admin_monthly_salary_report')}?{query_params}")
+            notify(request, "Monthly staff salary report sent via Email.")
+            return redirect(f"{reverse('admin_salary_list')}?{query_params}")
 
         # WhatsApp
         elif send_via == "whatsapp":
@@ -4740,8 +4988,8 @@ def send_manager_monthly_report(request):
                 pdf
             )
 
-            messages.info(request, "Manager monthly report sent via Email.")
-            return redirect(f"{reverse('manager_monthly_report')}?{query_params}")
+            notify(request, "Manager monthly salary report sent via Email.")
+            return redirect(f"{reverse('manager_salary_list')}?{query_params}")
 
         # WhatsApp
         elif send_via == "whatsapp":
@@ -4765,3 +5013,74 @@ def send_manager_monthly_report(request):
         "query_params": query_params,
         "action_url": reverse("send_manager_monthly_report")
     })
+    
+    
+    
+    
+from django.shortcuts import render
+from django.core.paginator import Paginator
+from .models import Notification
+
+
+from django.shortcuts import render
+from django.core.paginator import Paginator
+from datetime import datetime
+from .models import Notification
+from django.shortcuts import render
+from django.core.paginator import Paginator
+from datetime import datetime, timedelta
+from .models import Notification
+
+
+from django.shortcuts import render, redirect
+from django.core.paginator import Paginator
+from datetime import datetime, timedelta
+from .models import Notification
+
+def notifications_list(request):
+    user = request.user
+
+    # Start with all notifications for admins
+    if user.user_type == 0:  # Admin
+        notifications = Notification.objects.all().order_by('-created_at')
+    elif user.user_type == 1:  # Manager
+        # Only notifications from their branch
+        notifications = Notification.objects.filter(branch=user.branch).order_by('-created_at')
+    else:
+        # Other users see nothing
+        notifications = Notification.objects.none()
+
+    # Date filter
+    date_str = request.GET.get('date')
+    if date_str:
+        try:
+            selected_date = datetime.strptime(date_str, "%Y-%m-%d")
+            start_date = selected_date
+            end_date = selected_date + timedelta(days=1)
+            notifications = notifications.filter(
+                created_at__gte=start_date,
+                created_at__lt=end_date
+            )
+        except ValueError:
+            selected_date = None
+
+    # Pagination
+    paginator = Paginator(notifications, 10)
+    page = request.GET.get('page')
+    notifications = paginator.get_page(page)
+
+    context = {
+        "notifications": notifications,
+        "selected_date": date_str or "",
+    }
+    return render(request, "notifications/list.html", context)
+
+
+def delete_all_notifications(request):
+    user = request.user
+    if request.method == "POST":
+        if user.user_type == 0:  # Admin can delete all
+            Notification.objects.all().delete()
+        elif user.user_type == 1:  # Manager deletes only branch notifications
+            Notification.objects.filter(branch=user.branch).delete()
+    return redirect("notifications_list")

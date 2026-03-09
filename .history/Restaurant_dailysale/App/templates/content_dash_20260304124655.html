@@ -1,0 +1,354 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block 'content' %}
+
+<style>
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+.dashboard-wrapper {
+    padding: 40px;
+}
+
+/* ================= GLASS CARD ================= */
+.glass-card {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    transition: 0.3s ease;
+}
+
+.glass-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Accent Borders */
+.border-danger-glow { border-left: 4px solid #ef4444; }
+.border-success-glow { border-left: 4px solid #22c55e; }
+.border-primary-glow { border-left: 4px solid #3b82f6; }
+.border-warning-glow { border-left: 4px solid #f59e0b; }
+
+/* Tables */
+.table th {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.table tbody tr:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+/* Calendar */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    text-align: center;
+}
+
+.calendar-day {
+    padding: 8px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.05);
+}
+
+.calendar-day.today {
+    background: #3b82f6;
+    color: #fff;
+    font-weight: bold;
+}
+</style>
+
+<div class="container-fluid dashboard-wrapper">
+
+    <!-- TITLE -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="fw-bold">Dashboard Overview</h3>
+        </div>
+    </div>
+
+    <!-- SUMMARY CARDS -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-lg-4">
+            <div class="glass-card p-4 border-danger-glow">
+                <p class="small text-uppercase mb-1">Daily Expense</p>
+                <h2>{{ daily_total }}</h2>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="glass-card p-4 border-success-glow">
+                <p class="small text-uppercase mb-1">Daily Sales</p>
+                <h2>{{ daily_sales_total }}</h2>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="glass-card p-4 border-primary-glow">
+                <p class="small text-uppercase mb-1">Net Profit</p>
+                <h2>{{ net_profit }}</h2>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- BRANCH BALANCES -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="glass-card p-4 border-primary-glow">
+                <div class="d-flex justify-content-between mb-3">
+                    <h5 class="mb-0">Branch Balances</h5>
+                    {% if request.user.user_type == 0 %}
+                    <input type="text" id="branchSearch"
+                           class="form-control form-control-sm w-auto"
+                           placeholder="Search branch...">
+                    {% endif %}
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table" id="branchTable">
+                        <thead>
+                            <tr>
+                                <th>Branch</th>
+                                <th>Opening</th>
+                                <th>Closing</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cash in branch_cashbooks %}
+                            <tr>
+                                <td class="branch-name">{{ cash.branch.name }}</td>
+                                <td>{{ cash.opening_balance }}</td>
+                                <td>{{ cash.closing_balance }}</td>
+                                <td>
+                                    <span class="badge {% if cash.is_closed %}bg-danger{% else %}bg-success{% endif %}">
+                                        {% if cash.is_closed %}Closed{% else %}Open{% endif %}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No data available</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STAFF SALARIES -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="glass-card p-4 border-success-glow">
+                <div class="d-flex justify-content-between mb-3">
+                    <h5 class="mb-0">Staff Salaries</h5>
+                    {% if request.user.user_type == 0 %}
+                    <input type="text" id="staffSearch"
+                           class="form-control form-control-sm w-auto"
+                           placeholder="Search staff...">
+                    {% endif %}
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table" id="staffTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Branch</th>
+                                <th>Total Paid</th>
+                                <th>Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in staff_salaries %}
+                            <tr>
+                                <td class="staff-name">{{ s.staff.name }}</td>
+                                <td>{{ s.branch.name }}</td>
+                                <td>{{ s.total_salary }}</td>
+                                <td>{{ s.balance_to_pay }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No staff records</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if request.user.user_type == 0 %}
+    <!-- MANAGER SALARIES -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="glass-card p-4 border-warning-glow">
+                <div class="d-flex justify-content-between mb-3">
+                    <h5 class="mb-0">Manager Salaries</h5>
+                    <input type="text" id="managerSearch"
+                           class="form-control form-control-sm w-auto"
+                           placeholder="Search manager...">
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table" id="managerTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Branch</th>
+                                <th>Total Paid</th>
+                                <th>Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for m in manager_salaries %}
+                            <tr>
+                                <td class="manager-name">{{ m.manager.user.name }}</td>
+                                <td>{{ m.branch.name }}</td>
+                                <td>{{ m.total_paid }}</td>
+                                <td>{{ m.balance_salary }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No manager records</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- TODAY TABLES + CALENDAR -->
+    <div class="row g-4">
+
+        <!-- EXPENSES -->
+        <div class="col-lg-4">
+            <div class="glass-card p-3 border-danger-glow h-100">
+                <h6 class="fw-bold mb-3">Today's Expenses</h6>
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in expenses %}
+                        <tr>
+                            <td>{{ e.date }}</td>
+                            <td>{{ e.category }}</td>
+                            <td class="text-end text-danger">{{ e.amount }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center">No expenses today</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- SALES -->
+        <div class="col-lg-4">
+            <div class="glass-card p-3 border-success-glow h-100">
+                <h6 class="fw-bold mb-3">Today's Sales</h6>
+                <table class="table mb-0">
+                    <tbody>
+                        <tr><td>Breakfast</td><td class="text-end">{{ totals.total_breakfast }}</td></tr>
+                        <tr><td>Lunch</td><td class="text-end">{{ totals.total_lunch }}</td></tr>
+                        <tr><td>Dinner</td><td class="text-end">{{ totals.total_dinner }}</td></tr>
+                        <tr><td>Delivery</td><td class="text-end">{{ totals.total_delivery }}</td></tr>
+                        <tr><td>POS</td><td class="text-end">{{ totals.total_pos }}</td></tr>
+                        <tr><td>Cash</td><td class="text-end">{{ totals.total_cash }}</td></tr>
+                        <tr class="fw-bold">
+                            <td>Total</td>
+                            <td class="text-end">{{ totals.total_sales }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- CALENDAR -->
+        <div class="col-lg-4">
+            <div class="glass-card p-3 border-primary-glow h-100">
+                <h6 class="fw-bold mb-3">Calendar</h6>
+                <div id="calendar"></div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+function tableSearch(inputId, tableId, className) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+
+    input.addEventListener("keyup", function() {
+        const filter = this.value.toLowerCase();
+        const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+
+        rows.forEach(row => {
+            const cell = row.querySelector(`.${className}`);
+            if (!cell) return;
+            row.style.display = cell.textContent.toLowerCase().includes(filter) ? "" : "none";
+        });
+    });
+}
+
+tableSearch("branchSearch","branchTable","branch-name");
+tableSearch("staffSearch","staffTable","staff-name");
+tableSearch("managerSearch","managerTable","manager-name");
+
+function generateCalendar() {
+    const calendar = document.getElementById("calendar");
+    if (!calendar) return;
+
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const monthNames = ["January","February","March","April","May","June",
+                        "July","August","September","October","November","December"];
+
+    let html = `<h6 class="text-center mb-3">${monthNames[month]} ${year}</h6>`;
+    html += `<div class="calendar-grid">`;
+
+    const weekdays = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    weekdays.forEach(d => html += `<div><small>${d}</small></div>`);
+
+    for (let i = 0; i < firstDay; i++) html += `<div></div>`;
+
+    for (let d = 1; d <= daysInMonth; d++) {
+        html += `<div class="calendar-day ${d === today.getDate() ? 'today' : ''}">${d}</div>`;
+    }
+
+    html += `</div>`;
+    calendar.innerHTML = html;
+}
+
+generateCalendar();
+</script>
+
+{% endblock %}

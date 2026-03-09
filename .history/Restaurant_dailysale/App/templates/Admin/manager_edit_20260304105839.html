@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block 'content' %}
+
+<div class="container py-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold mb-0">
+                <i class="bi bi-pencil-square me-2"></i> Edit Manager
+            </h4>
+            <small class="text-muted">Update manager information</small>
+        </div>
+
+        <a href="{% url 'manager_view' %}" 
+           class="btn btn-outline-secondary rounded-pill">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+    </div>
+
+    <!-- Card -->
+    <div class="card border-0 shadow-sm">
+
+        <!-- Dark Header -->
+        <div class="card-header bg-dark text-white">
+            <strong>Manager Details</strong>
+        </div>
+
+        <div class="card-body p-4">
+
+            <p class="text-muted mb-4">
+                Fields marked with <span class="text-danger">*</span> are mandatory.
+            </p>
+
+            <!-- Django Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST" enctype="multipart/form-data" class="row g-4">
+                {% csrf_token %}
+
+                <!-- Name -->
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">
+                        Name <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" name="name"
+                           value="{{ form_data.name|default:manager.user.name }}"
+                           class="form-control" required>
+                </div>
+
+                <!-- Email -->
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">
+                        Email <span class="text-danger">*</span>
+                    </label>
+                    <input type="email" name="email"
+                           value="{{ form_data.email|default:manager.user.email }}"
+                           class="form-control" required>
+                </div>
+
+                <!-- Password -->
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">Password</label>
+                    <input type="password"
+                           name="password"
+                           class="form-control"
+                           minlength="8"
+                           maxlength="8"
+                           placeholder="Enter new password (8 characters)">
+                    <small class="text-muted">
+                        Leave blank to keep existing password
+                    </small>
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">Confirm Password</label>
+                    <input type="password"
+                           name="confirm_password"
+                           class="form-control"
+                           minlength="8"
+                           maxlength="8"
+                           placeholder="Re-enter password">
+                </div>
+
+                <!-- Branch -->
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">
+                        Assign Branch <span class="text-danger">*</span>
+                    </label>
+                    <select name="branch" class="form-select" required>
+                        <option value="">Select Branch</option>
+                        {% for branch in branches %}
+                            <option value="{{ branch.id }}"
+                                {% if form_data.branch %}
+                                    {% if form_data.branch == branch.id|stringformat:"s" %}selected{% endif %}
+                                {% else %}
+                                    {% if manager.user.branch.id == branch.id %}selected{% endif %}
+                                {% endif %}>
+                                {{ branch.name }} - {{ branch.location }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Phone -->
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">
+                        Phone <span class="text-danger">*</span>
+                    </label>
+                    <input type="tel" name="phone"
+                           value="{{ form_data.phone|default:manager.phone }}"
+                           class="form-control {% if phone_error %}is-invalid{% endif %}"
+                           placeholder="+971501234567"
+                           required>
+
+                    {% if phone_error %}
+                        <div class="invalid-feedback">
+                            {{ phone_error }}
+                        </div>
+                    {% else %}
+                        <small class="text-muted">
+                            Enter phone with country code
+                        </small>
+                    {% endif %}
+                </div>
+
+                <!-- Date of Birth -->
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">Date of Birth</label>
+                    <input type="date" name="dob"
+                           value="{% if form_data.dob %}{{ form_data.dob }}{% else %}{{ manager.dob|date:'Y-m-d' }}{% endif %}"
+                           class="form-control">
+                </div>
+
+                <!-- Gender -->
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">Gender</label>
+                    <select name="gender" class="form-select">
+                        <option value="">Select</option>
+                        <option value="Male"
+                            {% if form_data.gender == "Male" or manager.gender == "Male" %}selected{% endif %}>Male</option>
+                        <option value="Female"
+                            {% if form_data.gender == "Female" or manager.gender == "Female" %}selected{% endif %}>Female</option>
+                        <option value="Other"
+                            {% if form_data.gender == "Other" or manager.gender == "Other" %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+
+                <!-- Joining Date -->
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">Joining Date</label>
+                    <input type="date" name="joining_date"
+                           value="{% if form_data.joining_date %}{{ form_data.joining_date }}{% else %}{{ manager.joining_date|date:'Y-m-d' }}{% endif %}"
+                           class="form-control">
+                </div>
+
+                <!-- Address -->
+                <div class="col-12">
+                    <label class="form-label fw-medium">
+                        Address <span class="text-danger">*</span>
+                    </label>
+                    <textarea name="address"
+                              class="form-control"
+                              rows="3"
+                              required>{{ form_data.address|default:manager.address }}</textarea>
+                </div>
+
+                <!-- Photo -->
+                <div class="col-12">
+                    <label class="form-label fw-medium">Photo</label><br>
+                    {% if manager.photo %}
+                        <img src="{{ manager.photo.url }}"
+                             width="90"
+                             class="rounded border mb-3"
+                             style="object-fit: cover;">
+                    {% endif %}
+                    <input type="file"
+                           name="photo"
+                           class="form-control"
+                           accept="image/png, image/jpeg, image/jpg">
+                </div>
+
+                <!-- Submit -->
+                <div class="col-12">
+                    <button type="submit" 
+                            class="btn btn-success rounded-pill px-4 mt-3">
+                        <i class="bi bi-check-circle me-1"></i> Update Manager
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+{% load static %}
+{% block 'content' %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+    font-family: 'Inter', sans-serif;
+    background: #f4f7fb;
+}
+
+/* Layout */
+.dashboard-wrapper {
+    padding: 40px;
+}
+
+/* ================= GLASS CARD ================= */
+.glass-card {
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 10px 35px rgba(0,0,0,0.08);
+    transition: 0.3s ease;
+}
+
+.glass-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 18px 45px rgba(0,0,0,0.12);
+}
+
+/* ================= SUMMARY CARDS ================= */
+.summary-card {
+    padding: 25px;
+}
+
+.summary-card h2 {
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.border-danger-glow { border-left: 5px solid #ef4444; }
+.border-success-glow { border-left: 5px solid #22c55e; }
+.border-primary-glow { border-left: 5px solid #3b82f6; }
+.border-warning-glow { border-left: 5px solid #f59e0b; }
+
+/* ================= TABLE ================= */
+.table th {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #6b7280;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.table td {
+    font-size: 14px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.total-row {
+    background: #f3f4f6;
+    font-weight: 700;
+}
+
+/* Search Inputs */
+.form-control-sm {
+    border-radius: 20px;
+    padding-left: 15px;
+}
+
+/* Calendar */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    text-align: center;
+}
+
+.calendar-day {
+    padding: 10px;
+    border-radius: 8px;
+    background: #f1f5f9;
+}
+
+.calendar-day.today {
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    color: white;
+    font-weight: 600;
+}
+
+/* Animation */
+.fade-in {
+    animation: fadeIn 0.5s ease forwards;
+    opacity: 0;
+}
+
+@keyframes fadeIn {
+    to { opacity: 1; }
+}
+</style>
+
+<div class="container-fluid dashboard-wrapper">
+
+    <!-- TITLE -->
+    <div class="row mb-4 fade-in">
+        <div class="col-12">
+            <h3 class="fw-bold">Dashboard Overview</h3>
+        </div>
+    </div>
+
+    <!-- SUMMARY CARDS -->
+    <div class="row g-4 mb-4 fade-in">
+
+        <div class="col-lg-4">
+            <a href="{% url 'dashboard_expenses' %}" class="text-decoration-none text-dark">
+                <div class="glass-card summary-card border-danger-glow">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="text-muted small mb-1">Daily Expense</p>
+                            <h2>{{ daily_total }}</h2>
+                        </div>
+                        <i class="fas fa-receipt fa-2x text-danger"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-lg-4">
+            <a href="{% url 'daily_sales_dashboard' %}" class="text-decoration-none text-dark">
+                <div class="glass-card summary-card border-success-glow">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="text-muted small mb-1">Daily Sales</p>
+                            <h2>{{ daily_sales_total }}</h2>
+                        </div>
+                        <i class="fas fa-cash-register fa-2x text-success"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="glass-card summary-card border-primary-glow">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="text-muted small mb-1">Net Profit</p>
+                        <h2>{{ net_profit }}</h2>
+                    </div>
+                    <i class="fas fa-chart-line fa-2x text-primary"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BRANCH BALANCES -->
+    <div class="row g-4 mb-4 fade-in">
+        <div class="col-12">
+            <div class="glass-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0">Branch Balances</h5>
+                    {% if request.user.user_type == 0 %}
+                    <input type="text" id="branchSearch" 
+                           class="form-control form-control-sm w-auto"
+                           placeholder="Search branch...">
+                    {% endif %}
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table mb-0" id="branchBalanceTable">
+                        <thead>
+                            <tr>
+                                <th>Branch</th>
+                                <th>Opening</th>
+                                <th>Closing</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cash in branch_cashbooks %}
+                            <tr>
+                                <td class="branch-name">{{ cash.branch.name }}</td>
+                                <td>{{ cash.opening_balance }}</td>
+                                <td>{{ cash.closing_balance }}</td>
+                                <td>
+                                    <span class="badge {% if cash.is_closed %}bg-danger{% else %}bg-success{% endif %}">
+                                        {% if cash.is_closed %}Closed{% else %}Open{% endif %}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TODAY TABLES ROW -->
+    <div class="row g-4 fade-in">
+
+        <!-- Expenses -->
+        <div class="col-lg-6">
+            <div class="glass-card p-4 h-100">
+                <h6 class="fw-bold mb-3">Today's Expenses</h6>
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for e in expenses %}
+                            <tr>
+                                <td>{{ e.date }}</td>
+                                <td>{{ e.category }}</td>
+                                <td class="text-end text-danger fw-semibold">
+                                    {{ e.amount }}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">
+                                    No expenses today.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sales -->
+        <div class="col-lg-6">
+            <div class="glass-card p-4 h-100">
+                <h6 class="fw-bold mb-3">Today's Sales</h6>
+                <table class="table mb-0">
+                    <tbody>
+                        <tr><td>Breakfast</td><td class="text-end">{{ totals.total_breakfast }}</td></tr>
+                        <tr><td>Lunch</td><td class="text-end">{{ totals.total_lunch }}</td></tr>
+                        <tr><td>Dinner</td><td class="text-end">{{ totals.total_dinner }}</td></tr>
+                        <tr><td>Delivery</td><td class="text-end">{{ totals.total_delivery }}</td></tr>
+                        <tr><td>POS</td><td class="text-end">{{ totals.total_pos }}</td></tr>
+                        <tr class="total-row">
+                            <td>Total</td>
+                            <td class="text-end">{{ totals.total_sales }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+// Branch search
+document.getElementById('branchSearch')?.addEventListener('input', function() {
+    const filter = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#branchBalanceTable tbody tr');
+    rows.forEach(row => {
+        const name = row.querySelector('.branch-name').textContent.toLowerCase();
+        row.style.display = name.includes(filter) ? '' : 'none';
+    });
+});
+</script>
+
+{% endblock %}

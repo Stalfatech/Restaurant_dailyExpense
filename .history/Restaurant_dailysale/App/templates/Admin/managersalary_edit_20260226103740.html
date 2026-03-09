@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% load static %}
+{% block 'content' %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<div class="container mt-5">
+    <div class="card shadow border-0 rounded-4">
+        <div class="card-header bg-dark text-white">
+            <h4 class="mb-0">Edit Manager Salary</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                {% csrf_token %}
+                <div class="row g-3">
+
+                    <!-- Branch -->
+                    <div class="col-md-6">
+                        <label class="form-label">Branch</label>
+                        <select name="branch" class="form-select">
+                            {% for b in branches %}
+                            <option value="{{ b.id }}" {% if salary.branch.id == b.id %}selected{% endif %}>
+                                {{ b.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Manager -->
+                    <div class="col-md-6">
+                        <label class="form-label">Manager</label>
+                        <select name="manager" class="form-select">
+                            {% for m in managers %}
+                            <option value="{{ m.id }}" {% if salary.manager.id == m.id %}selected{% endif %}>
+                                {{ m }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Month -->
+                    <div class="col-md-6">
+                        <label class="form-label">Month</label>
+                        <select name="salary_month" class="form-select">
+                            {% for m,v in month_choices %}
+                            <option value="{{ m }}" {% if salary.salary_month == m %}selected{% endif %}>
+                                {{ v }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Year -->
+                    <div class="col-md-6">
+                        <label class="form-label">Year</label>
+                        <select name="salary_year" class="form-select">
+                            {% for y in years %}
+                            <option value="{{ y }}" {% if salary.salary_year == y %}selected{% endif %}>
+                                {{ y }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Salary -->
+                    <div class="col-md-6">
+                        <label class="form-label">Salary Amount</label>
+                        <input type="number" step="0.01" id="salary_amount"
+                               value="{{ salary.salary_amount }}" class="form-control" readonly>
+                    </div>
+
+                    <!-- Advance -->
+                    <div class="col-md-6">
+                        <label class="form-label">Advance</label>
+                        <input type="number" step="0.01" id="advance_amount"
+                               value="{{ salary.adjusted_advance }}" class="form-control" readonly>
+                    </div>
+
+                    <!-- Already Paid -->
+                    <div class="col-md-6">
+                        <label class="form-label">Already Paid</label>
+                        <input type="text" id="already_paid"
+                               value="{{ salary.paid_amount }}" class="form-control bg-light" readonly>
+                    </div>
+
+                    <!-- Pay Now -->
+                    <div class="col-md-6">
+                        <label class="form-label">Pay Now</label>
+                        <input type="number" step="0.01" name="pay_now" id="pay_now"
+                               class="form-control" placeholder="Enter amount">
+                    </div>
+
+             <!-- Balance Preview -->
+<div class="col-md-6">
+    <label class="form-label">Balance Preview</label>
+    <input type="text" id="balance_preview" class="form-control bg-light" 
+           value="{{ salary.balance_salary|default:"0.00" }}" readonly>
+</div>
+
+
+                    <!-- Payment Mode -->
+                    <div class="col-md-6">
+                        <label class="form-label">Payment Mode</label>
+                        <select name="payment_mode" class="form-select">
+                            <option value="">Select</option>
+                            <option value="Cash" {% if salary.payment_mode == "Cash" %}selected{% endif %}>Cash</option>
+                            <option value="Bank" {% if salary.payment_mode == "Bank" %}selected{% endif %}>Bank</option>
+                        </select>
+                    </div>
+
+                    <!-- Payment Date -->
+                    <div class="col-md-6">
+                        <label class="form-label">Payment Date</label>
+                        <input type="date" name="payment_date"
+                               value="{{ salary.payment_date|date:'Y-m-d' }}"
+                               class="form-control">
+                    </div>
+
+                    <!-- Next Month Advance -->
+                    <div class="col-md-6">
+                        <label class="form-label">Next Month Advance</label>
+                        <input type="number" step="0.01" name="next_month_advance"
+                               value="{{ salary.next_month_advance_amount }}" class="form-control">
+                    </div>
+
+                    <!-- Next Month -->
+                    <div class="col-md-6">
+                        <label class="form-label">Next Month</label>
+                        <select name="next_month" class="form-select">
+                            <option value="">Select Month</option>
+                            {% for m,v in month_choices %}
+                            <option value="{{ m }}" {% if salary.next_month == m %}selected{% endif %}>
+                                {{ v }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Next Year -->
+                    <div class="col-md-6">
+                        <label class="form-label">Next Year</label>
+                        <select name="next_month_year" class="form-select">
+                            <option value="">Select Year</option>
+                            {% for y in years %}
+                            <option value="{{ y }}" {% if salary.next_month_year == y %}selected{% endif %}>
+                                {{ y }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                </div>
+
+                <div class="text-end mt-4">
+                    <a href="{% url 'manager_salary_list' %}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-success">Update Salary</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function calculateBalance(){
+    let salary = parseFloat(document.getElementById("salary_amount").value) || 0;
+    let advance = parseFloat(document.getElementById("advance_amount").value) || 0;
+    let alreadyPaid = parseFloat(document.getElementById("already_paid").value) || 0;
+    let payNow = parseFloat(document.getElementById("pay_now").value) || 0;
+
+    let totalPaid = alreadyPaid + payNow;
+    let balance = salary - advance - totalPaid;
+
+    if(balance < 0){
+        balance = 0;
+    }
+
+    document.getElementById("balance_preview").value = balance.toFixed(2);
+}
+
+// Attach event listener for Pay Now input
+document.getElementById("pay_now").addEventListener("input", calculateBalance);
+
+// Optional: recalc on page load, in case form loads with prefilled Pay Now
+window.addEventListener("load", function(){
+    // Only recalc if pay_now is already filled (for safety)
+    if(document.getElementById("pay_now").value){
+        calculateBalance();
+    }
+});
+</script>
+{% endblock %}
+
+

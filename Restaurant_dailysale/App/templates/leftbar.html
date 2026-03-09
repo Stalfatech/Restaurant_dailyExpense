@@ -31,7 +31,7 @@
     <div class="startbar-collapse" id="startbarCollapse" data-simplebar>
         <div class="d-flex align-items-start flex-column w-100">
 
-            <ul class="navbar-nav mb-auto w-100">
+           <ul class="navbar-nav mb-auto w-100" id="sidebarMenu">
 
                
 
@@ -41,45 +41,73 @@
 
                 
 
-                <li class="nav-item">
+                <li class="nav-item menu-item">
                             <a class="nav-link" href="{% url 'dashboard' %}">
                                 <i class="iconoir-report-columns menu-icon"></i>
-                                <span>Dashboard</span>
+                                <span class="menu-text">Dashboard</span>
                           
                             </a>
                         </li><!--end nav-item-->
-                             <li class="nav-item">
+                             <li class="nav-item menu-item">
                     <a class="nav-link" href="{% url 'branch_list' %}">
                    <i class="iconoir-multiple-pages menu-icon"></i>
 
                         <span>Branches</span>
                     </a>
                 </li>
-                        <li class="nav-item">
-                    <a class="nav-link" href="{% url 'manager_view' %}">
-                        <i class="iconoir-group menu-icon"></i>
-                        <span>Managers</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                            <a class="nav-link" href="{% url 'adminview_staff' %}">
-                                <i class="iconoir-group menu-icon"></i>
-                                <span>Staff</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'admin_salary_list' %}">
-                                <i class="iconoir-wallet menu-icon"></i>
-                                <span>Staff Salary</span>
-                            </a>
-                        </li><!--end nav-item-->
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'manager_salary_list' %}">
-                                <i class="iconoir-user-bag menu-icon"></i>
+                     <li class="nav-item menu-item">
+    <a class="nav-link" data-bs-toggle="collapse" href="#managerMenu">
+        <i class="iconoir-user menu-icon"></i>
+        <span>Manager</span>
+    </a>
 
-                                <span>Managers Salary</span>
-                            </a>
-                        </li><!--end nav-item-->
+    <div class="collapse" id="managerMenu">
+        <ul class="nav flex-column sub-menu">
+
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'manager_view' %}">
+                    <i class="iconoir-group menu-icon"></i>
+                    <span>Managers</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'manager_salary_list' %}">
+                    <i class="iconoir-user-bag menu-icon"></i>
+                    <span>Managers Salary</span>
+                </a>
+            </li>
+
+        </ul>
+    </div>
+</li>
+               <li class="nav-item">
+    <a class="nav-link" data-bs-toggle="collapse" href="#staffMenu">
+        <i class="iconoir-group menu-icon"></i>
+        <span>Staff</span>
+    </a>
+
+    <div class="collapse" id="staffMenu">
+        <ul class="nav flex-column sub-menu">
+
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'adminview_staff' %}">
+                    <i class="iconoir-group menu-icon"></i>
+                    <span>Staff List</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'admin_salary_list' %}">
+                    <i class="iconoir-wallet menu-icon"></i>
+                    <span>Staff Salary</span>
+                </a>
+            </li>
+
+        </ul>
+    </div>
+</li>
+                        
                  <li class="nav-item">
                     <a class="nav-link" href="{% url 'supplier_list' %}">
                     <i class="iconoir-shop menu-icon"></i>
@@ -173,6 +201,32 @@
                            
                             </a>
                         </li><!--end nav-item-->
+                        <li class="nav-item">
+    <a class="nav-link" data-bs-toggle="collapse" href="#staffMenu">
+        <i class="iconoir-group menu-icon"></i>
+        <span>Staff</span>
+    </a>
+
+    <div class="collapse" id="staffMenu">
+        <ul class="nav flex-column sub-menu">
+
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'staff_list' %}">
+                    <i class="iconoir-group menu-icon"></i>
+                    <span>Staff List</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'salary_list' %}">
+                    <i class="iconoir-wallet menu-icon"></i>
+                    <span>Staff Salary</span>
+                </a>
+            </li>
+
+        </ul>
+    </div>
+</li>
                                                  <li class="nav-item">
                     <a class="nav-link" href="{% url 'dashboard_expenses' %}">
                       <i class="iconoir-wallet menu-icon"></i>
@@ -181,17 +235,7 @@
                     </a>
                 </li>
                         
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'staff_list' %}">
-                                <i class="iconoir-group menu-icon"></i>
-                                <span>Staff</span>
-                            </a>
-                        </li><!--end nav-item-->
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'salary_list' %}">
-                                <i class="iconoir-group menu-icon"></i>
-                                <span>Staff Salary</span>
-                            </a>
+                      
                         </li><!--end nav-item-->
                                              <li class="nav-item">
     <a class="nav-link" href="{% url 'daily_sales_dashboard' %}">

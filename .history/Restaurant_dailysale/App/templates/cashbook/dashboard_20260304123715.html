@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% block 'content' %}
+
+<style>
+    .premium-card {
+        border-radius: 16px;
+        background: #ffffff;
+    }
+
+    .filter-card {
+        border-radius: 14px;
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+    }
+
+    .filter-card .form-control {
+        height: 42px;
+        border-radius: 10px;
+    }
+
+    .premium-table thead {
+        background-color: #1f2937;
+        color: #ffffff;
+    }
+
+    .premium-table th,
+    .premium-table td {
+        padding: 12px;
+        font-size: 14px;
+        vertical-align: middle;
+    }
+
+    .premium-table tbody tr:hover {
+        background-color: #f1f5f9;
+    }
+
+    .badge-open {
+        background: #198754;
+    }
+
+    .badge-closed {
+        background: #dc3545;
+    }
+</style>
+
+<div class="container-fluid py-4">
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- PRINT AREA START -->
+    <div class="card premium-card shadow-sm print-area">
+
+        <div class="card-body">
+
+            <!-- Heading (Visible on Screen + Print) -->
+            <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+                <h3 class="fw-bold mb-0">
+                    <i class="bi bi-cash-coin text-success me-2"></i>
+                    CashBook Dashboard
+                </h3>
+
+                <button class="btn btn-dark rounded-pill px-4"
+                        onclick="window.print()">
+                    <i class="bi bi-printer me-1"></i> Print
+                </button>
+            </div>
+
+            <!-- Print Heading (Only For Print) -->
+            <h3 class="fw-bold text-center mb-4 print-only">
+                CashBook Dashboard
+            </h3>
+
+            <!-- Filters -->
+            <div class="filter-card p-3 mb-4 no-print">
+                <div class="row align-items-end g-3">
+
+                    <!-- Date Filter -->
+                    <div class="col-md-4">
+                        <form method="GET" class="row g-2 align-items-center">
+                            <div class="col">
+                                <input type="date"
+                                       name="date"
+                                       value="{{ selected_date|default:'' }}"
+                                       class="form-control">
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit"
+                                        class="btn btn-primary rounded-pill px-3">
+                                    Filter
+                                </button>
+                            </div>
+                            <div class="col-auto">
+                                <a href="{% url 'cashbook_dashboard' %}"
+                                   class="btn btn-outline-secondary rounded-pill px-3">
+                                    Reset
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Branch Search -->
+                    {% if request.user.user_type == 0 %}
+                    <div class="col-md-4">
+                        <input type="text"
+                               id="branchSearchInput"
+                               placeholder="Search Branch"
+                               class="form-control">
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered premium-table text-center"
+                       id="cashbookTable">
+
+                    <thead claa>
+                        <tr>
+                            <th>Date</th>
+                            <th>Branch</th>
+                            <th>Opening</th>
+                            <th>Cash Sales</th>
+                            <th>Expenses</th>
+                            <th>Closing</th>
+                            <th>Status</th>
+                            {% if request.user.user_type == 0 %}
+                                <th class="no-print">Action</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for cash in cashbooks %}
+                        <tr>
+                            <td>{{ cash.date|date:"d-m-Y" }}</td>
+                            <td class="branch-name fw-semibold">
+                                {{ cash.branch.name }}
+                            </td>
+                            <td>{{ cash.opening_balance }}</td>
+                            <td class="text-success fw-semibold">
+                                {{ cash.cash_sales }}
+                            </td>
+                            <td class="text-danger">
+                                {{ cash.expenses }}
+                            </td>
+                            <td class="fw-bold text-primary">
+                                {{ cash.closing_balance }}
+                            </td>
+                            <td>
+                                {% if cash.is_closed %}
+                                    <span class="badge badge-closed">Closed</span>
+                                {% else %}
+                                    <span class="badge badge-open">Open</span>
+                                {% endif %}
+                            </td>
+
+                            {% if request.user.user_type == 0 %}
+                            <td class="no-print">
+                                {% if not cash.is_closed %}
+                                    <a href="{% url 'toggle_day' cash.branch.id cash.date %}"
+                                       class="btn btn-sm btn-outline-danger rounded-pill"
+                                       onclick="return confirm('Close this day?');">
+                                        Close Day
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'toggle_day' cash.branch.id cash.date %}"
+                                       class="btn btn-sm btn-outline-success rounded-pill"
+                                       onclick="return confirm('Reopen this day?');">
+                                        Reopen
+                                    </a>
+                                {% endif %}
+                            </td>
+                            {% endif %}
+                        </tr>
+
+                        {% empty %}
+                        <tr>
+                            <td colspan="{% if request.user.user_type == 0 %}8{% else %}7{% endif %}"
+                                class="text-center">
+                                No Data Found
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+            </div>
+
+        </div>
+    </div>
+    <!-- PRINT AREA END -->
+
+</div>
+
+<!-- Branch Search Script -->
+<script>
+document.getElementById('branchSearchInput')?.addEventListener('keyup', function() {
+    const filter = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#cashbookTable tbody tr');
+
+    rows.forEach(row => {
+        const branchName = row.querySelector('.branch-name')?.textContent.toLowerCase();
+        row.style.display = branchName && branchName.includes(filter) ? '' : 'none';
+    });
+});
+</script>
+
+<!-- Print Styling -->
+<style>
+.print-only {
+    display: none;
+}
+
+@media print {
+
+    body * {
+        visibility: hidden;
+    }
+
+    .print-area, .print-area * {
+        visibility: visible;
+    }
+
+    .print-area {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+
+    .print-only {
+        display: block;
+    }
+
+    table {
+        font-size: 12px;
+    }
+}
+</style>
+
+{% endblock %}

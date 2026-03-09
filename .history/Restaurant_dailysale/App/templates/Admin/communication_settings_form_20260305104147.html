@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{%load widget_tweaks%}
+{% load static %}
+
+{% block 'content' %}
+
+<style>
+    .premium-card { border-radius: 16px; }
+    .form-label { font-size: 13px; font-weight: 600; color: #495057; }
+    .form-control, .form-select { border-radius: 10px; height: 44px; }
+    textarea.form-control { height: auto; min-height: 110px; }
+    .btn-primary { border-radius: 50px; padding: 8px 22px; font-size: 14px; font-weight: 500; }
+    .input-icon { position: relative; }
+    .input-icon i { position: absolute; top: 50%; left: 12px; transform: translateY(-50%); color: #6c757d; font-size: 14px; }
+    .text-danger { font-size: 12px; }
+</style>
+
+<div class="container py-4">
+
+    <div class="card premium-card shadow-sm border-0">
+
+        <!-- Header -->
+        <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
+            <div>
+                <h5 class="mb-0 fw-bold">
+                    {% if edit_mode %}
+                        <i class="bi bi-pencil-square text-warning me-2"></i>
+                        Edit Communication Settings
+                    {% else %}
+                        <i class="bi bi-gear text-primary me-2"></i>
+                        Add Communication Settings
+                    {% endif %}
+                </h5>
+                <small class="text-muted">Configure email and WhatsApp settings</small>
+            </div>
+
+            <a href="{% url 'communication_settings_list' %}" 
+               class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                ← Back
+            </a>
+        </div>
+
+        <div class="card-body p-4">
+
+            <!-- Non-field errors -->
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger alert-dismissible fade show">
+                    {% for error in form.non_field_errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="row g-4">
+
+                    <!-- Email Settings -->
+                    <div class="col-12">
+                        <h6 class="mb-3 fw-semibold">
+                            <i class="bi bi-envelope me-1"></i> Email Settings (Optional)
+                        </h6>
+                    </div>
+
+                    <div class="col-md-6 input-icon">
+                        <i class="bi bi-server"></i>
+                        {{ form.email_host|add_class:"form-control ps-5" }}
+                        <label class="form-label">Email Host</label>
+                        {% if form.email_host.errors %}
+                            <div class="text-danger">{{ form.email_host.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-6 input-icon">
+                        <i class="bi bi-hash"></i>
+                        {{ form.email_port|add_class:"form-control ps-5" }}
+                        <label class="form-label">Email Port</label>
+                        {% if form.email_port.errors %}
+                            <div class="text-danger">{{ form.email_port.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-6 input-icon">
+                        <i class="bi bi-person"></i>
+                        {{ form.email_host_user|add_class:"form-control ps-5" }}
+                        <label class="form-label">Email User</label>
+                        {% if form.email_host_user.errors %}
+                            <div class="text-danger">{{ form.email_host_user.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-6 input-icon">
+                        <i class="bi bi-lock"></i>
+                        {{ form.email_host_password|add_class:"form-control ps-5" }}
+                        <label class="form-label">Email Password</label>
+                        {% if form.email_host_password.errors %}
+                            <div class="text-danger">{{ form.email_host_password.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- WhatsApp Settings -->
+                    <div class="col-12 mt-3">
+                        <h6 class="mb-3 fw-semibold">
+                            <i class="bi bi-chat-left-text me-1"></i> WhatsApp Settings (Optional)
+                        </h6>
+                    </div>
+
+                    <div class="col-md-6 input-icon">
+                        <i class="bi bi-phone"></i>
+                        {{ form.whatsapp_number|add_class:"form-control ps-5" }}
+                        <label class="form-label">WhatsApp Number</label>
+                        {% if form.whatsapp_number.errors %}
+                            <div class="text-danger">{{ form.whatsapp_number.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-6 d-flex align-items-center">
+                        <div class="form-check mt-4">
+                            {{ form.is_active }}
+                            <label class="form-check-label ms-2">Active</label>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Submit Button -->
+                <div class="d-flex justify-content-end mt-4">
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                        {% if edit_mode %}
+                            <i class="bi bi-check-circle me-1"></i> Update Settings
+                        {% else %}
+                            <i class="bi bi-plus-circle me-1"></i> Add Settings
+                        {% endif %}
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

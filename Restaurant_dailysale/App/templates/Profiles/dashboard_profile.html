@@ -8,6 +8,14 @@
         <div class="card-header bg-dark text-white d-flex align-items-center rounded-top-4">
             <h5 class="mb-0">Add Dashboard Profile</h5>
         </div>
+        {% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endif %}
 
         <!-- ================= TITLE FORM ================= -->
         <div class="p-4 rounded-4 bg-light shadow-sm mb-4">

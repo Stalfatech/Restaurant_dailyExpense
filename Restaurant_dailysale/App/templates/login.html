@@ -3,7 +3,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Login | Daily Sales</title>
+
+<title>Login | {{ dashboard_profile.title }}</title>
+   {% if dashboard_profile.favicon %}
+    <link rel="icon" type="image/png" href="{{ dashboard_profile.favicon.url }}">
+    {% endif %}
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <link href="{% static 'assets/css/bootstrap.min.css' %}" rel="stylesheet">

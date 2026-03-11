@@ -155,29 +155,6 @@
                     {{ form.purchase_type }}
                     <div class="text-danger small">{{ form.purchase_type.errors }}</div>
                 </div>
-                  <!-- Invoice -->
-                <div class="col-md-6">
-                    <label class="form-label">
-                        <i class="bi bi-file-earmark-text text-danger me-1"></i>
-                        Invoice (PDF/Image)
-                        {% if not form.instance.pk %}
-                            <span class="text-danger">*</span>
-                        {% endif %}
-                    </label>
-
-                    {% if form.instance.invoice %}
-                        <div class="mb-2 small">
-                            <strong>Current File:</strong>
-                            <a href="{{ form.instance.invoice.url }}" target="_blank">
-                                {{ form.instance.invoice.name|cut:"invoices/" }}
-                            </a>
-                        </div>
-                    {% endif %}
-
-                    {{ form.invoice }}
-                    <div class="text-danger small">{{ form.invoice.errors }}</div>
-                </div>
-
 
                 <!-- Amount -->
                 <div class="col-md-6">
